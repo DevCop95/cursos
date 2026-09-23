@@ -119,3 +119,56 @@ a, button {
     page-break-inside: avoid;
   }
 }
+
+/* Water / Ink Canvas Background (Estilo MiMo Code) */
+#water-bg-wrapper {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background-color: var(--bg);
+}
+
+#water-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/mimo-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.9;
+  filter: contrast(1.03) saturate(1.05);
+}
+
+#waterMaskCanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+/* Tarjeta Editorial de Login */
+.login-card-editorial {
+  position: relative;
+  z-index: 10;
+  background-color: rgba(253, 252, 249, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(12, 13, 14, 0.08), 0 4px 16px rgba(12, 13, 14, 0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.login-card-editorial:hover {
+  box-shadow: 0 32px 80px rgba(12, 13, 14, 0.12), 0 6px 20px rgba(12, 13, 14, 0.05);
+}
+
+/* Marco del botón Google Identity */
+.google-btn-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+

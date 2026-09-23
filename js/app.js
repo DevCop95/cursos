@@ -207,14 +207,16 @@
   function updateNavigationUI(currentRoute) {
     const mainHeader = document.getElementById('main-header');
     const appFooter = document.getElementById('app-footer');
+    const waterWrapper = document.getElementById('water-bg-wrapper');
 
     if (!isUserAuthenticated() || currentRoute === 'login' || currentRoute === 'panel-admin') {
       if (mainHeader) mainHeader.classList.add('hidden');
       if (appFooter) appFooter.classList.add('hidden');
-      return;
+      if (waterWrapper) waterWrapper.classList.toggle('hidden', currentRoute === 'panel-admin');
     } else {
       if (mainHeader) mainHeader.classList.remove('hidden');
       if (appFooter) appFooter.classList.remove('hidden');
+      if (waterWrapper) waterWrapper.classList.add('hidden');
     }
 
     const navLinks = document.querySelectorAll('header nav a');
@@ -1608,61 +1610,59 @@
     const activeClientId = GOOGLE_AUTH_CONFIG.getClientId();
 
     container.innerHTML = `
-      <div class="min-h-[75vh] flex flex-col items-center justify-center py-10 px-4">
-        <div class="w-full max-w-md bg-[#fdfcf9] rounded-[24px] border border-[#d3cec5] shadow-[0_20px_60px_rgba(12,13,14,.08)] p-6 sm:p-8 flex flex-col items-center gap-6 modal-enter">
+      <div class="relative w-full min-h-[82vh] flex flex-col items-center justify-center py-10 px-4 z-10">
+        
+        <!-- Tarjeta de Login Editorial Dev101x -->
+        <div class="login-card-editorial w-full max-w-[420px] rounded-[28px] p-8 sm:p-10 flex flex-col items-center gap-7 modal-enter">
           
           <!-- Logo & Título Oficial Dev101x -->
-          <div class="flex flex-col items-center text-center gap-3">
-            <div class="w-16 h-16 rounded-2xl bg-white border border-[#d3cec5] flex items-center justify-center p-2.5 shadow-xs">
-              <img src="assets/favicon.png" alt="Dev101x" class="w-10 h-10 rounded-lg object-contain" />
+          <div class="flex flex-col items-center text-center gap-3.5">
+            <div class="relative group cursor-default">
+              <div class="absolute -inset-2 rounded-2xl bg-gradient-to-tr from-[#005c38]/20 via-[#9ffdd3]/30 to-[#005c38]/10 blur-md opacity-60 group-hover:opacity-100 transition-all duration-500"></div>
+              <div class="relative w-16 h-16 rounded-2xl bg-white border border-[#d3cec5] flex items-center justify-center p-2.5 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                <img src="assets/favicon.png" alt="Dev101x" class="w-11 h-11 rounded-lg object-contain" />
+              </div>
             </div>
             <div>
-              <h1 class="text-3xl font-extrabold text-[#0c0d0e] tracking-tight font-sans">
+              <h1 class="text-3xl sm:text-[32px] font-extrabold text-[#0c0d0e] tracking-tight font-sans">
                 Acceso a Dev<em class="not-italic text-[#005c38]">101x</em>
               </h1>
-              <p class="text-xs text-[#80857e] mt-1 font-mono">Pentesting 101 &bull; Fundamentos desde Windows</p>
+              <p class="text-xs text-[#80857e] mt-1.5 font-mono tracking-tight">Pentesting 101 &bull; Fundamentos desde Windows</p>
             </div>
           </div>
 
-          <!-- Contenedor Oficial Google Sign-In -->
-          <div class="w-full flex flex-col gap-5">
-            <div class="flex flex-col items-center gap-3">
-              <span class="text-xs text-[#282b29] font-medium text-center font-sans">Inicia sesión con tu cuenta de Google:</span>
-              <div id="real-google-btn-container" class="w-full flex justify-center items-center min-h-[50px] py-1">
-                <div class="flex items-center gap-2 text-xs text-[#80857e] py-3 font-mono">
-                  <span class="w-4 h-4 border-2 border-slate-300 border-t-[#005c38] rounded-full animate-spin"></span>
-                  <span>Cargando Google Identity Services...</span>
+          <!-- Botón Estilizado Google SSO -->
+          <div class="w-full flex flex-col items-center gap-3">
+            <span class="text-xs text-[#282b29] font-medium text-center font-sans">Inicia sesión con tu cuenta de Google:</span>
+            
+            <div class="w-full flex justify-center items-center py-1">
+              <div id="real-google-btn-container" class="google-btn-frame transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                <!-- Botón estilizado con logo multicolor oficial de Google -->
+                <div class="w-[300px] h-[48px] flex items-center justify-center gap-3 px-5 py-2.5 rounded-full bg-white border border-[#d3cec5] text-xs font-semibold text-[#0c0d0e] shadow-xs hover:border-[#005c38] hover:shadow-md transition-all cursor-pointer">
+                  <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                  </svg>
+                  <span>Continuar con Google</span>
                 </div>
               </div>
-            </div>
-
-            <!-- Panel de Seguridad & Verificación Oficial -->
-            <div class="p-3.5 bg-white border border-[#d3cec5] rounded-xl flex flex-col gap-2 text-xs">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 font-bold text-[#0c0d0e]">
-                  <span class="material-symbols-outlined text-sm text-[#005c38]">verified_user</span>
-                  <span class="font-sans">Autenticación Oficial Google OAuth 2.0</span>
-                </div>
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 text-[#005c38] border border-emerald-200">PROD</span>
-              </div>
-              <p class="text-[11px] text-[#282b29] leading-relaxed font-sans">
-                La contraseña y validación se procesan exclusivamente en los servidores oficiales de Google (<code class="text-[#0c0d0e] font-mono font-semibold">accounts.google.com</code>). Dev101x no almacena ni solicita contraseñas.
-              </p>
             </div>
           </div>
 
-          <!-- Pie de Seguridad -->
-          <div class="w-full pt-3 border-t border-[#d3cec5] flex items-center justify-between text-[11px] text-[#80857e] font-mono">
-            <span class="flex items-center gap-1.5 text-[#005c38] font-semibold">
-              <span class="material-symbols-outlined text-sm">lock</span>
-              <span>Protección SSL / HTTPS</span>
+          <!-- Pie Mínimo OpenID Oficial -->
+          <div class="w-full pt-4 border-t border-[#d3cec5]/70 flex items-center justify-between text-[11px] text-[#80857e] font-mono">
+            <span class="text-[#282b29] font-medium tracking-tight">Plataforma Académica</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f3f0ea] border border-[#d3cec5]/80 text-[#005c38] font-bold text-[10px] tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#005c38] animate-pulse"></span>
+              <span>OpenID Connect</span>
             </span>
-            <span>OpenID Connect</span>
           </div>
 
         </div>
 
-        <div class="w-full max-w-md mt-4 text-center">
+        <div class="w-full max-w-[420px] mt-5 text-center">
           <p class="text-[11px] text-[#80857e] font-sans">
             &copy; 2026 Dev<em class="not-italic text-[#005c38] font-bold">101x</em> &bull; Plataforma Oficial de Aprendizaje
           </p>
@@ -1670,7 +1670,7 @@
       </div>
     `;
 
-    // Renderizado reactivo del botón oficial de Google Identity Services
+    // Renderizado reactivo del botón oficial de Google Identity Services con shape pill
     let renderAttempts = 0;
     const maxRenderAttempts = 40;
 
@@ -1690,9 +1690,9 @@
           google.accounts.id.renderButton(el, {
             theme: 'outline',
             size: 'large',
-            width: 320,
+            width: 300,
             text: 'continue_with',
-            shape: 'rectangular',
+            shape: 'pill',
             logo_alignment: 'left'
           });
         } catch (e) {
