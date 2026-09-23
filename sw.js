@@ -2,7 +2,7 @@
  * Dev101x — Service Worker Oficial
  * Gestión de Caché Resiliente y Soporte Offline PWA
  */
-const CACHE_NAME = 'dev101x-v14-cache';
+const CACHE_NAME = 'dev101x-v15-cache';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const PRECACHE_ASSETS = [
   './assets/favicon.png',
   './assets/apple-touch-icon.png',
   './assets/mimo-bg.png',
+  './assets/og-preview.png',
   './manifest.json'
 ];
 
