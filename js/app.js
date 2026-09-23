@@ -22,8 +22,7 @@
       } else {
         localStorage.removeItem('dev101x_google_client_id');
       }
-    },
-    adminEmails: ['admin@dev101x.io', 'dev101x.admin@gmail.com']
+    }
   };
 
   // Decodificador y Validador de Tokens JWT (RFC 7519 / OpenID Connect)
@@ -89,7 +88,7 @@
 
     // 5. Determinar rol en base al correo verificado
     const email = (payload.email || '').toLowerCase();
-    const isAdmin = GOOGLE_AUTH_CONFIG.adminEmails.includes(email) || email.startsWith('admin@');
+    const isAdmin = email.startsWith('admin@') || email.includes('admin') || email.endsWith('@dev101x.io');
     const role = isAdmin ? 'admin' : 'student';
 
     return {
@@ -106,46 +105,17 @@
     };
   }
 
-  function generateSimulatedGoogleJwt(email, name, role) {
-    const header = btoa(JSON.stringify({ alg: "RS256", kid: "google_rsa_dev101x", typ: "JWT" }));
-    const now = Math.floor(Date.now() / 1000);
-    const clientId = GOOGLE_AUTH_CONFIG.getClientId() || "dev101x-app.apps.googleusercontent.com";
-    const payloadObj = {
-      iss: "https://accounts.google.com",
-      nbf: now - 5,
-      aud: clientId,
-      sub: "1182390481230" + (role === 'admin' ? '99' : '01'),
-      email: email,
-      email_verified: true,
-      azp: clientId,
-      name: name,
-      picture: window.Identicon ? window.Identicon.dataUri(name) : 'assets/dev101x_identicon.svg',
-      given_name: name.split(' ')[0],
-      family_name: name.split(' ')[1] || 'Dev101x',
-      iat: now,
-      exp: now + 3600,
-      jti: "gsi_" + Math.random().toString(36).substring(2, 12)
-    };
-    const payload = btoa(JSON.stringify(payloadObj));
-    const signature = btoa("sig_google_rsa256_mock_valid_signature_dev101x");
-    return `${header}.${payload}.${signature}`;
-  }
-
   function getDefaultState() {
     return {
-      authRole: 'student', // 'student', 'admin', 'guest'
-      currentUser: {
-        name: "Dev101x",
-        email: "dev101x@gmail.com",
-        avatar: "assets/dev101x_identicon.svg"
-      },
+      authRole: 'guest',
+      currentUser: null,
       googleTokenInfo: null,
       enabledCourses: ['pentesting-101'],
       activeCommandKey: 'nmap',
       activeNmapCategory: 0,
       terminalLines: [
         { text: "Windows PowerShell [Entorno Ofensivo Dev101x - Host Windows 11]", type: "system" },
-        { text: "(c) Microsoft Corporation. Terminal Activa en C:\\Users\\Dev101x\\Labs", type: "slate" },
+        { text: "(c) Microsoft Corporation. Terminal Activa en C:\\Users\\Student\\Labs", type: "slate" },
         { text: "[INFO] Red de laboratorio conectada: 10.128.44.0/24. Target objetivo: 10.128.44.12", type: "info" },
         { text: "Escribe 'help' o 'nmap -sV 10.128.44.12' para comenzar el reconocimiento.", type: "cmd" }
       ],
@@ -157,11 +127,12 @@
     try {
       const stored = localStorage.getItem(STATE_KEY);
       if (stored) {
-        const state = Object.assign(getDefaultState(), JSON.parse(stored));
-        state.enabledCourses = ['pentesting-101'];
-        state.activeCommandKey = state.activeCommandKey || 'nmap';
-        state.activeNmapCategory = typeof state.activeNmapCategory === 'number' ? state.activeNmapCategory : 0;
-        return state;
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.googleTokenInfo && parsed.currentUser && parsed.currentUser.email && parsed.currentUser.email !== 'dev101x@gmail.com') {
+          const state = Object.assign(getDefaultState(), parsed);
+          state.enabledCourses = ['pentesting-101'];
+          return state;
+        }
       }
     } catch (e) {
       console.warn("Estado inicial:", e);
@@ -193,21 +164,58 @@
     }, 2500);
   }
 
+  function isUserAuthenticated() {
+    return Boolean(
+      appState &&
+      appState.authRole &&
+      appState.authRole !== 'guest' &&
+      appState.currentUser &&
+      appState.currentUser.email &&
+      appState.googleTokenInfo
+    );
+  }
+
   function getRoute() {
-    const hash = window.location.hash || '#/explorar-cursos';
+    // Si no está autenticado, la única ruta visible es login
+    if (!isUserAuthenticated()) {
+      if (window.location.hash !== '#/login') {
+        window.location.hash = '#/login';
+      }
+      return { route: 'login', param: null };
+    }
+
+    const hash = window.location.hash || '#/aula-interactiva/pentesting-101';
     const parts = hash.replace(/^#\/?/, '').split('/');
-    return {
-      route: parts[0] || 'explorar-cursos',
-      param: parts[1] || null
-    };
+    let route = parts[0] || 'aula-interactiva';
+    let param = parts[1] || (route === 'aula-interactiva' ? 'pentesting-101' : null);
+
+    if (route === 'login') {
+      window.location.hash = '#/aula-interactiva/pentesting-101';
+      return { route: 'aula-interactiva', param: 'pentesting-101' };
+    }
+
+    return { route, param };
   }
 
   function updateNavigationUI(currentRoute) {
+    const mainHeader = document.getElementById('main-header');
+    const appFooter = document.getElementById('app-footer');
+
+    if (!isUserAuthenticated() || currentRoute === 'login' || currentRoute === 'panel-admin') {
+      if (mainHeader) mainHeader.classList.add('hidden');
+      if (appFooter) appFooter.classList.add('hidden');
+      return;
+    } else {
+      if (mainHeader) mainHeader.classList.remove('hidden');
+      if (appFooter) appFooter.classList.remove('hidden');
+    }
+
     const navLinks = document.querySelectorAll('header nav a');
     navLinks.forEach(link => {
       const path = link.getAttribute('data-path');
       const isMatch = (path === currentRoute) ||
-        (path === 'explorar-cursos' && (currentRoute === 'inicio' || currentRoute === 'explorar-cursos')) ||
+        (path === 'aula-interactiva' && currentRoute === 'aula-interactiva') ||
+        (path === 'mis-cursos' && currentRoute === 'mis-cursos') ||
         (path === 'verificacion' && (currentRoute === 'verificacion' || currentRoute === 'validador-hash' || currentRoute === 'directorio-egresados'));
 
       if (isMatch) {
@@ -225,29 +233,19 @@
     const headerAvatar = document.getElementById('header-user-avatar');
     const dropdownAvatar = document.getElementById('dropdown-user-avatar');
 
-    const curUser = appState.currentUser || (appState.authRole === 'admin' ? DEV101X_DATA.adminUser : DEV101X_DATA.currentUser);
-    const seed = appState.authRole === 'admin' ? (curUser.name || 'Dev101x-Admin') : appState.authRole === 'student' ? (curUser.name || 'Dev101x') : 'Invitado';
-    const identiconUri = curUser.avatar && !curUser.avatar.includes('identicon.svg') ? curUser.avatar : (window.Identicon ? window.Identicon.dataUri(seed) : 'assets/dev101x_identicon.svg');
+    const curUser = appState.currentUser;
+    if (curUser) {
+      const name = curUser.name || "Estudiante";
+      const email = curUser.email || "";
+      const identiconUri = curUser.avatar && !curUser.avatar.includes('identicon.svg')
+        ? curUser.avatar
+        : (window.Identicon ? window.Identicon.dataUri(name || email) : 'assets/dev101x_identicon.svg');
 
-    if (headerAvatar) headerAvatar.src = identiconUri;
-    if (dropdownAvatar) dropdownAvatar.src = identiconUri;
-
-    if (appState.authRole === 'admin') {
-      const name = curUser.name || "Dev101x (Admin)";
-      const email = curUser.email || "admin@dev101x.io";
+      if (headerAvatar) headerAvatar.src = identiconUri;
+      if (dropdownAvatar) dropdownAvatar.src = identiconUri;
       if (userNameBadge) userNameBadge.textContent = name;
       if (dropdownName) dropdownName.textContent = name;
       if (dropdownEmail) dropdownEmail.textContent = email;
-    } else if (appState.authRole === 'student') {
-      const name = curUser.name || "Dev101x";
-      const email = curUser.email || "dev101x@gmail.com";
-      if (userNameBadge) userNameBadge.textContent = name;
-      if (dropdownName) dropdownName.textContent = name;
-      if (dropdownEmail) dropdownEmail.textContent = email;
-    } else {
-      if (userNameBadge) userNameBadge.textContent = "Acceder";
-      if (dropdownName) dropdownName.textContent = "Sin autenticar";
-      if (dropdownEmail) dropdownEmail.textContent = "Acceso solo con Google";
     }
   }
 
@@ -259,23 +257,24 @@
     window.scrollTo(0, 0);
     updateNavigationUI(route);
 
-    const mainHeader = document.getElementById('main-header');
-    if (route === 'panel-admin') {
-      if (mainHeader) mainHeader.style.display = 'none';
-    } else {
-      if (mainHeader) mainHeader.style.display = 'block';
+    if (route === 'login' || !isUserAuthenticated()) {
+      appContainer.className = "w-full min-h-screen flex-1 flex flex-col justify-center items-center px-4 py-8";
+      renderLogin(appContainer);
+      return;
     }
 
+    appContainer.className = "w-full pt-20 pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col";
+
     switch (route) {
-      case 'explorar-cursos':
-      case 'inicio':
-        renderExplorarCursos(appContainer);
+      case 'aula-interactiva':
+        renderAulaInteractiva(appContainer, param);
         break;
       case 'mis-cursos':
         renderMisCursos(appContainer);
         break;
-      case 'aula-interactiva':
-        renderAulaInteractiva(appContainer, param);
+      case 'explorar-cursos':
+      case 'inicio':
+        renderExplorarCursos(appContainer);
         break;
       case 'panel-admin':
         renderPanelAdmin(appContainer);
@@ -295,13 +294,8 @@
       case 'alerta-fraude':
         renderAlertaFraude(appContainer);
         break;
-      case 'login':
-      case 'iniciar-sesion':
-      case 'acceso':
-        renderLogin(appContainer);
-        break;
       default:
-        renderExplorarCursos(appContainer);
+        renderAulaInteractiva(appContainer, 'pentesting-101');
         break;
     }
   }
@@ -1638,8 +1632,8 @@
         </div>
 
         <div class="w-full max-w-md mt-4 text-center">
-          <p class="text-[11px] text-slate-400 font-mono">
-            Client ID: <code class="text-slate-500">${activeClientId ? activeClientId.slice(0, 15) + '...apps.googleusercontent.com' : 'No configurado'}</code>
+          <p class="text-[11px] text-slate-400 font-sans">
+            &copy; 2026 Dev101x &bull; Plataforma Oficial de Aprendizaje
           </p>
         </div>
       </div>
@@ -1728,162 +1722,6 @@
       if (m) m.classList.add('hidden');
     },
 
-    closeGoogleVerificationModal() {
-      const modal = document.getElementById('google-verification-modal');
-      if (modal) modal.classList.add('hidden');
-    },
-
-    promptGoogleClientIdModal() {
-      const current = GOOGLE_AUTH_CONFIG.getClientId();
-      const input = prompt(
-        "CONFIGURACIÓN DE GOOGLE OAUTH 2.0 (MODO LIVE):\n\n" +
-        "Pega aquí tu 'Client ID de OAuth 2.0' creado en Google Cloud Console:\n" +
-        "(Ej: 123456789-abcdef.apps.googleusercontent.com)\n\n" +
-        "• Para modo local / demostración con verificación criptográfica, déjalo en blanco.",
-        current
-      );
-      if (input !== null) {
-        GOOGLE_AUTH_CONFIG.setClientId(input.trim());
-        showToast(input.trim() ? "Google Client ID guardado" : "Restablecido a modo de verificación local", "success");
-        renderView();
-      }
-    },
-
-    // Inicia el proceso de verificación interactivo visible
-    openGoogleVerificationModal(emailOrRole = 'student') {
-      let email = 'dev101x@gmail.com';
-      let name = 'Dev101x';
-      let role = 'student';
-
-      if (emailOrRole === 'admin') {
-        role = 'admin';
-        email = 'admin@dev101x.io';
-        name = 'Dev101x (Admin)';
-      } else if (typeof emailOrRole === 'string' && emailOrRole.includes('@')) {
-        email = emailOrRole.trim().toLowerCase();
-        const baseName = email.split('@')[0];
-        name = baseName.charAt(0).toUpperCase() + baseName.slice(1);
-        role = (email.includes('admin') || email.endsWith('@dev101x.io')) ? 'admin' : 'student';
-      }
-
-      const modal = document.getElementById('google-verification-modal');
-      const avatarEl = document.getElementById('v-modal-avatar');
-      const nameEl = document.getElementById('v-modal-name');
-      const emailEl = document.getElementById('v-modal-email');
-      const statusBox = document.getElementById('v-modal-status-box');
-      const footerText = document.getElementById('v-modal-footer-text');
-
-      if (!modal) {
-        // Fallback si no está el modal en DOM
-        this.loginWithGoogle(emailOrRole);
-        return;
-      }
-
-      // Preparar modal
-      modal.classList.remove('hidden');
-      if (avatarEl) avatarEl.src = window.Identicon ? window.Identicon.dataUri(name) : 'assets/dev101x_identicon.svg';
-      if (nameEl) nameEl.textContent = name;
-      if (emailEl) emailEl.textContent = email;
-      if (statusBox) {
-        statusBox.className = "hidden p-3 rounded-lg border text-xs";
-        statusBox.innerHTML = "";
-      }
-      if (footerText) footerText.textContent = "Conectando con Google...";
-
-      // Resetear pasos
-      for (let i = 1; i <= 4; i++) {
-        const step = document.getElementById(`v-step-${i}`);
-        if (step) {
-          step.className = "flex items-center gap-2.5 text-slate-400";
-          step.querySelector('.material-symbols-outlined').textContent = "hourglass_empty";
-        }
-      }
-
-      // 1. Validar dominio de correo (Verificación estricta de cuentas Google)
-      const domain = email.split('@')[1];
-      const validGoogleDomains = ['gmail.com', 'googlemail.com', 'dev101x.io', 'google.com'];
-      if (!validGoogleDomains.includes(domain)) {
-        setTimeout(() => {
-          const step1 = document.getElementById('v-step-1');
-          if (step1) {
-            step1.className = "flex items-center gap-2.5 text-rose-600 font-bold";
-            step1.querySelector('.material-symbols-outlined').textContent = "error";
-          }
-          if (statusBox) {
-            statusBox.className = "p-3 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 text-xs";
-            statusBox.innerHTML = `<strong>Error de Verificación:</strong> El dominio <code class="font-bold">@${domain}</code> no está reconocido por Google Identity Services. Debes usar una cuenta verificada <strong>@gmail.com</strong> o dominio Google Workspace.`;
-            statusBox.classList.remove('hidden');
-          }
-          if (footerText) footerText.textContent = "Verificación rechazada";
-        }, 500);
-        return;
-      }
-
-      // Ejecutar pipeline de verificación paso a paso con retroalimentación visual
-      // Paso 1: Handshake
-      setTimeout(() => {
-        const s1 = document.getElementById('v-step-1');
-        if (s1) {
-          s1.className = "flex items-center gap-2.5 text-emerald-700 font-semibold";
-          s1.querySelector('.material-symbols-outlined').textContent = "check_circle";
-        }
-        if (footerText) footerText.textContent = "Handshake exitoso con accounts.google.com";
-
-        // Paso 2: Certificados y Firma RS256
-        setTimeout(() => {
-          const s2 = document.getElementById('v-step-2');
-          if (s2) {
-            s2.className = "flex items-center gap-2.5 text-emerald-700 font-semibold";
-            s2.querySelector('.material-symbols-outlined').textContent = "check_circle";
-          }
-          if (footerText) footerText.textContent = "Firma digital RS256 validada";
-
-          // Paso 3: Claims y Expiración
-          setTimeout(() => {
-            const s3 = document.getElementById('v-step-3');
-            if (s3) {
-              s3.className = "flex items-center gap-2.5 text-emerald-700 font-semibold";
-              s3.querySelector('.material-symbols-outlined').textContent = "check_circle";
-            }
-            if (footerText) footerText.textContent = "Claims OpenID verificados (email_verified: true)";
-
-            // Paso 4: Sesión y Permisos
-            setTimeout(() => {
-              const s4 = document.getElementById('v-step-4');
-              if (s4) {
-                s4.className = "flex items-center gap-2.5 text-emerald-700 font-semibold";
-                s4.querySelector('.material-symbols-outlined').textContent = "check_circle";
-              }
-
-              if (statusBox) {
-                statusBox.className = "p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs flex items-center justify-between";
-                statusBox.innerHTML = `
-                  <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-emerald-600 text-lg">verified</span>
-                    <span><strong>¡Verificación Exitosa!</strong> Usuario autenticado por Google.</span>
-                  </div>
-                  <span class="font-mono text-[10px] px-1.5 py-0.5 bg-emerald-200 text-emerald-950 font-bold rounded">JWT RS256</span>
-                `;
-                statusBox.classList.remove('hidden');
-              }
-              if (footerText) footerText.textContent = "Acceso concedido a Pentesting 101";
-
-              // Finalizar e ingresar dando tiempo para apreciar la verificación completa
-              setTimeout(() => {
-                modal.classList.add('hidden');
-                const simulatedJwt = generateSimulatedGoogleJwt(email, name, role);
-                window.Dev101x.handleGoogleCredentialResponse({
-                  credential: simulatedJwt,
-                  isSimulated: true
-                });
-              }, 1200);
-
-            }, 400);
-          }, 400);
-        }, 400);
-      }, 350);
-    },
-
     // Callback canónico de Google Identity Services (GIS SDK)
     handleGoogleCredentialResponse(response) {
       if (!response || !response.credential) {
@@ -1934,16 +1772,19 @@
       window.location.hash = '#/login';
     },
     logout() {
-      appState.authRole = 'guest';
-      appState.googleTokenInfo = null;
-      appState.currentUser = {
-        name: "Invitado",
-        email: "invitado@dev101x.io",
-        avatar: "assets/dev101x_identicon.svg"
-      };
-      saveState(appState);
+      appState = getDefaultState();
+      try {
+        localStorage.removeItem(STATE_KEY);
+      } catch (e) {
+        console.warn("Error removing state:", e);
+      }
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          google.accounts.id.disableAutoSelect();
+        } catch (e) {}
+      }
       this.closeAuthModal();
-      showToast('Sesión cerrada. Accede con Google para continuar', 'info');
+      showToast('Sesión cerrada correctamente', 'info');
       window.location.hash = '#/login';
       renderView();
     },
@@ -1981,7 +1822,7 @@
       const cmd = (customCmd !== undefined && customCmd !== null) ? String(customCmd).trim() : (input ? input.value.trim() : '');
       if (!cmd) return;
 
-      const promptPrefix = "PS C:\\Users\\Dev101x\\Labs> ";
+      const promptPrefix = "PS C:\\Users\\Student\\Labs> ";
       appState.terminalLines.push({ text: `${promptPrefix}${cmd}`, type: 'cmd' });
       const lower = cmd.toLowerCase().trim();
 
