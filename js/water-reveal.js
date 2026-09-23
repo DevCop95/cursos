@@ -11,9 +11,6 @@
     const wrapper = document.getElementById('water-bg-wrapper');
     if (!canvas || !wrapper) return;
 
-    // Solo habilitar en dispositivos con puntero (mouse/trackpad)
-    const canHover = window.matchMedia('(hover: hover)').matches;
-    if (!canHover) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -154,6 +151,29 @@
       lastX = null;
       lastY = null;
     });
+
+    window.addEventListener('touchstart', function (e) {
+      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
+      if (e.touches && e.touches[0]) {
+        lastX = null;
+        lastY = null;
+        stampAlong(e.touches[0].clientX, e.touches[0].clientY);
+        start();
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', function (e) {
+      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
+      if (e.touches && e.touches[0]) {
+        stampAlong(e.touches[0].clientX, e.touches[0].clientY);
+        start();
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', function () {
+      lastX = null;
+      lastY = null;
+    }, { passive: true });
   }
 
   if (document.readyState === 'loading') {
