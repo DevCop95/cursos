@@ -1627,7 +1627,6 @@
               <h1 class="text-3xl sm:text-[32px] font-extrabold text-[#0c0d0e] tracking-tight font-sans">
                 Acceso a Dev<em class="not-italic text-[#005c38]">101x</em>
               </h1>
-              <p class="text-xs text-[#80857e] mt-1.5 font-mono tracking-tight">Pentesting 101 &bull; Fundamentos desde Windows</p>
             </div>
           </div>
 

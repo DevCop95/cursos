@@ -134,11 +134,11 @@ a, button {
   position: absolute;
   inset: 0;
   background-image: url('../assets/mimo-bg.png');
-  background-size: cover;
-  background-position: center;
+  background-size: 1350px auto;
+  background-position: center 35%;
   background-repeat: no-repeat;
-  opacity: 0.9;
-  filter: contrast(1.03) saturate(1.05);
+  opacity: 0.95;
+  filter: contrast(1.1) saturate(1.15);
 }
 
 #waterMaskCanvas {

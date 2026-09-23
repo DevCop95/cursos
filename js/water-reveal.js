@@ -23,12 +23,12 @@
 
     // Color de la máscara: Warm Paper #f3f0ea
     const MASK = '243, 240, 234';
-    const R_START = 12;
-    const R_END = 145;
+    const R_START = 14;
+    const R_END = 160;
     const R_VARY = 0.45;
-    const LIFETIME = 680; // ms de expansión y desvanecimiento
-    const STAMP_STEP = 12;
-    const MAX_STAMPS = 200;
+    const LIFETIME = 850; // ms de expansión fluida
+    const STAMP_STEP = 10;
+    const MAX_STAMPS = 220;
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
     let w = 0;
@@ -110,6 +110,19 @@
       ctx.fill();
     }
 
+    // Dibuja una onda / anillo de refracción líquida sutil
+    function drawRippleRing(x, y, r, alpha) {
+      if (alpha < 0.08) return;
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(0, 92, 56, ' + (alpha * 0.16) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 0.92, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     let running = false;
 
     function loop() {
@@ -120,7 +133,7 @@
       ctx.fillStyle = 'rgb(' + MASK + ')';
       ctx.fillRect(0, 0, w, h);
 
-      // 2. Perforar con gotas activas
+      // 2. Perforar con gotas activas estilo MiMo
       ctx.globalCompositeOperation = 'destination-out';
       for (let i = stamps.length - 1; i >= 0; i--) {
         const t = (now - stamps[i].born) / LIFETIME;
@@ -132,6 +145,17 @@
         const r = R_START + (stamps[i].rmax - R_START) * ease;
         const alpha = 1 - t * t; // Desvanecimiento progresivo
         carveWaterDrop(stamps[i].x, stamps[i].y, r, alpha, stamps[i].seed);
+      }
+
+      // 3. Dibujar ondas de refracción líquida suaves
+      for (let i = 0; i < stamps.length; i++) {
+        const t = (now - stamps[i].born) / LIFETIME;
+        if (t < 1) {
+          const ease = 1 - Math.pow(1 - t, 3);
+          const r = R_START + (stamps[i].rmax - R_START) * ease;
+          const alpha = 1 - t * t;
+          drawRippleRing(stamps[i].x, stamps[i].y, r, alpha);
+        }
       }
 
       if (stamps.length) {
@@ -149,7 +173,7 @@
     }
 
     window.addEventListener('mousemove', function (e) {
-      if (wrapper.style.display === 'none') return;
+      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
       stampAlong(e.clientX, e.clientY);
       start();
     }, { passive: true });
@@ -161,11 +185,11 @@
 
     // Pequeño saludo visual inicial tipo gota que se expande
     setTimeout(function () {
-      if (wrapper.style.display === 'none') return;
+      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
-      addStamp(cx - 50, cy - 40);
-      addStamp(cx + 50, cy + 30);
+      addStamp(cx - 80, cy - 60);
+      addStamp(cx + 80, cy + 50);
       start();
     }, 350);
   }
