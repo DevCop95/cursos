@@ -1,10 +1,9 @@
 /**
  * Dev101x — Liquid Water / Ink Reveal Canvas Effect
- * Inspirado en la experiencia de MiMo Code (mimo.xiaomi.com/coder)
+ * Réplica exacta y natural del efecto de MiMo Code (mimo.xiaomi.com/coder)
  * 
- * Genera un lienzo interactivo con física de ondas de agua y gotas de tinta que
- * disuelven suavemente la máscara sólida para revelar el arte de fondo cuando
- * el cursor se desplaza sobre la pantalla.
+ * Disuelve suave y orgánicamente la máscara sólida de papel al pasar el cursor,
+ * sin líneas, trazos ni círculos artificiales, revelando el fondo de forma natural.
  */
 (function initDev101xWaterReveal() {
   function startEngine() {
@@ -12,23 +11,21 @@
     const wrapper = document.getElementById('water-bg-wrapper');
     if (!canvas || !wrapper) return;
 
-    // Solo habilitar interacción en dispositivos con puntero (mouse/trackpad)
+    // Solo habilitar en dispositivos con puntero (mouse/trackpad)
     const canHover = window.matchMedia('(hover: hover)').matches;
-    if (!canHover) {
-      return;
-    }
+    if (!canHover) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Color de la máscara: Warm Paper #f3f0ea
     const MASK = '243, 240, 234';
-    const R_START = 14;
-    const R_END = 160;
+    const R_START = 8;
+    const R_END = 128;
     const R_VARY = 0.45;
-    const LIFETIME = 850; // ms de expansión fluida
-    const STAMP_STEP = 10;
-    const MAX_STAMPS = 220;
+    const LIFETIME = 540; // ms natural y dinámico
+    const STAMP_STEP = 12;
+    const MAX_STAMPS = 160;
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
     let w = 0;
@@ -82,24 +79,23 @@
       lastY = y;
     }
 
-    // Dibuja una gota irregular con gradiente suave que perfora la máscara sólida
-    function carveWaterDrop(x, y, r, alpha, seed) {
-      const g = ctx.createRadialGradient(x, y, r * 0.18, x, y, r);
-      g.addColorStop(0, 'rgba(0, 0, 0, ' + 0.98 * alpha + ')');
-      g.addColorStop(0.5, 'rgba(0, 0, 0, ' + 0.85 * alpha + ')');
-      g.addColorStop(0.85, 'rgba(0, 0, 0, ' + 0.35 * alpha + ')');
+    // Carve orgánico suave y natural idéntico a MiMo Code
+    function carveInk(x, y, r, alpha, seed) {
+      const g = ctx.createRadialGradient(x, y, r * 0.25, x, y, r);
+      g.addColorStop(0, 'rgba(0, 0, 0, ' + 0.95 * alpha + ')');
+      g.addColorStop(0.55, 'rgba(0, 0, 0, ' + 0.88 * alpha + ')');
       g.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
       ctx.fillStyle = g;
+
       ctx.beginPath();
       const segs = 32;
       for (let i = 0; i <= segs; i++) {
         const a = (i / segs) * Math.PI * 2;
         const wob =
-          0.82 +
-          0.12 * Math.sin(a * 3 + seed) +
-          0.06 * Math.sin(a * 7 + seed * 2.1) +
-          0.04 * Math.sin(a * 13 + seed * 0.7);
+          0.78 +
+          0.14 * Math.sin(a * 3 + seed) +
+          0.08 * Math.sin(a * 7 + seed * 2.1) +
+          0.05 * Math.sin(a * 13 + seed * 0.7);
         const rr = r * wob;
         const px = x + Math.cos(a) * rr;
         const py = y + Math.sin(a) * rr;
@@ -110,30 +106,17 @@
       ctx.fill();
     }
 
-    // Dibuja una onda / anillo de refracción líquida sutil
-    function drawRippleRing(x, y, r, alpha) {
-      if (alpha < 0.08) return;
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = 'rgba(0, 92, 56, ' + (alpha * 0.16) + ')';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y, r * 0.92, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
     let running = false;
 
     function loop() {
       const now = performance.now();
 
-      // 1. Re-pintar máscara sólida
+      // 1. Repintar la máscara sólida uniforme
       ctx.globalCompositeOperation = 'source-over';
       ctx.fillStyle = 'rgb(' + MASK + ')';
       ctx.fillRect(0, 0, w, h);
 
-      // 2. Perforar con gotas activas estilo MiMo
+      // 2. Disolver suavemente en cada punto activo
       ctx.globalCompositeOperation = 'destination-out';
       for (let i = stamps.length - 1; i >= 0; i--) {
         const t = (now - stamps[i].born) / LIFETIME;
@@ -143,19 +126,8 @@
         }
         const ease = 1 - Math.pow(1 - t, 3); // Expansión fluida easeOutCubic
         const r = R_START + (stamps[i].rmax - R_START) * ease;
-        const alpha = 1 - t * t; // Desvanecimiento progresivo
-        carveWaterDrop(stamps[i].x, stamps[i].y, r, alpha, stamps[i].seed);
-      }
-
-      // 3. Dibujar ondas de refracción líquida suaves
-      for (let i = 0; i < stamps.length; i++) {
-        const t = (now - stamps[i].born) / LIFETIME;
-        if (t < 1) {
-          const ease = 1 - Math.pow(1 - t, 3);
-          const r = R_START + (stamps[i].rmax - R_START) * ease;
-          const alpha = 1 - t * t;
-          drawRippleRing(stamps[i].x, stamps[i].y, r, alpha);
-        }
+        const alpha = 1 - t * t; // Desvanecimiento suave
+        carveInk(stamps[i].x, stamps[i].y, r, alpha, stamps[i].seed);
       }
 
       if (stamps.length) {
@@ -182,16 +154,6 @@
       lastX = null;
       lastY = null;
     });
-
-    // Pequeño saludo visual inicial tipo gota que se expande
-    setTimeout(function () {
-      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      addStamp(cx - 80, cy - 60);
-      addStamp(cx + 80, cy + 50);
-      start();
-    }, 350);
   }
 
   if (document.readyState === 'loading') {
