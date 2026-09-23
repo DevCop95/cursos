@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev101x — Plataforma de Cursos de Ciberseguridad & Inteligencia Artificial</title>
+  
+  <!-- SEO & OpenGraph -->
+  <meta name="description" content="Plataforma de formación técnica en Ciberseguridad Ofensiva y Modelos de Inteligencia Artificial." />
+  <meta property="og:title" content="Dev101x — Academia de Ciberseguridad & IA" />
+  <meta property="og:description" content="Laboratorios prácticos en entornos aislados y modelos de IA." />
+  <meta property="og:image" content="assets/logo.svg" />
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <!-- App Custom Stylesheet -->
+  <link rel="stylesheet" href="css/app.css" />
+
+  <!-- Google Identity Services (GIS SDK Oficial) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Tailwind CSS CDN + Architectural Design System Configuration -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#f9f9ff",
+            "surface": "#f9f9ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f0f3ff",
+            "surface-container": "#e7eeff",
+            "surface-container-high": "#dee8ff",
+            "surface-container-highest": "#d8e3fb",
+            "surface-dim": "#cfdaf2",
+            "surface-bright": "#f9f9ff",
+            "on-surface": "#111c2d",
+            "on-surface-variant": "#3e4943",
+            "inverse-surface": "#263143",
+            "inverse-on-surface": "#ecf1ff",
+            "primary": "#005d42",
+            "primary-container": "#047857",
+            "primary-fixed": "#97f5cc",
+            "primary-fixed-dim": "#7bd8b1",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#9ffdd3",
+            "secondary": "#565e74",
+            "secondary-container": "#dae2fd",
+            "secondary-fixed": "#dae2fd",
+            "on-secondary": "#ffffff",
+            "tertiary": "#005d3f",
+            "tertiary-container": "#007853",
+            "outline": "#6e7a73",
+            "outline-variant": "#bdc9c1",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-error-container": "#93000a"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "sm": "0.125rem",
+            "md": "0.375rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "gutter": "1.5rem",
+            "gutter-mobile": "1rem",
+            "margin": "2rem",
+            "margin-desktop": "3rem"
+          },
+          fontFamily: {
+            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "sans-serif"],
+            "display-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "display-md": ["Plus Jakarta Sans", "sans-serif"],
+            "body-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "body-md": ["Plus Jakarta Sans", "sans-serif"],
+            "body-sm": ["Plus Jakarta Sans", "sans-serif"],
+            "label-lg": ["JetBrains Mono", "monospace"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "label-sm": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col selection:bg-primary-fixed selection:text-[#002115]">
+
+  <!-- Top Navigation Bar Unificada & Limpia -->
+  <header id="main-header" class="fixed top-0 left-0 right-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
+    <div class="h-16 max-w-[1280px] mx-auto px-gutter flex items-center justify-between gap-4">
+      
+      <!-- Brand & Main Nav Links -->
+      <div class="flex items-center gap-8">
+        <a class="flex items-center gap-2.5 group" href="#/explorar-cursos">
+          <img alt="Dev101x" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform" src="assets/icon.svg" />
+          <span class="font-headline-sm text-base leading-none text-on-surface font-extrabold tracking-tight">Dev101<span class="text-primary">x</span></span>
+        </a>
+
+        <!-- Solo 3 enlaces limpios y consolidados -->
+        <nav class="hidden md:flex items-center gap-1 font-body-sm text-xs font-medium">
+          <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="explorar-cursos" href="#/explorar-cursos">
+            Cursos
+          </a>
+          <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="mis-cursos" href="#/mis-cursos">
+            Mis Cursos
+          </a>
+          <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="verificacion" href="#/verificacion">
+            Verificación
+          </a>
+        </nav>
+      </div>
+
+      <!-- Controls Derecha Limpia (Búsqueda + Perfil Dropdown) -->
+      <div class="flex items-center gap-2">
+        
+        <!-- Búsqueda rápida -->
+        <button onclick="document.getElementById('quick-search-modal').classList.remove('hidden')" class="p-2 rounded text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors" title="Buscar (Ctrl+K)">
+          <span class="material-symbols-outlined text-lg">search</span>
+        </button>
+
+        <!-- Dropdown Usuario / Cuenta -->
+        <div class="relative">
+          <button onclick="window.Dev101x.toggleProfileDropdown()" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors" type="button" id="user-menu-btn">
+            <img alt="Perfil" id="header-user-avatar" class="w-8 h-8 rounded-lg object-cover border border-[#CBD5E1]" src="assets/dev101x_identicon.svg" />
+            <span class="hidden sm:inline font-body-sm text-xs font-semibold text-slate-800" id="header-user-name">Dev101x</span>
+            <span class="material-symbols-outlined text-sm text-slate-400">expand_more</span>
+          </button>
+
+          <!-- Dropdown Menú Flotante -->
+          <div id="profile-dropdown" class="hidden absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-[#E2E8F0] py-1 text-xs font-mono z-50 modal-enter">
+            <div class="px-3 py-2 border-b border-slate-100 flex items-center gap-2.5">
+              <img id="dropdown-user-avatar" class="w-8 h-8 rounded-lg object-cover border border-slate-200" src="assets/dev101x_identicon.svg" alt="Dev101x" />
+              <div class="overflow-hidden">
+                <span class="font-bold text-slate-900 block truncate" id="dropdown-user-name">Dev101x</span>
+                <span class="text-slate-400 text-[11px] block truncate font-sans" id="dropdown-user-email">dev101x@gmail.com</span>
+              </div>
+            </div>
+            <a href="#/perfil" onclick="window.Dev101x.toggleProfileDropdown(false)" class="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
+              <span class="material-symbols-outlined text-base text-slate-400">person</span>
+              <span>Mi Perfil</span>
+            </a>
+            <a href="#/panel-admin" onclick="window.Dev101x.toggleProfileDropdown(false)" class="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
+              <span class="material-symbols-outlined text-base text-primary">admin_panel_settings</span>
+              <span>Panel de Administración</span>
+            </a>
+            <div class="border-t border-slate-100 my-1"></div>
+            <a href="#/login" onclick="window.Dev101x.toggleProfileDropdown(false);" class="w-full text-left flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
+              <span class="material-symbols-outlined text-base text-slate-400">switch_account</span>
+              <span>Cambiar cuenta Google</span>
+            </a>
+            <button onclick="window.Dev101x.logout(); window.Dev101x.toggleProfileDropdown(false);" class="w-full text-left flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50">
+              <span class="material-symbols-outlined text-base">logout</span>
+              <span>Cerrar sesión</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main id="app-view" class="w-full pt-24 pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col">
+    <!-- Renderizado dinámicamente -->
+  </main>
+
+  <!-- Global Footer Conciso -->
+  <footer id="app-footer" class="w-full bg-white border-t border-[#E2E8F0] py-6 mt-12 text-xs text-slate-500 font-mono">
+    <div class="max-w-[1280px] mx-auto px-gutter flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <img alt="Dev101x" class="h-6 w-auto rounded" src="assets/icon.svg" />
+        <span class="font-medium text-slate-600">&copy; Dev101x Academy. Seguridad &amp; Inteligencia Artificial.</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="#/verificacion" class="hover:text-primary">Verificación</a>
+        <a href="#/perfil" class="hover:text-primary">Perfil</a>
+        <a href="#/panel-admin" class="hover:text-primary text-primary font-bold">Admin</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal Google Auth -->
+  <div id="google-auth-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden modal-enter flex flex-col">
+      <div class="p-5 border-b border-[#E2E8F0] flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+            <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
+            <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" fill="#34A853"></path>
+            <path d="M5.28 14.27A7.16 7.16 0 0 1 4.9 12c0-.79.14-1.57.38-2.27V6.58H1.25A11.96 11.96 0 0 0 0 12c0 1.92.45 3.74 1.25 5.42l4.03-3.15z" fill="#FBBC05"></path>
+            <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
+          </svg>
+          <span class="font-bold text-sm text-slate-900">Acceso con Google</span>
+        </div>
+        <button onclick="window.Dev101x.closeAuthModal()" class="text-slate-400 hover:text-slate-700">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <div class="p-5 flex flex-col gap-2.5">
+        <button onclick="window.Dev101x.loginAs('student')" class="w-full flex items-center justify-between p-2.5 rounded-lg border border-[#E2E8F0] hover:bg-slate-50 transition-all text-left">
+          <div class="flex items-center gap-2.5">
+            <img class="w-8 h-8 rounded-lg object-cover border border-slate-200" src="assets/dev101x_identicon.svg" alt="Dev101x" />
+            <div>
+              <span class="text-xs font-bold text-slate-900 block">Dev101x</span>
+              <span class="text-[11px] text-slate-400 font-mono">Estudiante • dev101x@gmail.com</span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-sm text-slate-400">chevron_right</span>
+        </button>
+
+        <button onclick="window.Dev101x.loginAs('admin')" class="w-full flex items-center justify-between p-2.5 rounded-lg border border-[#E2E8F0] hover:bg-slate-50 transition-all text-left">
+          <div class="flex items-center gap-2.5">
+            <img id="modal-admin-avatar" class="w-8 h-8 rounded-lg object-cover border border-slate-200" src="assets/dev101x_identicon.svg" alt="Dev101x Admin" />
+            <div>
+              <span class="text-xs font-bold text-slate-900 block">Dev101x (Admin)</span>
+              <span class="text-[11px] text-primary font-mono font-semibold">Administrador • admin@dev101x.io</span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-sm text-slate-400">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Búsqueda (Ctrl+K) -->
+  <div id="quick-search-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-sm flex items-start justify-center pt-24 p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden modal-enter flex flex-col">
+      <div class="p-3 border-b border-[#E2E8F0] flex items-center gap-2">
+        <span class="material-symbols-outlined text-slate-400 text-base">search</span>
+        <input id="quick-search-input" onkeyup="if(event.key==='Escape') document.getElementById('quick-search-modal').classList.add('hidden')" type="text" placeholder="Buscar cursos, verificación, perfil..." class="w-full text-xs outline-none text-slate-800 font-body-sm" autofocus />
+        <button onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="text-[10px] text-slate-400 px-1 py-0.5 rounded border border-slate-200 font-mono">ESC</button>
+      </div>
+      <div class="p-2 flex flex-col gap-0.5 text-xs font-mono">
+        <a href="#/explorar-cursos" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
+          <span>Catálogo de Cursos</span>
+          <span class="text-slate-400">#/explorar-cursos</span>
+        </a>
+        <a href="#/mis-cursos" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
+          <span>Mis Cursos</span>
+          <span class="text-slate-400">#/mis-cursos</span>
+        </a>
+        <a href="#/verificacion" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
+          <span>Centro de Verificación</span>
+          <span class="text-slate-400">#/verificacion</span>
+        </a>
+        <a href="#/diploma" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
+          <span>Diploma Oficial</span>
+          <span class="text-slate-400">#/diploma</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detalle Curso -->
+  <div id="course-detail-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden modal-enter flex flex-col">
+      <div class="p-5 border-b border-[#E2E8F0] flex items-center justify-between">
+        <h3 id="modal-course-title" class="font-headline-sm text-base font-bold text-slate-900">Temario</h3>
+        <button onclick="window.Dev101x.closeCourseDetail()" class="text-slate-400 hover:text-slate-700">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+      <div class="p-5 flex flex-col gap-3 font-body-sm text-xs text-slate-600">
+        <p id="modal-course-desc"></p>
+        <div class="flex justify-between bg-slate-50 p-2.5 rounded font-mono text-[11px] border border-slate-200">
+          <div>Instructor: <span id="modal-course-instructor" class="font-bold text-slate-800"></span></div>
+          <div>Duración: <span id="modal-course-duration" class="font-bold text-slate-800"></span></div>
+        </div>
+      </div>
+      <div class="bg-slate-50 p-3 border-t border-[#E2E8F0] flex justify-end gap-2">
+        <button onclick="window.Dev101x.closeCourseDetail()" class="px-3 py-1.5 bg-white border border-[#E2E8F0] rounded text-xs font-semibold">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/identicon.js?t=1790195000"></script>
+  <script src="js/data.js?t=1790195000"></script>
+  <script src="js/app.js?t=1790195000"></script>
+</body>
+</html>
