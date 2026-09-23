@@ -12,8 +12,9 @@
   // CONFIGURACIÓN DE GOOGLE IDENTITY SERVICES (GIS SDK)
   // ==========================================
   const GOOGLE_AUTH_CONFIG = {
+    defaultClientId: '41363425322-c9n72qus0d8jj3g3vqc5icd371p7ju1f.apps.googleusercontent.com',
     getClientId() {
-      return localStorage.getItem('dev101x_google_client_id') || '';
+      return localStorage.getItem('dev101x_google_client_id') || this.defaultClientId;
     },
     setClientId(id) {
       if (id && id.trim()) {
@@ -1581,8 +1582,6 @@
   // VIEW 9: LOGIN EXCLUSIVO GOOGLE SSO CON VERIFICACIÓN INTERACTIVA
   // ==========================================
   function renderLogin(container) {
-    const studentAvatar = window.Identicon ? window.Identicon.dataUri('Dev101x') : 'assets/dev101x_identicon.svg';
-    const adminAvatar = window.Identicon ? window.Identicon.dataUri('Dev101x-Admin') : 'assets/dev101x_identicon.svg';
     const activeClientId = GOOGLE_AUTH_CONFIG.getClientId();
 
     container.innerHTML = `
@@ -1600,176 +1599,90 @@
             </div>
           </div>
 
-          <!-- Botón Principal Continuar con Google -->
-          <div class="w-full flex flex-col gap-4">
-            ${activeClientId ? `
-              <div class="flex flex-col items-center gap-2">
-                <span class="text-[11px] text-slate-500 font-medium">Autenticación Oficial en Vivo con Google:</span>
-                <div id="real-google-btn-container" class="w-full flex justify-center min-h-[44px]"></div>
+          <!-- Contenedor Oficial Google Sign-In -->
+          <div class="w-full flex flex-col gap-5">
+            <div class="flex flex-col items-center gap-3">
+              <span class="text-xs text-slate-600 font-medium text-center">Inicia sesión con tu cuenta de Google:</span>
+              <div id="real-google-btn-container" class="w-full flex justify-center items-center min-h-[50px] py-1">
+                <div class="flex items-center gap-2 text-xs text-slate-400 py-3">
+                  <span class="w-4 h-4 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin"></span>
+                  <span>Cargando Google Identity Services...</span>
+                </div>
               </div>
-            ` : `
-              <button id="btn-login-google-main" onclick="window.Dev101x.openGoogleVerificationModal('student')" class="w-full h-12 px-5 bg-white hover:bg-slate-50 active:scale-[0.99] border-2 border-slate-300 hover:border-slate-400 rounded-xl flex items-center justify-center gap-3.5 text-sm font-bold text-slate-700 shadow-sm transition-all cursor-pointer">
-                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                  <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
-                  <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" fill="#34A853"></path>
-                  <path d="M5.28 14.27A7.16 7.16 0 0 1 4.9 12c0-.79.14-1.57.38-2.27V6.58H1.25A11.96 11.96 0 0 0 0 12c0 1.92.45 3.74 1.25 5.42l4.03-3.15z" fill="#FBBC05"></path>
-                  <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
-                </svg>
-                <span>Continuar con Google</span>
-              </button>
-            `}
-
-            <!-- Cuentas Autorizadas para el Curso -->
-            <div class="flex flex-col gap-2 pt-2 border-t border-slate-100">
-              <span class="text-[11px] text-slate-500 font-medium text-center">Cuentas autorizadas para Dev101x:</span>
-              
-              <button onclick="window.Dev101x.openGoogleVerificationModal('student')" class="w-full p-3 rounded-xl border border-slate-200 hover:border-primary/60 hover:bg-emerald-50/40 transition-all flex items-center justify-between text-left group cursor-pointer">
-                <div class="flex items-center gap-3">
-                  <img class="w-8 h-8 rounded-lg object-cover border border-slate-200" src="${studentAvatar}" alt="Dev101x" />
-                  <div>
-                    <span class="text-xs font-bold text-slate-900 block group-hover:text-primary transition-colors">Dev101x</span>
-                    <span class="text-[11px] text-slate-500 font-mono">dev101x@gmail.com</span>
-                  </div>
-                </div>
-                <span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-emerald-100 text-emerald-800">ALUMNO</span>
-              </button>
-
-              <button onclick="window.Dev101x.openGoogleVerificationModal('admin')" class="w-full p-3 rounded-xl border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-between text-left group cursor-pointer">
-                <div class="flex items-center gap-3">
-                  <img class="w-8 h-8 rounded-lg object-cover border border-slate-200" src="${adminAvatar}" alt="Dev101x Admin" />
-                  <div>
-                    <span class="text-xs font-bold text-slate-900 block">Dev101x (Admin)</span>
-                    <span class="text-[11px] text-slate-500 font-mono">admin@dev101x.io</span>
-                  </div>
-                </div>
-                <span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-900 text-emerald-400">ADMIN</span>
-              </button>
             </div>
 
-            <!-- Panel Informativo de Validación Real -->
+            <!-- Panel de Seguridad & Verificación Oficial -->
             <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2 text-xs">
-              <div class="flex items-center gap-1.5 font-bold text-slate-800">
-                <span class="material-symbols-outlined text-sm text-primary">info</span>
-                <span>¿Cómo funciona la validación con Google?</span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 font-bold text-slate-800">
+                  <span class="material-symbols-outlined text-sm text-emerald-600">verified_user</span>
+                  <span>Autenticación Oficial Google OAuth 2.0</span>
+                </div>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">PROD</span>
               </div>
               <p class="text-[11px] text-slate-600 leading-relaxed font-sans">
-                Para que Google verifique en vivo contraseñas reales y compruebe si una cuenta existe en sus servidores mundiales, Google exige registrar un <strong>Client ID de OAuth 2.0</strong> en Google Cloud Console.
+                La contraseña y validación se procesan exclusivamente en los servidores oficiales de Google (<code class="text-slate-700 font-mono">accounts.google.com</code>). Dev101x no almacena ni solicita contraseñas.
               </p>
-              <button onclick="window.Dev101x.promptGoogleClientIdModal()" class="mt-1 h-8 px-3 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-[11px] font-semibold text-slate-700 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-xs">key</span>
-                <span>${activeClientId ? 'Client ID Activo (Editar / Cambiar)' : 'Conectar mi Client ID de Google Cloud'}</span>
-              </button>
             </div>
-
           </div>
 
           <!-- Pie de Seguridad -->
           <div class="w-full pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
             <span class="flex items-center gap-1.5 text-emerald-700 font-semibold">
-              <span class="material-symbols-outlined text-sm">verified_user</span>
-              <span>Google SSO Protegido</span>
+              <span class="material-symbols-outlined text-sm">lock</span>
+              <span>Protección SSL / HTTPS</span>
             </span>
-            <span>OAuth 2.0 / OpenID</span>
+            <span>OpenID Connect</span>
           </div>
 
         </div>
 
-        <!-- Explicación transparente sobre cómo se valida -->
         <div class="w-full max-w-md mt-4 text-center">
           <p class="text-[11px] text-slate-400 font-mono">
-            Protocolo de seguridad: Validación estricta de emisor (<code class="text-slate-600">accounts.google.com</code>), firma digital RS256 y estado <code class="text-slate-600">email_verified: true</code>.
+            Client ID: <code class="text-slate-500">${activeClientId ? activeClientId.slice(0, 15) + '...apps.googleusercontent.com' : 'No configurado'}</code>
           </p>
-        </div>
-      </div>
-
-      <!-- MODAL INTERACTIVO DE VERIFICACIÓN EN TIEMPO REAL -->
-      <div id="google-verification-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden modal-enter flex flex-col">
-          
-          <!-- Encabezado de la ventana Google -->
-          <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
-                <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" fill="#34A853"></path>
-                <path d="M5.28 14.27A7.16 7.16 0 0 1 4.9 12c0-.79.14-1.57.38-2.27V6.58H1.25A11.96 11.96 0 0 0 0 12c0 1.92.45 3.74 1.25 5.42l4.03-3.15z" fill="#FBBC05"></path>
-                <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
-              </svg>
-              <div class="leading-tight">
-                <span class="font-bold text-xs text-slate-800 block">Google Identity Services</span>
-                <span class="text-[10px] text-slate-400 font-mono">accounts.google.com/o/oauth2/v2/auth</span>
-              </div>
-            </div>
-            <button onclick="window.Dev101x.closeGoogleVerificationModal()" class="text-slate-400 hover:text-slate-700">
-              <span class="material-symbols-outlined text-base">close</span>
-            </button>
-          </div>
-
-          <!-- Cuerpo: Progreso visible de verificación -->
-          <div class="p-6 flex flex-col gap-4">
-            <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <img id="v-modal-avatar" class="w-10 h-10 rounded-full border border-slate-200" src="assets/dev101x_identicon.svg" />
-              <div>
-                <span id="v-modal-name" class="font-bold text-sm text-slate-900 block">Dev101x</span>
-                <span id="v-modal-email" class="text-xs text-slate-500 font-mono">dev101x@gmail.com</span>
-              </div>
-            </div>
-
-            <!-- Lista de Pasos de Verificación -->
-            <div class="flex flex-col gap-2.5 font-mono text-xs" id="v-modal-steps">
-              <div id="v-step-1" class="flex items-center gap-2.5 text-slate-400">
-                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
-                <span>Paso 1: Handshake con Google Identity (<code class="text-slate-500">accounts.google.com</code>)</span>
-              </div>
-              <div id="v-step-2" class="flex items-center gap-2.5 text-slate-400">
-                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
-                <span>Paso 2: Validación de certificados y firma RS256</span>
-              </div>
-              <div id="v-step-3" class="flex items-center gap-2.5 text-slate-400">
-                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
-                <span>Paso 3: Verificación de claims (<code class="text-slate-500">email_verified: true</code>)</span>
-              </div>
-              <div id="v-step-4" class="flex items-center gap-2.5 text-slate-400">
-                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
-                <span>Paso 4: Validación de sesión y curso Pentesting 101</span>
-              </div>
-            </div>
-
-            <!-- Estado / Mensaje de Error -->
-            <div id="v-modal-status-box" class="hidden p-3 rounded-lg border text-xs"></div>
-          </div>
-
-          <!-- Pie del modal -->
-          <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span id="v-modal-footer-text">Verificando autenticidad...</span>
-            <span class="text-emerald-700 font-bold">OpenID Connect</span>
-          </div>
-
         </div>
       </div>
     `;
 
-    if (activeClientId && window.google && window.google.accounts && window.google.accounts.id) {
-      setTimeout(() => {
+    // Renderizado reactivo del botón oficial de Google Identity Services
+    let renderAttempts = 0;
+    const maxRenderAttempts = 40;
+
+    function renderGoogleLiveButton() {
+      const el = document.getElementById('real-google-btn-container');
+      if (!el) return;
+
+      if (window.google && window.google.accounts && window.google.accounts.id && activeClientId) {
         try {
           google.accounts.id.initialize({
             client_id: activeClientId,
-            callback: (resp) => window.Dev101x.handleGoogleCredentialResponse(resp)
+            callback: (resp) => window.Dev101x.handleGoogleCredentialResponse(resp),
+            auto_select: false,
+            cancel_on_tap_outside: true
           });
-          const el = document.getElementById('real-google-btn-container');
-          if (el) {
-            google.accounts.id.renderButton(el, {
-              theme: 'outline',
-              size: 'large',
-              width: 320,
-              text: 'continue_with'
-            });
-          }
-        } catch (err) {
-          console.warn("GIS live render error:", err);
+          el.innerHTML = '';
+          google.accounts.id.renderButton(el, {
+            theme: 'outline',
+            size: 'large',
+            width: 320,
+            text: 'continue_with',
+            shape: 'rectangular',
+            logo_alignment: 'left'
+          });
+        } catch (e) {
+          console.error("Error inicializando Google Identity Services:", e);
+          el.innerHTML = `<span class="text-xs text-rose-600 font-mono">Error al inicializar Google SSO: ${e.message}</span>`;
         }
-      }, 50);
+      } else if (renderAttempts < maxRenderAttempts) {
+        renderAttempts++;
+        setTimeout(renderGoogleLiveButton, 100);
+      } else {
+        el.innerHTML = `<span class="text-xs text-amber-700">El SDK de Google tardó en cargar. Por favor recarga la página.</span>`;
+      }
     }
+
+    renderGoogleLiveButton();
   }
 
   // --- Global Public API ---
@@ -2009,16 +1922,16 @@
     },
 
     // Función principal para iniciar sesión con Google
-    loginWithGoogle(emailOrRole = 'student') {
-      this.openGoogleVerificationModal(emailOrRole);
+    loginWithGoogle() {
+      window.location.hash = '#/login';
     },
 
     loginWithTestGoogleAccount(role) {
-      this.openGoogleVerificationModal(role);
+      window.location.hash = '#/login';
     },
 
     loginAs(role) {
-      this.openGoogleVerificationModal(role);
+      window.location.hash = '#/login';
     },
     logout() {
       appState.authRole = 'guest';
