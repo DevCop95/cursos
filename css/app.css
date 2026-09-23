@@ -28,9 +28,9 @@
   --color-border-subtle: #e9e5dd;
 }
 
-body {
+html, body {
   font-family: var(--fh);
-  background-color: var(--bg);
+  background-color: #f3f0ea !important;
   color: var(--ink);
   margin: 0;
   padding: 0;
