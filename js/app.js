@@ -86,9 +86,9 @@
       return { valid: false, error: `La audiencia (aud: ${payload.aud}) no coincide con el Client ID configurado (${expectedClientId}).`, payload, header };
     }
 
-    // 5. Determinar rol en base al correo verificado
-    const email = (payload.email || '').toLowerCase();
-    const isAdmin = email.startsWith('admin@') || email.includes('admin') || email.endsWith('@dev101x.io');
+    // 5. Determinar rol en base al correo verificado (Único administrador: yared.henriquezb@gmail.com)
+    const email = (payload.email || '').toLowerCase().trim();
+    const isAdmin = email === 'yared.henriquezb@gmail.com';
     const role = isAdmin ? 'admin' : 'student';
 
     return {
@@ -189,6 +189,13 @@
     let route = parts[0] || 'aula-interactiva';
     let param = parts[1] || (route === 'aula-interactiva' ? 'pentesting-101' : null);
 
+    // Protección estricta: Si un alumno intenta acceder al panel de administración, se deniega y se redirige
+    if (route === 'panel-admin' && appState.authRole !== 'admin') {
+      showToast("Acceso restringido: Se requieren permisos de Administrador", "error");
+      window.location.hash = '#/aula-interactiva/pentesting-101';
+      return { route: 'aula-interactiva', param: 'pentesting-101' };
+    }
+
     if (route === 'login') {
       window.location.hash = '#/aula-interactiva/pentesting-101';
       return { route: 'aula-interactiva', param: 'pentesting-101' };
@@ -232,10 +239,20 @@
     const dropdownEmail = document.getElementById('dropdown-user-email');
     const headerAvatar = document.getElementById('header-user-avatar');
     const dropdownAvatar = document.getElementById('dropdown-user-avatar');
+    const adminDropdownLink = document.getElementById('dropdown-admin-link');
+    const adminFooterLink = document.getElementById('footer-admin-link');
+
+    const isAdmin = appState && appState.authRole === 'admin';
+    if (adminDropdownLink) {
+      adminDropdownLink.classList.toggle('hidden', !isAdmin);
+    }
+    if (adminFooterLink) {
+      adminFooterLink.classList.toggle('hidden', !isAdmin);
+    }
 
     const curUser = appState.currentUser;
     if (curUser) {
-      const name = curUser.name || "Estudiante";
+      const name = curUser.name || (isAdmin ? "Administrador" : "Estudiante");
       const email = curUser.email || "";
       const identiconUri = curUser.avatar && !curUser.avatar.includes('identicon.svg')
         ? curUser.avatar
@@ -277,6 +294,12 @@
         renderExplorarCursos(appContainer);
         break;
       case 'panel-admin':
+        if (appState.authRole !== 'admin') {
+          showToast("Acceso restringido: Se requieren permisos de Administrador", "error");
+          window.location.hash = '#/aula-interactiva/pentesting-101';
+          renderAulaInteractiva(appContainer, 'pentesting-101');
+          return;
+        }
         renderPanelAdmin(appContainer);
         break;
       case 'perfil':
@@ -1453,6 +1476,12 @@
   // VIEW 6: PANEL ADMIN
   // ==========================================
   function renderPanelAdmin(container) {
+    if (appState.authRole !== 'admin') {
+      showToast("Acceso restringido: Se requieren permisos de Administrador", "error");
+      window.location.hash = '#/aula-interactiva/pentesting-101';
+      renderView();
+      return;
+    }
     const students = DEV101X_DATA.adminStudents;
 
     container.innerHTML = `
@@ -1972,6 +2001,10 @@
       }
     },
     toggleCourseAccess(studentId, courseId, isChecked) {
+      if (appState.authRole !== 'admin') {
+        showToast("Acción no autorizada: Solo el Administrador puede modificar permisos", "error");
+        return;
+      }
       if (studentId === 'STU-101-DEV' || studentId === 'STU-9924-ALX') {
         if (isChecked && !appState.enabledCourses.includes(courseId)) {
           appState.enabledCourses.push(courseId);
@@ -1994,6 +2027,10 @@
       }
     },
     downloadTransparencyCSV() {
+      if (appState.authRole !== 'admin') {
+        showToast("Acción no autorizada: Solo el Administrador puede exportar datos", "error");
+        return;
+      }
       const csv = "Folio,Alumno,Curso,Calificacion,Horas\nD101X-LLM-89210,Dev101x,Arquitectura y Fine-Tuning de LLMs,92%,32\n";
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);

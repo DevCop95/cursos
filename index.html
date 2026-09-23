@@ -157,7 +157,7 @@
               <span class="material-symbols-outlined text-base text-slate-400">person</span>
               <span>Mi Perfil</span>
             </a>
-            <a href="#/panel-admin" onclick="window.Dev101x.toggleProfileDropdown(false)" class="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
+            <a href="#/panel-admin" id="dropdown-admin-link" onclick="window.Dev101x.toggleProfileDropdown(false)" class="hidden flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
               <span class="material-symbols-outlined text-base text-primary">admin_panel_settings</span>
               <span>Panel de Administración</span>
             </a>
@@ -187,7 +187,7 @@
       <div class="flex items-center gap-4">
         <a href="#/verificacion" class="hover:text-primary">Verificación</a>
         <a href="#/perfil" class="hover:text-primary">Perfil</a>
-        <a href="#/panel-admin" class="hover:text-primary text-primary font-bold">Admin</a>
+        <a href="#/panel-admin" id="footer-admin-link" class="hidden hover:text-primary text-primary font-bold">Admin</a>
       </div>
     </div>
   </footer>
@@ -243,8 +243,8 @@
     </div>
   </div>
 
-  <script src="js/identicon.js?v=clean-auth-5"></script>
-  <script src="js/data.js?v=clean-auth-5"></script>
-  <script src="js/app.js?v=clean-auth-5"></script>
+  <script src="js/identicon.js?v=admin-role-6"></script>
+  <script src="js/data.js?v=admin-role-6"></script>
+  <script src="js/app.js?v=admin-role-6"></script>
 </body>
 </html>
