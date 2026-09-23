@@ -184,21 +184,21 @@
       return { route: 'login', param: null };
     }
 
-    const hash = window.location.hash || '#/aula-interactiva/pentesting-101';
+    const hash = window.location.hash || '#/mis-cursos';
     const parts = hash.replace(/^#\/?/, '').split('/');
-    let route = parts[0] || 'aula-interactiva';
+    let route = parts[0] || 'mis-cursos';
     let param = parts[1] || (route === 'aula-interactiva' ? 'pentesting-101' : null);
 
     // Protección estricta: Si un alumno intenta acceder al panel de administración, se deniega y se redirige
     if (route === 'panel-admin' && appState.authRole !== 'admin') {
       showToast("Acceso restringido: Se requieren permisos de Administrador", "error");
-      window.location.hash = '#/aula-interactiva/pentesting-101';
-      return { route: 'aula-interactiva', param: 'pentesting-101' };
+      window.location.hash = '#/mis-cursos';
+      return { route: 'mis-cursos', param: null };
     }
 
     if (route === 'login') {
-      window.location.hash = '#/aula-interactiva/pentesting-101';
-      return { route: 'aula-interactiva', param: 'pentesting-101' };
+      window.location.hash = '#/mis-cursos';
+      return { route: 'mis-cursos', param: null };
     }
 
     return { route, param };
@@ -434,28 +434,33 @@
       window.location.hash = '#/login';
       return;
     }
-    const student = DEV101X_DATA.currentUser;
+    const student = appState.currentUser || DEV101X_DATA.currentUser;
     const enrolled = DEV101X_DATA.courses.filter(c => appState.enabledCourses.includes(c.id));
+    const identiconUri = student.avatar && !student.avatar.includes('identicon.svg')
+      ? student.avatar
+      : (window.Identicon ? window.Identicon.dataUri(student.name || student.email) : 'assets/dev101x_identicon.svg');
+    const studentId = student.sub ? student.sub.substring(0, 10) : 'DEV-STU-001';
 
     const coursesListHtml = enrolled.map(c => `
-      <div class="p-4 bg-white rounded-lg border border-[#E2E8F0] shadow-sm flex flex-col justify-between gap-3">
-        <div class="flex flex-col gap-1">
+      <div class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs hover:border-[#005c38] transition-all flex flex-col justify-between gap-4">
+        <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between text-xs font-mono">
-            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold">${c.categoryLabel}</span>
-            <span class="text-slate-400 font-bold">${c.certified ? 'DIPLOMA EMITIDO' : 'EN CURSO'}</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#005c38] font-semibold border border-emerald-200">${c.categoryLabel}</span>
+            <span class="text-[#80857e] font-bold text-[11px]">${c.certified ? 'DIPLOMA EMITIDO' : 'EN CURSO'}</span>
           </div>
-          <h3 class="text-sm font-bold text-slate-900 mt-1">${c.title}</h3>
-          <p class="text-xs text-slate-500">${c.userCurrentLesson}</p>
-          <div class="w-full bg-slate-100 h-1.5 rounded overflow-hidden mt-1">
-            <div class="bg-primary h-full rounded" style="width: ${c.userProgress}%;"></div>
+          <h3 class="text-base font-bold text-[#0c0d0e] mt-1 font-sans">${c.title}</h3>
+          <p class="text-xs text-[#80857e] font-sans">${c.userCurrentLesson}</p>
+          <div class="w-full bg-[#f3f0ea] h-2 rounded-full overflow-hidden mt-1 border border-[#d3cec5]/40">
+            <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${c.userProgress}%;"></div>
           </div>
         </div>
-        <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
-          <a href="#/aula-interactiva/${c.id}" class="flex-1 py-1.5 bg-primary-container text-white text-center rounded text-xs font-semibold">
-            ${c.certified ? 'Repasar Material' : 'Continuar Clase'}
+        <div class="flex items-center gap-2 pt-3 border-t border-[#d3cec5]/60">
+          <a href="#/aula-interactiva/${c.id}" class="flex-1 py-2 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">terminal</span>
+            <span>${c.certified ? 'Repasar Material' : 'Entrar al Aula'}</span>
           </a>
           ${c.certified ? `
-            <a href="#/diploma" class="py-1.5 px-3 bg-slate-50 text-slate-700 rounded text-xs font-semibold border border-slate-200">
+            <a href="#/diploma" class="py-2 px-3.5 bg-white text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold border border-[#d3cec5] shadow-xs transition-all">
               Diploma
             </a>
           ` : ''}
@@ -465,22 +470,38 @@
 
     container.innerHTML = `
       <div class="flex flex-col w-full py-6 gap-6">
-        <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-[#E2E8F0] shadow-sm">
-          <div class="flex items-center gap-3">
-            <img class="w-10 h-10 rounded-lg object-cover border border-slate-200" src="${window.Identicon ? window.Identicon.dataUri(student.name) : student.avatar}" />
+        <!-- Tarjeta de Perfil del Estudiante -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs">
+          <div class="flex items-center gap-3.5">
+            <img class="w-12 h-12 rounded-xl object-cover border border-[#d3cec5]" src="${identiconUri}" alt="${student.name}" />
             <div>
-              <h1 class="text-base font-bold text-slate-900">${student.name}</h1>
-              <span class="text-xs text-slate-400 font-mono">ID: ${student.id}</span>
+              <div class="flex items-center gap-2">
+                <h1 class="text-lg font-bold text-[#0c0d0e] font-sans">${student.name}</h1>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${appState.authRole === 'admin' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
+                  ${appState.authRole === 'admin' ? 'ADMIN' : 'ESTUDIANTE'}
+                </span>
+              </div>
+              <span class="text-xs text-[#80857e] font-mono">${student.email || 'ID: ' + studentId}</span>
             </div>
           </div>
-          <div class="flex gap-4 text-center font-mono text-xs">
-            <div><span class="font-bold text-slate-900">0${enrolled.length}</span> <span class="text-slate-400">Cursos</span></div>
-            <div><span class="font-bold text-slate-900">${student.completedLabs}/${student.totalLabs}</span> <span class="text-slate-400">Labs</span></div>
+          <div class="flex gap-6 text-center font-mono text-xs">
+            <div class="bg-[#f3f0ea] px-3.5 py-2 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-sm block">0${enrolled.length}</span>
+              <span class="text-[#80857e] text-[11px]">Cursos</span>
+            </div>
+            <div class="bg-[#f3f0ea] px-3.5 py-2 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-sm block">03/03</span>
+              <span class="text-[#80857e] text-[11px]">Labs</span>
+            </div>
           </div>
         </div>
 
+        <!-- Lista de Cursos -->
         <div class="flex flex-col gap-3">
-          <h2 class="text-sm font-bold text-slate-900">Cursos Asignados</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-[#0c0d0e] font-sans tracking-tight">Cursos Disponibles en tu Aula</h2>
+            <span class="text-xs font-mono text-[#80857e]">${enrolled.length} curso(s) matriculado(s)</span>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${coursesListHtml}
           </div>
@@ -1785,7 +1806,7 @@
       saveState(appState);
 
       showToast(`✓ Bienvenido, ${result.user.name}! Sesión verificada con Google`, "success");
-      window.location.hash = '#/aula-interactiva/pentesting-101';
+      window.location.hash = '#/mis-cursos';
       renderView();
     },
 
