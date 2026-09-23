@@ -11,9 +11,11 @@
   <meta property="og:description" content="Laboratorios prácticos en entornos aislados y modelos de IA." />
   <meta property="og:image" content="assets/logo.svg" />
   
-  <!-- Favicon Oficial Dev101x -->
+  <!-- Favicon & PWA Manifest Oficial Dev101x -->
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#005c38" />
 
   <!-- Fonts & Icons Oficiales de Dev101x -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,10 +25,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
   <!-- App Custom Stylesheet -->
-  <link rel="stylesheet" href="css/app.css?v=dev101x-v12" />
+  <link rel="stylesheet" href="css/app.css?v=dev101x-v13" />
 
   <!-- Google Identity Services (GIS SDK Oficial) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- html2pdf.js para exportación directa de certificados a 300 DPI -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Supabase JS Client para sincronización en la nube -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Tailwind CSS CDN + Architectural Design System Configuration -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -227,9 +235,18 @@
     </div>
   </div>
 
-  <script src="js/identicon.js?v=dev101x-v12"></script>
-  <script src="js/data.js?v=dev101x-v12"></script>
-  <script src="js/app.js?v=dev101x-v12"></script>
-  <script src="js/water-reveal.js?v=dev101x-v12"></script>
+  <script src="js/identicon.js?v=dev101x-v13"></script>
+  <script src="js/data.js?v=dev101x-v13"></script>
+  <script src="js/app.js?v=dev101x-v13"></script>
+  <script src="js/water-reveal.js?v=dev101x-v13"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').catch(function(err) {
+          console.debug('ServiceWorker notice:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

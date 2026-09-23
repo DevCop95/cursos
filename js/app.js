@@ -113,6 +113,7 @@
       enabledCourses: ['pentesting-101'],
       activeCommandKey: 'nmap',
       activeNmapCategory: 0,
+      studentProgress: {},
       terminalLines: [
         { text: "Windows PowerShell [Entorno Ofensivo Dev101x - Host Windows 11]", type: "system" },
         { text: "(c) Microsoft Corporation. Terminal Activa en C:\\Users\\Student\\Labs", type: "slate" },
@@ -121,6 +122,78 @@
       ],
       verificationTab: 'validador'
     };
+  }
+
+  function getStudentProgress(email) {
+    const key = (email || (appState.currentUser && appState.currentUser.email) || '').toLowerCase().trim();
+    if (!key) return { completedLabs: ['lab-1', 'lab-2', 'lab-3'], userProgress: 100, certified: true };
+    if (!appState.studentProgress) appState.studentProgress = {};
+    if (!appState.studentProgress[key]) {
+      appState.studentProgress[key] = {
+        completedLabs: [],
+        userProgress: 0,
+        certified: false,
+        completedAt: null,
+        diplomaHash: null
+      };
+    }
+    return appState.studentProgress[key];
+  }
+
+  function markLabCompleted(email, labId) {
+    const key = (email || (appState.currentUser && appState.currentUser.email) || '').toLowerCase().trim();
+    if (!key) return;
+    const prog = getStudentProgress(key);
+    if (!prog.completedLabs.includes(labId)) {
+      prog.completedLabs.push(labId);
+      prog.userProgress = Math.min(100, Math.round((prog.completedLabs.length / 3) * 100));
+      if (prog.userProgress >= 100 && !prog.certified) {
+        prog.certified = true;
+        prog.completedAt = new Date().toISOString();
+        prog.diplomaHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
+        showToast("🎉 ¡Felicidades! Has completado el 100% de los laboratorios. Tu Diploma Oficial Dev101x está listo.", "success");
+      } else {
+        showToast(`✓ Progreso actualizado: ${prog.userProgress}% (${prog.completedLabs.length}/3 Labs)`, "success");
+      }
+      saveState(appState);
+      syncProgressToCloud(key, prog);
+    }
+  }
+
+  // Supabase Cloud Adapter (Sincronización Cloud Resiliente)
+  const SUPABASE_CONFIG = {
+    url: 'https://ejopclpiiwcqmwrnaimh.supabase.co',
+    anonKey: window.DEV101X_SUPABASE_ANON || null
+  };
+  let supabaseClient = null;
+  function getSupabaseClient() {
+    if (!supabaseClient && typeof supabase !== 'undefined' && SUPABASE_CONFIG.anonKey) {
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+      } catch (e) {
+        console.debug("Supabase fallback local:", e);
+      }
+    }
+    return supabaseClient;
+  }
+
+  function syncProgressToCloud(email, progressData) {
+    const client = getSupabaseClient();
+    if (!client || !email) return;
+    try {
+      client.from('student_progress').upsert({
+        email: email,
+        completed_labs: progressData.completedLabs,
+        progress_percentage: progressData.userProgress,
+        certified: progressData.certified,
+        diploma_hash: progressData.diplomaHash,
+        updated_at: new Date().toISOString()
+      }).then(({ error }) => {
+        if (error) console.debug("Supabase sync notice:", error.message);
+      }).catch(err => console.debug("Supabase sync notice:", err));
+    } catch (err) {
+      console.debug("Supabase local mode active");
+    }
   }
 
   function loadState() {
@@ -441,27 +514,33 @@
       : (window.Identicon ? window.Identicon.dataUri(student.name || student.email) : 'assets/dev101x_identicon.svg');
     const studentId = student.sub ? student.sub.substring(0, 10) : 'DEV-STU-001';
 
+    const prog = getStudentProgress(student.email);
+    const userProgress = prog.userProgress !== undefined ? prog.userProgress : 0;
+    const isCertified = Boolean(prog.certified);
+    const labsCount = (prog.completedLabs && prog.completedLabs.length) || 0;
+
     const coursesListHtml = enrolled.map(c => `
       <div class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs hover:border-[#005c38] transition-all flex flex-col justify-between gap-4">
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between text-xs font-mono">
             <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#005c38] font-semibold border border-emerald-200">${c.categoryLabel}</span>
-            <span class="text-[#80857e] font-bold text-[11px]">${c.certified ? 'DIPLOMA EMITIDO' : 'EN CURSO'}</span>
+            <span class="text-[#80857e] font-bold text-[11px]">${isCertified ? 'DIPLOMA EMITIDO' : (userProgress > 0 ? `${userProgress}% COMPLETADO` : 'POR INICIAR')}</span>
           </div>
           <h3 class="text-base font-bold text-[#0c0d0e] mt-1 font-sans">${c.title}</h3>
-          <p class="text-xs text-[#80857e] font-sans">${c.userCurrentLesson}</p>
+          <p class="text-xs text-[#80857e] font-sans">${userProgress === 100 ? 'Laboratorios de reconocimiento y análisis completados con éxito' : (userProgress > 0 ? `Laboratorios en curso (${labsCount}/3 completados)` : c.userCurrentLesson)}</p>
           <div class="w-full bg-[#f3f0ea] h-2 rounded-full overflow-hidden mt-1 border border-[#d3cec5]/40">
-            <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${c.userProgress}%;"></div>
+            <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${userProgress}%;"></div>
           </div>
         </div>
         <div class="flex items-center gap-2 pt-3 border-t border-[#d3cec5]/60">
           <a href="#/aula-interactiva/${c.id}" class="flex-1 py-2 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-sm">terminal</span>
-            <span>${c.certified ? 'Repasar Material' : 'Entrar al Aula'}</span>
+            <span>${isCertified ? 'Repasar Material' : (userProgress > 0 ? 'Continuar Clase' : 'Entrar al Aula')}</span>
           </a>
-          ${c.certified ? `
-            <a href="#/diploma" class="py-2 px-3.5 bg-white text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold border border-[#d3cec5] shadow-xs transition-all">
-              Diploma
+          ${isCertified ? `
+            <a href="#/diploma" class="py-2 px-3.5 bg-white text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold border border-[#d3cec5] shadow-xs transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs text-[#005c38]">verified</span>
+              <span>Diploma</span>
             </a>
           ` : ''}
         </div>
@@ -490,7 +569,7 @@
               <span class="text-[#80857e] text-[11px]">Cursos</span>
             </div>
             <div class="bg-[#f3f0ea] px-3.5 py-2 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-sm block">03/03</span>
+              <span class="font-bold text-[#0c0d0e] text-sm block">0${labsCount}/03</span>
               <span class="text-[#80857e] text-[11px]">Labs</span>
             </div>
           </div>
@@ -929,18 +1008,18 @@
     return `
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         ${cat.items.map(item => `
-          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="p-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-primary/50 rounded-lg flex flex-col justify-between gap-2 transition-all shadow-xs group">
+          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="p-3.5 bg-[#fdfcf9] hover:bg-[#f3f0ea]/70 border border-[#d3cec5] hover:border-[#005c38]/60 rounded-xl flex flex-col justify-between gap-2.5 transition-all shadow-xs group">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-base shrink-0 group-hover:scale-110 transition-transform">${cat.icon}</span>
-                <h4 class="font-bold text-slate-900 group-hover:text-primary transition-colors text-xs leading-snug">${item.title}</h4>
+                <span class="material-symbols-outlined text-[#005c38] text-base shrink-0 group-hover:scale-110 transition-transform">${cat.icon}</span>
+                <h4 class="font-bold text-[#0c0d0e] group-hover:text-[#005c38] transition-colors text-xs leading-snug font-sans">${item.title}</h4>
               </div>
               <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0 ${item.badgeClass}">${item.badge}</span>
             </div>
-            <p class="text-slate-600 text-[11px] leading-relaxed">${item.desc}</p>
-            <div class="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1.5 border-t border-slate-100">
-              <span class="truncate max-w-[200px] text-primary/80">${item.url.replace('https://', '')}</span>
-              <span class="inline-flex items-center gap-0.5 text-primary font-semibold">
+            <p class="text-[#282b29] text-[11px] leading-relaxed font-sans">${item.desc}</p>
+            <div class="flex items-center justify-between text-[10px] font-mono text-[#80857e] pt-2 border-t border-[#d3cec5]/60">
+              <span class="truncate max-w-[200px] text-[#005c38] font-medium">${item.url.replace('https://', '')}</span>
+              <span class="inline-flex items-center gap-0.5 text-[#005c38] font-bold">
                 <span>Abrir recurso</span>
                 <span class="material-symbols-outlined text-xs">open_in_new</span>
               </span>
@@ -954,20 +1033,20 @@
   function getExplanationCardHtml(key) {
     const data = PENTESTING_COMMANDS[key] || PENTESTING_COMMANDS['nmap'];
     return `
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#d3cec5]">
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold ${data.badgeClass}">${data.badge}</span>
-            <span class="text-slate-500 font-mono text-[11px]">${data.category}</span>
+            <span class="text-[#80857e] font-mono text-[11px]">${data.category}</span>
           </div>
-          <h3 class="text-base font-bold text-slate-900">${data.title}</h3>
+          <h3 class="text-base font-bold text-[#0c0d0e] font-sans">${data.title}</h3>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button onclick="window.Dev101x.copyCommandText('${data.cmd.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 font-mono text-xs font-semibold flex items-center gap-1 border border-slate-200 transition-colors">
+          <button onclick="window.Dev101x.copyCommandText('${data.cmd.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-[#f3f0ea] hover:bg-[#e9e5dd] text-[#0c0d0e] font-mono text-xs font-semibold flex items-center gap-1 border border-[#d3cec5] transition-colors shadow-xs">
             <span class="material-symbols-outlined text-sm">content_copy</span>
             <span>Copiar</span>
           </button>
-          <button onclick="window.Dev101x.executeTerminalCommand(null, '${data.cmd.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded bg-primary hover:bg-primary-container text-white font-mono text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors">
+          <button onclick="window.Dev101x.executeTerminalCommand(null, '${data.cmd.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-[#005c38] hover:bg-[#003f27] text-white font-mono text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors">
             <span class="material-symbols-outlined text-sm">terminal</span>
             <span>Ejecutar en Consola</span>
           </button>
@@ -975,70 +1054,70 @@
       </div>
 
       <!-- Sintaxis de Ejecución en Windows -->
-      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-slate-100 font-mono text-xs flex items-center justify-between gap-2 overflow-x-auto">
+      <div class="bg-[#0e1013] p-3.5 rounded-xl border border-[#30363d] text-slate-100 font-mono text-xs flex items-center justify-between gap-2 overflow-x-auto shadow-inner">
         <div class="flex items-center gap-2">
           <span class="text-emerald-400 select-none font-bold">PS C:\\Users\\Dev101x\\Labs&gt;</span>
           <span class="text-emerald-300 font-bold">${data.cmd}</span>
         </div>
-        <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded shrink-0 border border-slate-800">PowerShell Windows</span>
+        <span class="text-[10px] text-slate-400 bg-[#161b22] px-2 py-0.5 rounded shrink-0 border border-[#30363d]">PowerShell Windows</span>
       </div>
 
       <!-- Propósito en Pentesting -->
-      <div class="space-y-1">
-        <h4 class="font-bold text-slate-900 uppercase font-mono text-[11px] flex items-center gap-1.5 text-primary">
+      <div class="space-y-1.5">
+        <h4 class="font-bold text-[#0c0d0e] uppercase font-mono text-[11px] flex items-center gap-1.5 text-[#005c38]">
           <span class="material-symbols-outlined text-sm">flag</span>
           <span>1. Propósito Ofensivo y Uso en Auditoría</span>
         </h4>
-        <p class="text-slate-700 leading-relaxed text-xs pl-5 border-l-2 border-primary/40">${data.purpose}</p>
+        <p class="text-[#282b29] leading-relaxed text-xs pl-5 border-l-2 border-[#005c38]/50 font-sans">${data.purpose}</p>
       </div>
 
       <!-- Desglose de Flags y Parámetros -->
       <div class="space-y-2">
-        <h4 class="font-bold text-slate-900 uppercase font-mono text-[11px] flex items-center gap-1.5 text-primary">
+        <h4 class="font-bold text-[#0c0d0e] uppercase font-mono text-[11px] flex items-center gap-1.5 text-[#005c38]">
           <span class="material-symbols-outlined text-sm">tune</span>
           <span>2. Desglose de Flags y Parámetros</span>
         </h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           ${data.flags.map(f => `
-            <div class="bg-slate-50 p-2.5 rounded border border-slate-200 flex flex-col gap-1">
+            <div class="bg-[#f3f0ea]/60 p-3 rounded-xl border border-[#d3cec5]/80 flex flex-col gap-1">
               <div class="flex items-center justify-between">
-                <code class="font-mono font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded text-[11px]">${f.flag}</code>
-                <span class="text-[10px] font-mono text-slate-500 font-semibold">${f.name}</span>
+                <code class="font-mono font-bold text-[#005c38] bg-emerald-100/80 px-1.5 py-0.5 rounded text-[11px]">${f.flag}</code>
+                <span class="text-[10px] font-mono text-[#80857e] font-semibold">${f.name}</span>
               </div>
-              <p class="text-slate-600 text-[11px] leading-snug">${f.desc}</p>
+              <p class="text-[#282b29] text-[11px] leading-snug font-sans">${f.desc}</p>
             </div>
           `).join('')}
         </div>
       </div>
 
       <!-- Por qué desde Windows y Relevancia Operativa -->
-      <div class="space-y-1">
-        <h4 class="font-bold text-slate-900 uppercase font-mono text-[11px] flex items-center gap-1.5 text-primary">
+      <div class="space-y-1.5">
+        <h4 class="font-bold text-[#0c0d0e] uppercase font-mono text-[11px] flex items-center gap-1.5 text-[#005c38]">
           <span class="material-symbols-outlined text-sm">laptop_windows</span>
           <span>3. ¿Por qué desde Windows? (Arquitectura & Relevancia)</span>
         </h4>
-        <p class="text-slate-700 leading-relaxed text-xs pl-5 border-l-2 border-emerald-500/40">${data.windowsContext}</p>
+        <p class="text-[#282b29] leading-relaxed text-xs pl-5 border-l-2 border-[#005c38]/50 font-sans">${data.windowsContext}</p>
       </div>
 
       <!-- Análisis de Hallazgos en el Laboratorio -->
-      <div class="p-3.5 bg-emerald-50/70 rounded-lg border border-emerald-200 space-y-1.5">
+      <div class="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 space-y-2">
         <div class="flex items-center justify-between">
           <h4 class="font-bold text-emerald-950 font-mono text-[11px] flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-sm text-emerald-700">fact_check</span>
+            <span class="material-symbols-outlined text-sm text-[#005c38]">fact_check</span>
             <span>4. Análisis de Hallazgos en el Output de Laboratorio</span>
           </h4>
-          <span class="text-[10px] font-mono text-emerald-700 font-semibold bg-emerald-100 px-2 py-0.5 rounded">Target: 10.128.44.12</span>
+          <span class="text-[10px] font-mono text-[#005c38] font-bold bg-emerald-100/90 px-2 py-0.5 rounded-md">Target: 10.128.44.12</span>
         </div>
-        <p class="text-emerald-900 text-xs leading-relaxed">${data.findings}</p>
-        <div class="mt-2 pt-2 border-t border-emerald-200/80 font-mono text-[11px] text-emerald-800 flex items-center gap-1 flex-wrap">
+        <p class="text-emerald-900 text-xs leading-relaxed font-sans">${data.findings}</p>
+        <div class="mt-2 pt-2 border-t border-emerald-200/80 font-mono text-[11px] text-emerald-800 flex items-center gap-1.5 flex-wrap">
           <span class="font-bold">Firma detectada:</span>
-          <code class="bg-emerald-100 px-1.5 py-0.5 rounded text-[10px] text-emerald-900">${data.sampleOutput}</code>
+          <code class="bg-emerald-100 px-2 py-0.5 rounded text-[10px] text-emerald-950 font-semibold">${data.sampleOutput}</code>
         </div>
       </div>
 
       ${data.officialLinks ? `
         <!-- Enlaces Oficiales Nmap.org Directos -->
-        <div class="p-3.5 bg-slate-900 text-white rounded-lg border border-slate-800 space-y-2">
+        <div class="p-4 bg-[#0e1013] text-white rounded-xl border border-[#30363d] space-y-2.5">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-emerald-400 font-mono text-[11px] flex items-center gap-1.5">
               <span class="material-symbols-outlined text-sm">link</span>
@@ -1048,12 +1127,12 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             ${data.officialLinks.map(l => `
-              <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded bg-slate-800/90 hover:bg-slate-800 text-slate-200 hover:text-emerald-300 flex items-center justify-between text-[11px] font-mono transition-colors border border-slate-700/50">
-                <span class="flex items-center gap-1.5 truncate">
-                  <span class="material-symbols-outlined text-xs text-primary">${l.icon}</span>
+              <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] text-slate-200 hover:text-emerald-300 flex items-center justify-between text-[11px] font-mono transition-colors border border-[#30363d]/80">
+                <span class="flex items-center gap-2 truncate">
+                  <span class="material-symbols-outlined text-xs text-[#005c38]">${l.icon}</span>
                   <span class="truncate">${l.label}</span>
                 </span>
-                <span class="text-[9px] px-1 py-0.2 rounded bg-slate-700 text-emerald-300 shrink-0 ml-1.5">${l.badge}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-emerald-300 shrink-0 ml-1.5 font-bold">${l.badge}</span>
               </a>
             `).join('')}
           </div>
@@ -1091,40 +1170,40 @@
     container.innerHTML = `
       <div class="flex flex-col w-full py-4 gap-4">
         <!-- Header Exclusivo Pentesting 101 -->
-        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm flex-wrap">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded bg-primary-container text-white font-mono text-xs font-bold">DEV101X LABS</span>
-            <span class="text-xs font-bold text-slate-900 font-mono">${course.title}</span>
+        <div class="flex items-center justify-between gap-3 bg-[#fdfcf9] p-4 rounded-2xl border border-[#d3cec5] shadow-xs flex-wrap">
+          <div class="flex items-center gap-2.5">
+            <span class="px-2.5 py-1 rounded-lg bg-[#005c38] text-white font-mono text-xs font-bold shadow-xs">DEV101X LABS</span>
+            <span class="text-xs font-bold text-[#0c0d0e] font-sans">${course.title}</span>
           </div>
           <div class="flex items-center gap-2">
-            <a href="#seccion-recursos-nmap" class="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-mono text-xs font-bold border border-emerald-300 flex items-center gap-1 transition-colors">
+            <a href="#seccion-recursos-nmap" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#005c38] font-mono text-xs font-bold border border-emerald-300 flex items-center gap-1.5 transition-colors shadow-xs">
               <span class="material-symbols-outlined text-xs">link</span>
               <span>27+ Enlaces Nmap</span>
             </a>
-            <span class="font-mono text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded border border-slate-200 shrink-0">${course.activeStudents || 7} alumnos activos</span>
+            <span class="font-mono text-xs text-[#80857e] bg-[#f3f0ea] px-3 py-1.5 rounded-xl border border-[#d3cec5]/70 shrink-0 font-medium">${course.activeStudents || 7} alumnos activos</span>
           </div>
         </div>
 
         <!-- Banner de Contexto y Sesión Activa -->
-        <div class="bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
           <div>
             <div class="flex items-center gap-2 font-mono">
-              <span class="text-primary font-bold">${course.title}</span>
-              <span class="text-slate-300">•</span>
-              <span class="text-slate-600">${activeModule.module}</span>
+              <span class="text-[#005c38] font-bold">${course.title}</span>
+              <span class="text-[#d3cec5]">•</span>
+              <span class="text-[#80857e]">${activeModule.module}</span>
             </div>
-            <h1 class="text-base font-bold text-slate-900 mt-0.5">${activeLesson.title}</h1>
-            <div class="flex items-center gap-2 mt-1 font-mono text-[11px] text-slate-500 flex-wrap">
+            <h1 class="text-base sm:text-lg font-bold text-[#0c0d0e] font-sans mt-0.5">${activeLesson.title}</h1>
+            <div class="flex items-center gap-2 mt-1.5 font-mono text-[11px] text-[#80857e] flex-wrap">
               <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>Host Auditor: Windows 11 (10.128.44.5)</span>
-              <span class="text-slate-300">•</span>
-              <span class="text-slate-700 font-bold">Target: 10.128.44.12 (srv-target.dev101x.lab)</span>
-              <span class="text-slate-300">•</span>
-              <span class="text-slate-600">Herramientas: Nmap.exe + Npcap + CLI Windows</span>
+              <span class="text-[#d3cec5]">•</span>
+              <span class="text-[#0c0d0e] font-bold">Target: 10.128.44.12 (srv-target.dev101x.lab)</span>
+              <span class="text-[#d3cec5]">•</span>
+              <span class="text-[#80857e]">Nmap.exe + Npcap + CLI Windows</span>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded font-mono text-xs font-bold border border-emerald-200">${course.badge}</span>
-            <span class="px-2.5 py-1 bg-slate-900 text-emerald-400 rounded font-mono text-xs font-semibold">LAB OFENSIVO</span>
+            <span class="px-3 py-1 bg-emerald-50 text-[#005c38] rounded-full font-mono text-xs font-bold border border-emerald-300 shadow-xs">${course.badge}</span>
+            <span class="px-3 py-1 bg-[#0c0d0e] text-emerald-400 rounded-full font-mono text-xs font-semibold shadow-xs">LAB OFENSIVO</span>
           </div>
         </div>
 
@@ -1135,31 +1214,35 @@
           <div class="lg:col-span-8 flex flex-col gap-4">
             
             <!-- Terminal Windows PowerShell -->
-            <div class="bg-slate-950 rounded-lg border border-slate-800 overflow-hidden font-mono text-xs shadow-md">
-              <div class="p-2.5 bg-slate-900 text-slate-300 flex items-center justify-between text-[11px] border-b border-slate-800">
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span class="font-bold text-slate-100">Consola Windows: PowerShell 7</span>
+            <div class="bg-[#0e1013] rounded-2xl border border-[#30363d] overflow-hidden font-mono text-xs shadow-md">
+              <div class="p-3 bg-[#161b22] text-slate-300 flex items-center justify-between text-[11px] border-b border-[#30363d]">
+                <div class="flex items-center gap-2.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-[#ff5f56]/80 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-[#ffbd2e]/80 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-[#27c93f]/80 inline-block"></span>
+                  </div>
+                  <span class="font-bold text-slate-100 ml-1">PowerShell 7 — Terminal Ofensivo</span>
                   <span class="text-slate-400">• IP: 10.128.44.5</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-800/50">Target: 10.128.44.12</span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[10px] font-bold border border-emerald-700/50">Target: 10.128.44.12</span>
                   <button onclick="window.Dev101x.executeTerminalCommand(null, 'cls')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition-colors" title="Limpiar pantalla">cls</button>
                   <button onclick="window.Dev101x.executeTerminalCommand(null, 'help')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px] transition-colors" title="Ver comandos disponibles">help</button>
                 </div>
               </div>
 
               <!-- Quick Command Chips -->
-              <div class="bg-slate-900/95 px-3 py-1.5 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+              <div class="bg-[#111418] px-3.5 py-2 border-b border-[#30363d] flex items-center gap-1.5 overflow-x-auto text-[11px]">
                 <span class="text-slate-400 text-[10px] uppercase font-bold shrink-0">Ejecutar:</span>
-                <button onclick="window.Dev101x.selectExplanation('nmap', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 whitespace-nowrap">nmap -sV</button>
-                <button onclick="window.Dev101x.selectExplanation('ipconfig', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-300 whitespace-nowrap">ipconfig /all</button>
-                <button onclick="window.Dev101x.selectExplanation('whoami', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 whitespace-nowrap">whoami /priv</button>
-                <button onclick="window.Dev101x.selectExplanation('ping', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-300 whitespace-nowrap">ping -n 3</button>
-                <button onclick="window.Dev101x.selectExplanation('tracert', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-purple-300 whitespace-nowrap">tracert -d</button>
-                <button onclick="window.Dev101x.selectExplanation('netstat', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 whitespace-nowrap">netstat -ano</button>
-                <button onclick="window.Dev101x.selectExplanation('curl', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 whitespace-nowrap">curl -I</button>
-                <button onclick="window.Dev101x.selectExplanation('testnet', true)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-teal-300 whitespace-nowrap">Test-NetConnection</button>
+                <button onclick="window.Dev101x.selectExplanation('nmap', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-emerald-400 whitespace-nowrap transition-colors">nmap -sV</button>
+                <button onclick="window.Dev101x.selectExplanation('ipconfig', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-sky-300 whitespace-nowrap transition-colors">ipconfig /all</button>
+                <button onclick="window.Dev101x.selectExplanation('whoami', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-amber-300 whitespace-nowrap transition-colors">whoami /priv</button>
+                <button onclick="window.Dev101x.selectExplanation('ping', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-indigo-300 whitespace-nowrap transition-colors">ping -n 3</button>
+                <button onclick="window.Dev101x.selectExplanation('tracert', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-purple-300 whitespace-nowrap transition-colors">tracert -d</button>
+                <button onclick="window.Dev101x.selectExplanation('netstat', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-cyan-300 whitespace-nowrap transition-colors">netstat -ano</button>
+                <button onclick="window.Dev101x.selectExplanation('curl', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-emerald-300 whitespace-nowrap transition-colors">curl -I</button>
+                <button onclick="window.Dev101x.selectExplanation('testnet', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-teal-300 whitespace-nowrap transition-colors">Test-NetConnection</button>
               </div>
 
               <!-- Terminal Output Screen -->
@@ -1168,23 +1251,23 @@
               </div>
 
               <!-- Terminal Input Form -->
-              <form onsubmit="window.Dev101x.executeTerminalCommand(event)" class="p-2.5 bg-black border-t border-slate-800 flex items-center gap-2">
+              <form onsubmit="window.Dev101x.executeTerminalCommand(event)" class="p-3 bg-[#090a0c] border-t border-[#30363d] flex items-center gap-2">
                 <span class="text-emerald-400 text-xs shrink-0 select-none font-bold">PS C:\\Users\\Dev101x\\Labs&gt;</span>
                 <input id="terminal-input" type="text" placeholder="Ej: nmap -sV 10.128.44.12, ipconfig /all, whoami /priv, ping, tracert, netstat, curl, help..." class="flex-1 bg-transparent text-emerald-300 text-xs outline-none font-mono" autofocus />
-                <button type="submit" class="px-3.5 py-1 bg-primary hover:bg-primary-container rounded text-white text-xs font-semibold shrink-0">Ejecutar</button>
+                <button type="submit" class="px-4 py-1.5 bg-[#005c38] hover:bg-[#003f27] rounded-xl text-white text-xs font-semibold shrink-0 transition-colors shadow-xs">Ejecutar</button>
               </form>
             </div>
 
             <!-- Panel de Explicación Técnica en Profundidad -->
-            <div class="bg-white rounded-lg border border-[#E2E8F0] shadow-sm overflow-hidden">
-              <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap">
+            <div class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden">
+              <div class="p-3.5 bg-[#f3f0ea]/70 border-b border-[#d3cec5]/80 flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-primary text-base">psychology</span>
-                  <h2 class="text-xs font-bold text-slate-900 uppercase font-mono tracking-wider">Explicación Técnica del Comando</h2>
+                  <span class="material-symbols-outlined text-[#005c38] text-base">psychology</span>
+                  <h2 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono tracking-wider">Explicación Técnica del Comando</h2>
                 </div>
                 <div class="flex items-center gap-1 overflow-x-auto pb-0.5 max-w-full font-mono text-[11px]">
                   ${Object.keys(PENTESTING_COMMANDS).map(k => `
-                    <button onclick="window.Dev101x.selectExplanation('${k}', false)" data-cmd-key="${k}" class="cmd-tab-btn px-2.5 py-1 rounded transition-all ${k === activeCmdKey ? 'font-bold bg-primary-container text-white shadow-sm' : 'font-semibold bg-slate-200/70 hover:bg-slate-300 text-slate-700'}">
+                    <button onclick="window.Dev101x.selectExplanation('${k}', false)" data-cmd-key="${k}" class="cmd-tab-btn px-2.5 py-1 rounded-lg transition-all ${k === activeCmdKey ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#e9e5dd] text-[#0c0d0e] border border-[#d3cec5]/70'}">
                       ${PENTESTING_COMMANDS[k].name}
                     </button>
                   `).join('')}
@@ -1198,16 +1281,16 @@
             </div>
 
             <!-- Directorio Completo de Recursos & Enlaces Oficiales de Nmap -->
-            <div id="seccion-recursos-nmap" class="bg-white rounded-lg border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col gap-3 p-4 sm:p-5">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+            <div id="seccion-recursos-nmap" class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden flex flex-col gap-3 p-4 sm:p-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#d3cec5]">
                 <div>
                   <div class="flex items-center gap-2 mb-1">
                     <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">TODO ENLACES NMAP</span>
-                    <span class="text-slate-500 font-mono text-[11px]">27+ Fuentes Oficiales & Documentación Canónica</span>
+                    <span class="text-[#80857e] font-mono text-[11px]">27+ Fuentes Oficiales & Documentación Canónica</span>
                   </div>
-                  <h3 class="text-base font-bold text-slate-900">Ecosistema Completo y Recursos Oficiales de Nmap</h3>
+                  <h3 class="text-base font-bold text-[#0c0d0e] font-sans">Ecosistema Completo y Recursos Oficiales de Nmap</h3>
                 </div>
-                <a href="https://nmap.org" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-slate-900 hover:bg-black text-emerald-400 font-mono text-xs rounded font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-sm">
+                <a href="https://nmap.org" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white font-mono text-xs rounded-xl font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs">
                   <span>Portal nmap.org</span>
                   <span class="material-symbols-outlined text-xs">open_in_new</span>
                 </a>
@@ -1216,7 +1299,7 @@
               <!-- Selector de Categorías Nmap -->
               <div class="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full font-mono text-xs">
                 ${NMAP_RESOURCES.map((c, i) => `
-                  <button onclick="window.Dev101x.switchNmapCategory(${i})" class="nmap-cat-btn px-2.5 py-1 rounded text-xs transition-all whitespace-nowrap ${i === activeCatIdx ? 'font-bold bg-primary-container text-white shadow-xs' : 'font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+                  <button onclick="window.Dev101x.switchNmapCategory(${i})" class="nmap-cat-btn px-2.5 py-1 rounded-lg text-xs transition-all whitespace-nowrap ${i === activeCatIdx ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#f3f0ea] text-[#0c0d0e] border border-[#d3cec5]/70'}">
                     ${c.categoryShort}
                   </button>
                 `).join('')}
@@ -1234,8 +1317,8 @@
           <div class="lg:col-span-4 flex flex-col gap-4">
             
             <!-- Accesos Oficiales Nmap Destacados -->
-            <div class="bg-slate-900 text-white p-4 rounded-lg border border-slate-800 shadow-sm flex flex-col gap-2.5 font-mono text-xs">
-              <div class="flex items-center justify-between pb-1.5 border-b border-slate-800">
+            <div class="bg-[#0e1013] text-white p-4 sm:p-5 rounded-2xl border border-[#30363d] shadow-xs flex flex-col gap-2.5 font-mono text-xs">
+              <div class="flex items-center justify-between pb-2 border-b border-[#30363d]">
                 <span class="font-bold text-emerald-400 text-xs flex items-center gap-1">
                   <span class="material-symbols-outlined text-sm">download</span>
                   <span>Descargas & Manuales</span>
@@ -1243,23 +1326,23 @@
                 <span class="text-[10px] text-slate-400">Oficial</span>
               </div>
               <div class="flex flex-col gap-1.5">
-                <a href="https://nmap.org/download.html#windows" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors">
+                <a href="https://nmap.org/download.html#windows" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
                   <span class="truncate">Portal Descargas (nmap.org)</span>
                   <span class="text-[10px] text-emerald-400 font-bold">Oficial</span>
                 </a>
-                <a href="https://npcap.com/#download" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors">
+                <a href="https://npcap.com/#download" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
                   <span class="truncate">Npcap Kernel Driver</span>
                   <span class="text-[10px] text-amber-400 font-bold">Windows</span>
                 </a>
-                <a href="https://nmap.org/book/" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors">
+                <a href="https://nmap.org/book/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
                   <span class="truncate">Libro Oficial de Gordon</span>
                   <span class="text-[10px] text-sky-400 font-bold">500+ pág</span>
                 </a>
-                <a href="https://nmap.org/nsedoc/" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors">
+                <a href="https://nmap.org/nsedoc/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
                   <span class="truncate">Catálogo Scripts NSE</span>
                   <span class="text-[10px] text-purple-400 font-bold">600+</span>
                 </a>
-                <a href="https://www.sans.org/posters/nmap-cheat-sheet/" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors">
+                <a href="https://www.sans.org/posters/nmap-cheat-sheet/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
                   <span class="truncate">SANS Nmap Cheat Sheet</span>
                   <span class="text-[10px] text-rose-400 font-bold">PDF</span>
                 </a>
@@ -1267,30 +1350,30 @@
             </div>
 
             <!-- Guía Rápida de Comandos Pentesting -->
-            <div class="bg-white p-4 rounded-lg border border-[#E2E8F0] shadow-sm flex flex-col gap-3">
-              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-3">
+              <div class="flex items-center justify-between pb-2 border-b border-[#d3cec5]">
                 <div class="flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-primary text-base">terminal</span>
-                  <h3 class="text-xs font-bold text-slate-900 uppercase font-mono">Guía Rápida de Comandos</h3>
+                  <span class="material-symbols-outlined text-[#005c38] text-base">terminal</span>
+                  <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Guía Rápida de Comandos</h3>
                 </div>
-                <span class="text-[10px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">8 Comandos</span>
+                <span class="text-[10px] font-mono text-[#80857e] bg-[#f3f0ea] px-2 py-0.5 rounded-md border border-[#d3cec5]/70">8 Comandos</span>
               </div>
 
               <div class="flex flex-col gap-2 font-mono text-xs">
                 ${Object.keys(PENTESTING_COMMANDS).map(k => {
                   const item = PENTESTING_COMMANDS[k];
                   return `
-                    <div class="border border-slate-200 rounded p-2.5 bg-slate-50/70 hover:bg-slate-50 transition-colors flex flex-col gap-1.5">
+                    <div class="border border-[#d3cec5] rounded-xl p-3 bg-white/70 hover:bg-[#f3f0ea]/50 transition-colors flex flex-col gap-1.5 shadow-2xs">
                       <div class="flex items-center justify-between">
-                        <code class="font-bold text-emerald-800 text-[11px] truncate mr-1">${item.name}</code>
+                        <code class="font-bold text-[#005c38] text-[11px] truncate mr-1">${item.name}</code>
                         <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${item.badgeClass}">${item.badge.split('//')[0].trim()}</span>
                       </div>
-                      <p class="text-slate-600 text-[10px] font-sans line-clamp-1">${item.title}</p>
-                      <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[10px]">
-                        <span class="text-slate-400 truncate max-w-[130px]">${item.cmd}</span>
+                      <p class="text-[#282b29] text-[10px] font-sans line-clamp-1">${item.title}</p>
+                      <div class="flex items-center justify-between pt-1.5 border-t border-[#d3cec5]/60 text-[10px]">
+                        <span class="text-[#80857e] truncate max-w-[130px] font-mono">${item.cmd}</span>
                         <div class="flex items-center gap-1 shrink-0">
-                          <button onclick="window.Dev101x.selectExplanation('${k}', false)" class="px-1.5 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-[10px]">Explicar</button>
-                          <button onclick="window.Dev101x.selectExplanation('${k}', true)" class="px-1.5 py-0.5 rounded bg-primary hover:bg-primary-container text-white font-semibold text-[10px]">Ejecutar</button>
+                          <button onclick="window.Dev101x.selectExplanation('${k}', false)" class="px-2 py-0.5 rounded-lg bg-[#f3f0ea] hover:bg-[#e9e5dd] text-[#0c0d0e] font-semibold text-[10px] border border-[#d3cec5]/70 transition-colors">Explicar</button>
+                          <button onclick="window.Dev101x.selectExplanation('${k}', true)" class="px-2 py-0.5 rounded-lg bg-[#005c38] hover:bg-[#003f27] text-white font-semibold text-[10px] transition-colors shadow-2xs">Ejecutar</button>
                         </div>
                       </div>
                     </div>
@@ -1300,22 +1383,22 @@
             </div>
 
             <!-- Temario / Plan de Estudio -->
-            <div class="bg-white p-4 rounded-lg border border-[#E2E8F0] shadow-sm flex flex-col gap-3">
-              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-                <h3 class="text-xs font-bold text-slate-900 uppercase font-mono">Plan de Estudio</h3>
-                <span class="text-[11px] text-slate-400 font-mono">${course.duration}</span>
+            <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-3">
+              <div class="flex items-center justify-between pb-2 border-b border-[#d3cec5]">
+                <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Plan de Estudio</h3>
+                <span class="text-[11px] text-[#80857e] font-mono">${course.duration}</span>
               </div>
               <div class="flex flex-col gap-2 font-mono text-xs">
                 ${course.syllabus.map(m => `
-                  <div class="border border-slate-200 rounded-lg p-2.5 bg-slate-50">
+                  <div class="border border-[#d3cec5] rounded-xl p-3 bg-white/70">
                     <div class="flex items-center justify-between mb-1.5">
-                      <span class="font-bold text-slate-900 text-[11px]">${m.module}</span>
-                      <span class="text-[10px] text-slate-400">${m.completed ? '✓ Completado' : m.current ? 'En progreso' : 'Pendiente'}</span>
+                      <span class="font-bold text-[#0c0d0e] text-[11px] font-sans">${m.module}</span>
+                      <span class="text-[10px] ${m.completed ? 'text-[#005c38] font-bold' : 'text-[#80857e]'}">${m.completed ? '✓ Completado' : m.current ? 'En progreso' : 'Pendiente'}</span>
                     </div>
                     <div class="flex flex-col gap-1">
                       ${m.lessons.map(l => `
-                        <div class="flex items-center justify-between py-1 px-1.5 rounded transition-colors ${l.active ? 'bg-emerald-100/70 text-primary font-bold' : l.done ? 'text-slate-600' : 'text-slate-400'}">
-                          <span class="truncate mr-2">${l.title}</span>
+                        <div class="flex items-center justify-between py-1 px-1.5 rounded-lg transition-colors ${l.active ? 'bg-emerald-100/70 text-[#005c38] font-bold' : l.done ? 'text-[#282b29]' : 'text-[#80857e]'}">
+                          <span class="truncate mr-2 font-sans">${l.title}</span>
                           <span class="text-[10px] shrink-0 font-mono">${l.time}</span>
                         </div>
                       `).join('')}
@@ -1343,17 +1426,17 @@
       <div class="flex flex-col w-full py-6 max-w-4xl mx-auto gap-6">
         
         <!-- Header & Segmented Tab Switch -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#d3cec5] pb-4">
           <div>
-            <h1 class="text-xl font-bold text-slate-900">Centro de Verificación</h1>
-            <p class="text-xs text-slate-500 font-mono">Consulta de validez de diplomas y registro público de egresados</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-[#0c0d0e] font-sans">Centro de Verificación</h1>
+            <p class="text-xs text-[#80857e] font-mono mt-0.5">Consulta de validez criptográfica de diplomas y registro público de egresados</p>
           </div>
           <!-- 2 Tabs en un solo lugar -->
-          <div class="flex p-1 bg-slate-100 rounded-lg text-xs font-mono">
-            <button onclick="window.Dev101x.switchVerifyTab('validador')" id="tab-btn-validador" class="px-3 py-1.5 rounded-md font-semibold ${initialTab === 'validador' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'} transition-all">
+          <div class="flex p-1 bg-[#f3f0ea] rounded-xl text-xs font-mono border border-[#d3cec5]/80">
+            <button onclick="window.Dev101x.switchVerifyTab('validador')" id="tab-btn-validador" class="px-3.5 py-1.5 rounded-lg font-semibold ${initialTab === 'validador' ? 'bg-white text-[#0c0d0e] shadow-xs' : 'text-[#80857e]'} transition-all">
               Validar por Hash
             </button>
-            <button onclick="window.Dev101x.switchVerifyTab('directorio')" id="tab-btn-directorio" class="px-3 py-1.5 rounded-md font-semibold ${initialTab === 'directorio' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'} transition-all">
+            <button onclick="window.Dev101x.switchVerifyTab('directorio')" id="tab-btn-directorio" class="px-3.5 py-1.5 rounded-lg font-semibold ${initialTab === 'directorio' ? 'bg-white text-[#0c0d0e] shadow-xs' : 'text-[#80857e]'} transition-all">
               Directorio de Egresados
             </button>
           </div>
@@ -1361,21 +1444,21 @@
 
         <!-- Section 1: Validador Hash -->
         <div id="section-validador" class="${initialTab === 'validador' ? '' : 'hidden'} flex flex-col gap-4">
-          <div class="bg-white p-6 rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col gap-4">
+          <div class="bg-[#fdfcf9] p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4">
             <div>
-              <h2 class="text-sm font-bold text-slate-900">Comprobar Autenticidad de Certificado</h2>
-              <p class="text-xs text-slate-500 mt-1">Introduce el folio (ej: D101X-LLM-89210) o el hash SHA-256 impreso en el documento.</p>
+              <h2 class="text-sm font-bold text-[#0c0d0e] font-sans">Comprobar Autenticidad de Certificado</h2>
+              <p class="text-xs text-[#80857e] mt-1 font-sans">Introduce el folio (ej: D101X-LLM-89210) o el hash SHA-256 impreso en el documento.</p>
             </div>
             <form onsubmit="window.Dev101x.handleValidateHash(event)" class="flex flex-col gap-3">
-              <input id="hash-eval-input" type="text" value="${validCert.hash}" placeholder="Hash SHA-256 o Folio..." class="h-10 px-3 bg-slate-50 rounded font-mono text-xs border border-slate-200 outline-none focus:bg-white" />
-              <div class="flex items-center gap-2">
-                <button type="submit" class="h-9 px-4 bg-primary-container text-white rounded text-xs font-semibold">
+              <input id="hash-eval-input" type="text" value="${validCert.hash}" placeholder="Hash SHA-256 o Folio..." class="h-10 px-3.5 bg-white rounded-xl font-mono text-xs border border-[#d3cec5] outline-none focus:border-[#005c38] transition-colors" />
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="submit" class="h-9 px-4 bg-[#005c38] hover:bg-[#003f27] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors">
                   Validar Certificado
                 </button>
-                <button type="button" onclick="document.getElementById('hash-eval-input').value = '${validCert.hash}'; window.Dev101x.handleValidateHash(event);" class="text-xs text-primary hover:underline font-mono">
+                <button type="button" onclick="document.getElementById('hash-eval-input').value = '${validCert.hash}'; window.Dev101x.handleValidateHash(event);" class="text-xs text-[#005c38] hover:underline font-mono">
                   Probar Hash Válido
                 </button>
-                <span class="text-slate-300 font-mono">|</span>
+                <span class="text-[#d3cec5] font-mono">|</span>
                 <button type="button" onclick="document.getElementById('hash-eval-input').value = '0x_hash_alterado'; window.Dev101x.handleValidateHash(event);" class="text-xs text-rose-600 hover:underline font-mono">
                   Probar Hash Inválido
                 </button>
@@ -1387,36 +1470,36 @@
         <!-- Section 2: Directorio de Egresados -->
         <div id="section-directorio" class="${initialTab === 'directorio' ? '' : 'hidden'} flex flex-col gap-4">
           <div class="flex items-center justify-between">
-            <span class="text-xs text-slate-500 font-mono">Diplomas emitidos registrados</span>
-            <button onclick="window.Dev101x.downloadTransparencyCSV()" class="px-3 py-1.5 bg-slate-900 text-white rounded text-xs font-semibold">
+            <span class="text-xs text-[#80857e] font-mono">Diplomas emitidos registrados</span>
+            <button onclick="window.Dev101x.downloadTransparencyCSV()" class="px-3.5 py-1.5 bg-[#0c0d0e] hover:bg-black text-white rounded-xl text-xs font-semibold transition-colors shadow-xs">
               Descargar Reporte CSV
             </button>
           </div>
-          <div class="bg-white rounded-lg border border-[#E2E8F0] shadow-sm overflow-hidden text-xs">
+          <div class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden text-xs">
             <table class="w-full text-left border-collapse">
-              <thead class="bg-slate-50 border-b border-[#E2E8F0] font-mono text-slate-500">
+              <thead class="bg-[#f3f0ea]/70 border-b border-[#d3cec5] font-mono text-[#80857e]">
                 <tr>
-                  <th class="p-3">EGRESADO</th>
-                  <th class="p-3">CURSO</th>
-                  <th class="p-3">FOLIO</th>
-                  <th class="p-3">ESTADO</th>
-                  <th class="p-3 text-right">DIPLOMA</th>
+                  <th class="p-3.5">EGRESADO</th>
+                  <th class="p-3.5">CURSO</th>
+                  <th class="p-3.5">FOLIO</th>
+                  <th class="p-3.5">ESTADO</th>
+                  <th class="p-3.5 text-right">DIPLOMA</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#EAECF0]">
+              <tbody class="divide-y divide-[#d3cec5]/60">
                 ${certs.map(c => {
                   const avatarUri = window.Identicon ? window.Identicon.dataUri(c.avatarSeed || c.studentName) : (c.avatar || 'assets/dev101x_identicon.svg');
                   return `
-                  <tr class="hover:bg-slate-50">
-                    <td class="p-3 flex items-center gap-2">
-                      <img src="${avatarUri}" class="w-6 h-6 rounded-md object-cover border border-slate-200" />
-                      <span class="font-bold text-slate-900">${c.studentName}</span>
+                  <tr class="hover:bg-[#f3f0ea]/40 transition-colors">
+                    <td class="p-3.5 flex items-center gap-2.5">
+                      <img src="${avatarUri}" class="w-7 h-7 rounded-lg object-cover border border-[#d3cec5]" />
+                      <span class="font-bold text-[#0c0d0e] font-sans">${c.studentName}</span>
                     </td>
-                    <td class="p-3">${c.courseTitle}</td>
-                    <td class="p-3 font-mono font-bold text-primary">${c.folio}</td>
-                    <td class="p-3 font-mono text-emerald-700 font-semibold">${c.status}</td>
-                    <td class="p-3 text-right">
-                      <a href="#/diploma" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded text-[11px] font-semibold">
+                    <td class="p-3.5 text-[#282b29] font-sans">${c.courseTitle}</td>
+                    <td class="p-3.5 font-mono font-bold text-[#005c38]">${c.folio}</td>
+                    <td class="p-3.5 font-mono text-emerald-700 font-semibold">${c.status}</td>
+                    <td class="p-3.5 text-right">
+                      <a href="#/diploma" class="px-3 py-1 bg-white hover:bg-[#f3f0ea] border border-[#d3cec5] rounded-xl text-[11px] font-semibold text-[#0c0d0e] transition-colors shadow-2xs">
                         Ver
                       </a>
                     </td>
@@ -1435,43 +1518,51 @@
   // ==========================================
   function renderDiploma(container) {
     const cert = DEV101X_DATA.certificates[0];
+    const studentName = (appState.currentUser && appState.currentUser.name) || cert.studentName;
+    const studentProg = getStudentProgress(appState.currentUser && appState.currentUser.email);
+    const folio = studentProg.diplomaHash ? ('DEV-' + studentProg.diplomaHash.substring(2, 10).toUpperCase()) : cert.folio;
 
     container.innerHTML = `
       <div class="flex flex-col w-full py-4 gap-4 max-w-4xl mx-auto">
-        <div class="bg-white p-3.5 rounded-lg border border-[#E2E8F0] shadow-sm flex items-center justify-between text-xs no-print">
-          <div class="flex items-center gap-2 font-mono">
-            <span class="material-symbols-outlined text-primary text-base">verified</span>
-            <span class="font-bold text-slate-900">Diploma Verificado</span>
-            <span class="text-slate-400">•</span>
-            <span class="text-slate-600 font-bold">${cert.folio}</span>
+        <!-- Barra de Controles y Descarga -->
+        <div class="bg-[#fdfcf9] p-4 rounded-2xl border border-[#d3cec5] shadow-xs flex items-center justify-between text-xs no-print flex-wrap gap-3">
+          <div class="flex items-center gap-2.5 font-mono">
+            <span class="material-symbols-outlined text-[#005c38] text-base">verified</span>
+            <span class="font-bold text-[#0c0d0e]">Diploma Oficial Verificado</span>
+            <span class="text-[#d3cec5]">•</span>
+            <span class="text-[#005c38] font-bold">${folio}</span>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="window.print()" class="px-3 py-1.5 bg-slate-900 text-white rounded text-xs font-semibold flex items-center gap-1">
+            <button onclick="window.Dev101x.downloadDiplomaPDF()" class="px-3.5 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all">
+              <span class="material-symbols-outlined text-sm">download</span>
+              <span>Descargar PDF (300 DPI)</span>
+            </button>
+            <button onclick="window.print()" class="px-3 py-1.5 bg-white text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold border border-[#d3cec5] transition-all flex items-center gap-1">
               <span class="material-symbols-outlined text-sm">print</span>
               <span>Imprimir</span>
             </button>
-            <a href="#/verificacion" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-xs font-semibold border border-slate-200">
-              Centro de Verificación
+            <a href="#/verificacion" class="px-3 py-1.5 bg-[#f3f0ea] text-[#0c0d0e] hover:bg-[#e9e5dd] rounded-xl text-xs font-semibold border border-[#d3cec5]/80 transition-all">
+              Verificar
             </a>
           </div>
         </div>
 
-        <div id="diploma-printable" class="bg-white rounded-lg border-2 border-[#005D42] p-8 sm:p-10 shadow-sm flex flex-col gap-6">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div id="diploma-printable" class="bg-[#fdfcf9] rounded-2xl border-2 border-[#005c38] p-8 sm:p-12 shadow-sm flex flex-col gap-6">
+          <div class="flex items-center justify-between border-b border-[#d3cec5] pb-4">
             <div class="flex items-center gap-2.5">
-              <img src="assets/icon.svg" alt="Dev101x" class="h-8 w-8 rounded-lg" />
-              <span class="font-extrabold text-sm text-slate-900">DEV101X ACADEMY</span>
+              <img src="assets/favicon.png" alt="Dev101x" class="h-9 w-9 rounded-lg" />
+              <span class="font-extrabold text-sm text-[#0c0d0e] tracking-tight">DEV101X ACADEMY</span>
             </div>
-            <span class="font-mono text-xs text-slate-500 font-bold">${cert.folio}</span>
+            <span class="font-mono text-xs text-[#005c38] font-bold">${folio}</span>
           </div>
 
-          <div class="text-center py-4 flex flex-col items-center gap-1.5">
-            <span class="text-xs text-slate-400 uppercase font-mono tracking-wider">Certifica que:</span>
-            <h2 class="text-2xl sm:text-3xl text-slate-900 font-extrabold tracking-tight">${cert.studentName}</h2>
-            <p class="text-xs text-slate-500 max-w-md mt-1">Ha completado satisfactoriamente la especialización técnica:</p>
-            <h3 class="text-lg sm:text-xl text-primary font-bold">${cert.courseTitle}</h3>
-            <span class="px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono text-xs font-semibold mt-1">
-              ${cert.grade} • ${cert.hoursCompleted}
+          <div class="text-center py-6 flex flex-col items-center gap-2">
+            <span class="text-xs text-[#80857e] uppercase font-mono tracking-widest">Certifica que:</span>
+            <h2 class="text-3xl sm:text-4xl text-[#0c0d0e] font-extrabold tracking-tight font-sans">${studentName}</h2>
+            <p class="text-xs text-[#80857e] max-w-md mt-1 font-sans">Ha completado satisfactoriamente los laboratorios prácticos y requisitos de la especialización técnica:</p>
+            <h3 class="text-xl sm:text-2xl text-[#005c38] font-bold font-sans">${cert.courseTitle}</h3>
+            <span class="px-3 py-1 rounded-full bg-emerald-50 text-[#005c38] font-mono text-xs font-bold border border-emerald-300 mt-1">
+              ${cert.grade} • ${cert.hoursCompleted} • Entorno Ofensivo Windows
             </span>
           </div>
 
@@ -1975,6 +2066,14 @@
       if (detectedKey) {
         appState.activeCommandKey = detectedKey;
         updateExplanationCard(detectedKey);
+
+        // Registro de progreso real por estudiante
+        const userEmail = appState.currentUser && appState.currentUser.email;
+        if (userEmail) {
+          if (detectedKey === 'nmap') markLabCompleted(userEmail, 'lab-1');
+          else if (detectedKey === 'ipconfig' || detectedKey === 'ping' || detectedKey === 'tracert') markLabCompleted(userEmail, 'lab-2');
+          else if (detectedKey === 'whoami' || detectedKey === 'netstat' || detectedKey === 'testnet' || detectedKey === 'curl') markLabCompleted(userEmail, 'lab-3');
+        }
       }
 
       if (input) input.value = '';
@@ -2061,6 +2160,35 @@
       a.download = "dev101x_registro.csv";
       a.click();
       showToast("CSV descargado", "success");
+    },
+    downloadDiplomaPDF() {
+      const element = document.getElementById('diploma-printable');
+      if (!element) {
+        showToast("Error: No se encontró el diploma para exportar", "error");
+        return;
+      }
+      showToast("Preparando descarga de Diploma en alta resolución...", "info");
+
+      const student = (appState.currentUser && appState.currentUser.name) || 'Dev101x';
+      const cleanName = student.replace(/[^a-zA-Z0-9]/g, '_');
+
+      if (typeof html2pdf !== 'undefined') {
+        const opt = {
+          margin: [8, 8, 8, 8],
+          filename: `Diploma_Dev101x_${cleanName}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2.5, useCORS: true, letterRendering: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save().then(() => {
+          showToast("Diploma descargado exitosamente (PDF 300 DPI)", "success");
+        }).catch((err) => {
+          console.warn("Fallo html2pdf, recurriendo a impresión:", err);
+          window.print();
+        });
+      } else {
+        window.print();
+      }
     }
   };
 
