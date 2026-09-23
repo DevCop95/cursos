@@ -1609,49 +1609,51 @@
 
     container.innerHTML = `
       <div class="min-h-[75vh] flex flex-col items-center justify-center py-10 px-4">
-        <div class="w-full max-w-md bg-white rounded-2xl border border-[#E2E8F0] shadow-xl p-6 sm:p-8 flex flex-col items-center gap-6 modal-enter">
+        <div class="w-full max-w-md bg-[#fdfcf9] rounded-[24px] border border-[#d3cec5] shadow-[0_20px_60px_rgba(12,13,14,.08)] p-6 sm:p-8 flex flex-col items-center gap-6 modal-enter">
           
-          <!-- Logo & Título -->
-          <div class="flex flex-col items-center text-center gap-2">
-            <div class="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center p-2.5 shadow-sm">
-              <img src="assets/icon.svg" alt="Dev101x" class="w-9 h-9 rounded-lg" />
+          <!-- Logo & Título Oficial Dev101x -->
+          <div class="flex flex-col items-center text-center gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-white border border-[#d3cec5] flex items-center justify-center p-2.5 shadow-xs">
+              <img src="assets/favicon.png" alt="Dev101x" class="w-10 h-10 rounded-lg object-contain" />
             </div>
             <div>
-              <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Acceso a Dev101x</h1>
-              <p class="text-xs text-slate-500 mt-1">Pentesting 101: Fundamentos desde Windows</p>
+              <h1 class="text-3xl font-extrabold text-[#0c0d0e] tracking-tight font-sans">
+                Acceso a Dev<em class="not-italic text-[#005c38]">101x</em>
+              </h1>
+              <p class="text-xs text-[#80857e] mt-1 font-mono">Pentesting 101 &bull; Fundamentos desde Windows</p>
             </div>
           </div>
 
           <!-- Contenedor Oficial Google Sign-In -->
           <div class="w-full flex flex-col gap-5">
             <div class="flex flex-col items-center gap-3">
-              <span class="text-xs text-slate-600 font-medium text-center">Inicia sesión con tu cuenta de Google:</span>
+              <span class="text-xs text-[#282b29] font-medium text-center font-sans">Inicia sesión con tu cuenta de Google:</span>
               <div id="real-google-btn-container" class="w-full flex justify-center items-center min-h-[50px] py-1">
-                <div class="flex items-center gap-2 text-xs text-slate-400 py-3">
-                  <span class="w-4 h-4 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin"></span>
+                <div class="flex items-center gap-2 text-xs text-[#80857e] py-3 font-mono">
+                  <span class="w-4 h-4 border-2 border-slate-300 border-t-[#005c38] rounded-full animate-spin"></span>
                   <span>Cargando Google Identity Services...</span>
                 </div>
               </div>
             </div>
 
             <!-- Panel de Seguridad & Verificación Oficial -->
-            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2 text-xs">
+            <div class="p-3.5 bg-white border border-[#d3cec5] rounded-xl flex flex-col gap-2 text-xs">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 font-bold text-slate-800">
-                  <span class="material-symbols-outlined text-sm text-emerald-600">verified_user</span>
-                  <span>Autenticación Oficial Google OAuth 2.0</span>
+                <div class="flex items-center gap-1.5 font-bold text-[#0c0d0e]">
+                  <span class="material-symbols-outlined text-sm text-[#005c38]">verified_user</span>
+                  <span class="font-sans">Autenticación Oficial Google OAuth 2.0</span>
                 </div>
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">PROD</span>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 text-[#005c38] border border-emerald-200">PROD</span>
               </div>
-              <p class="text-[11px] text-slate-600 leading-relaxed font-sans">
-                La contraseña y validación se procesan exclusivamente en los servidores oficiales de Google (<code class="text-slate-700 font-mono">accounts.google.com</code>). Dev101x no almacena ni solicita contraseñas.
+              <p class="text-[11px] text-[#282b29] leading-relaxed font-sans">
+                La contraseña y validación se procesan exclusivamente en los servidores oficiales de Google (<code class="text-[#0c0d0e] font-mono font-semibold">accounts.google.com</code>). Dev101x no almacena ni solicita contraseñas.
               </p>
             </div>
           </div>
 
           <!-- Pie de Seguridad -->
-          <div class="w-full pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-            <span class="flex items-center gap-1.5 text-emerald-700 font-semibold">
+          <div class="w-full pt-3 border-t border-[#d3cec5] flex items-center justify-between text-[11px] text-[#80857e] font-mono">
+            <span class="flex items-center gap-1.5 text-[#005c38] font-semibold">
               <span class="material-symbols-outlined text-sm">lock</span>
               <span>Protección SSL / HTTPS</span>
             </span>
@@ -1661,8 +1663,8 @@
         </div>
 
         <div class="w-full max-w-md mt-4 text-center">
-          <p class="text-[11px] text-slate-400 font-sans">
-            &copy; 2026 Dev101x &bull; Plataforma Oficial de Aprendizaje
+          <p class="text-[11px] text-[#80857e] font-sans">
+            &copy; 2026 Dev<em class="not-italic text-[#005c38] font-bold">101x</em> &bull; Plataforma Oficial de Aprendizaje
           </p>
         </div>
       </div>

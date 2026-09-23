@@ -1,34 +1,49 @@
-/* Dev101x Architectural Precision Stylesheet */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+/* Dev101x Official Cinematic & Editorial Design System */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 :root {
-  --color-primary: #005d42;
-  --color-primary-container: #047857;
-  --color-primary-fixed: #97f5cc;
+  --fh: 'Bricolage Grotesque', sans-serif;
+  --fm: 'DM Mono', monospace;
+  --bg: #f3f0ea;
+  --bg2: #e9e5dd;
+  --surface: #fdfcf9;
+  --ink: #0c0d0e;
+  --ink2: #282b29;
+  --muted: #80857e;
+  --accent: #005c38;
+  --accent2: #003f27;
+  --line: #d3cec5;
+  --color-primary: #005c38;
+  --color-primary-container: #003f27;
+  --color-primary-fixed: #9ffdd3;
   --color-on-primary: #ffffff;
-  --color-surface: #f9f9ff;
-  --color-surface-container: #e7eeff;
-  --color-surface-container-low: #f0f3ff;
+  --color-surface: #fdfcf9;
+  --color-surface-container: #f3f0ea;
+  --color-surface-container-low: #f9f8f5;
   --color-surface-container-lowest: #ffffff;
-  --color-on-surface: #111c2d;
-  --color-on-surface-variant: #3e4943;
-  --color-border-hairline: #e2e8f0;
-  --color-border-subtle: #eaecf0;
-  --color-slate-dark: #0f172a;
+  --color-on-surface: #0c0d0e;
+  --color-on-surface-variant: #80857e;
+  --color-border-hairline: #d3cec5;
+  --color-border-subtle: #e9e5dd;
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--color-surface);
-  color: var(--color-on-surface);
+  font-family: var(--fh);
+  background-color: var(--bg);
+  color: var(--ink);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: var(--accent);
+  color: var(--surface);
+}
+
 code, pre, .font-mono {
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: var(--fm) !important;
 }
 
 /* Material Symbols standard setup */

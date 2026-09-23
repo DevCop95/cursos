@@ -11,10 +11,15 @@
   <meta property="og:description" content="Laboratorios prácticos en entornos aislados y modelos de IA." />
   <meta property="og:image" content="assets/logo.svg" />
   
-  <!-- Fonts & Icons -->
+  <!-- Favicon Oficial Dev101x -->
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+
+  <!-- Fonts & Icons Oficiales de Dev101x -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
   <!-- App Custom Stylesheet -->
@@ -31,69 +36,42 @@
       theme: {
         extend: {
           colors: {
-            "background": "#f9f9ff",
-            "surface": "#f9f9ff",
+            "bg": "#f3f0ea",
+            "bg2": "#e9e5dd",
+            "surface": "#fdfcf9",
+            "ink": "#0c0d0e",
+            "ink2": "#282b29",
+            "muted": "#80857e",
+            "accent": "#005c38",
+            "accent2": "#003f27",
+            "line": "#d3cec5",
+            "background": "#f3f0ea",
             "surface-container-lowest": "#ffffff",
-            "surface-container-low": "#f0f3ff",
-            "surface-container": "#e7eeff",
-            "surface-container-high": "#dee8ff",
-            "surface-container-highest": "#d8e3fb",
-            "surface-dim": "#cfdaf2",
-            "surface-bright": "#f9f9ff",
-            "on-surface": "#111c2d",
-            "on-surface-variant": "#3e4943",
-            "inverse-surface": "#263143",
-            "inverse-on-surface": "#ecf1ff",
-            "primary": "#005d42",
-            "primary-container": "#047857",
-            "primary-fixed": "#97f5cc",
-            "primary-fixed-dim": "#7bd8b1",
-            "on-primary": "#ffffff",
-            "on-primary-container": "#9ffdd3",
-            "secondary": "#565e74",
-            "secondary-container": "#dae2fd",
-            "secondary-fixed": "#dae2fd",
-            "on-secondary": "#ffffff",
-            "tertiary": "#005d3f",
-            "tertiary-container": "#007853",
-            "outline": "#6e7a73",
-            "outline-variant": "#bdc9c1",
-            "error": "#ba1a1a",
-            "error-container": "#ffdad6",
-            "on-error": "#ffffff",
-            "on-error-container": "#93000a"
-          },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "sm": "0.125rem",
-            "md": "0.375rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "full": "9999px"
-          },
-          spacing: {
-            "space-xs": "0.25rem",
-            "space-sm": "0.5rem",
-            "space-md": "1rem",
-            "space-lg": "1.5rem",
-            "space-xl": "2.5rem",
-            "gutter": "1.5rem",
-            "gutter-mobile": "1rem",
-            "margin": "2rem",
-            "margin-desktop": "3rem"
+            "surface-container-low": "#fdfcf9",
+            "surface-container": "#f3f0ea",
+            "surface-container-high": "#e9e5dd",
+            "surface-container-highest": "#d3cec5",
+            "on-surface": "#0c0d0e",
+            "on-surface-variant": "#80857e",
+            "primary": "#005c38",
+            "primary-container": "#003f27",
+            "primary-fixed": "#9ffdd3"
           },
           fontFamily: {
-            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "headline-md": ["Plus Jakarta Sans", "sans-serif"],
-            "headline-sm": ["Plus Jakarta Sans", "sans-serif"],
-            "display-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "display-md": ["Plus Jakarta Sans", "sans-serif"],
-            "body-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "body-md": ["Plus Jakarta Sans", "sans-serif"],
-            "body-sm": ["Plus Jakarta Sans", "sans-serif"],
-            "label-lg": ["JetBrains Mono", "monospace"],
-            "label-md": ["JetBrains Mono", "monospace"],
-            "label-sm": ["JetBrains Mono", "monospace"]
+            sans: ["Bricolage Grotesque", "sans-serif"],
+            heading: ["Bricolage Grotesque", "sans-serif"],
+            mono: ["DM Mono", "monospace"],
+            "headline-lg": ["Bricolage Grotesque", "sans-serif"],
+            "headline-md": ["Bricolage Grotesque", "sans-serif"],
+            "headline-sm": ["Bricolage Grotesque", "sans-serif"],
+            "display-lg": ["Bricolage Grotesque", "sans-serif"],
+            "display-md": ["Bricolage Grotesque", "sans-serif"],
+            "body-lg": ["Bricolage Grotesque", "sans-serif"],
+            "body-md": ["Bricolage Grotesque", "sans-serif"],
+            "body-sm": ["Bricolage Grotesque", "sans-serif"],
+            "label-lg": ["DM Mono", "monospace"],
+            "label-md": ["DM Mono", "monospace"],
+            "label-sm": ["DM Mono", "monospace"]
           }
         }
       }
@@ -101,17 +79,17 @@
   </script>
 </head>
 
-<body class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col selection:bg-primary-fixed selection:text-[#002115]">
+<body class="bg-bg font-sans text-body-md text-ink antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
 
   <!-- Top Navigation Bar Unificada & Limpia (Oculta hasta autenticarse) -->
-  <header id="main-header" class="hidden fixed top-0 left-0 right-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
+  <header id="main-header" class="hidden fixed top-0 left-0 right-0 w-full z-50 bg-[#fdfcf9]/95 backdrop-blur-md border-b border-[#d3cec5] shadow-[0_1px_8px_rgba(12,13,14,.04)]">
     <div class="h-16 max-w-[1280px] mx-auto px-gutter flex items-center justify-between gap-4">
       
       <!-- Brand & Main Nav Links -->
       <div class="flex items-center gap-8">
         <a class="flex items-center gap-2.5 group" href="#/aula-interactiva/pentesting-101">
-          <img alt="Dev101x" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform" src="assets/icon.svg" />
-          <span class="font-headline-sm text-base leading-none text-on-surface font-extrabold tracking-tight">Dev101<span class="text-primary">x</span></span>
+          <img alt="Dev101x" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform" src="assets/favicon.png" />
+          <span class="font-extrabold text-xl leading-none tracking-tight text-[#0c0d0e]">Dev<em class="not-italic text-[#005c38]">101x</em></span>
         </a>
 
         <!-- Enlaces limpios para estudiantes autenticados -->
@@ -178,16 +156,16 @@
   </main>
 
   <!-- Global Footer Conciso (Oculto hasta autenticarse) -->
-  <footer id="app-footer" class="hidden w-full bg-white border-t border-[#E2E8F0] py-6 text-xs text-slate-500 font-mono">
+  <footer id="app-footer" class="hidden w-full bg-[#fdfcf9] border-t border-[#d3cec5] py-6 text-xs text-[#80857e] font-mono">
     <div class="max-w-[1280px] mx-auto px-gutter flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2.5">
-        <img alt="Dev101x" class="h-6 w-auto rounded" src="assets/icon.svg" />
-        <span class="font-medium text-slate-600">&copy; Dev101x Academy. Seguridad &amp; Inteligencia Artificial.</span>
+        <img alt="Dev101x" class="h-6 w-auto rounded" src="assets/favicon.png" />
+        <span class="font-medium text-[#282b29]">&copy; Dev<em class="not-italic text-[#005c38] font-bold">101x</em> Academy &bull; Ciberseguridad &amp; Inteligencia Artificial</span>
       </div>
       <div class="flex items-center gap-4">
-        <a href="#/verificacion" class="hover:text-primary">Verificación</a>
-        <a href="#/perfil" class="hover:text-primary">Perfil</a>
-        <a href="#/panel-admin" id="footer-admin-link" class="hidden hover:text-primary text-primary font-bold">Admin</a>
+        <a href="#/verificacion" class="hover:text-[#005c38] transition-colors">Verificación</a>
+        <a href="#/perfil" class="hover:text-[#005c38] transition-colors">Perfil</a>
+        <a href="#/panel-admin" id="footer-admin-link" class="hidden hover:text-[#005c38] text-[#005c38] font-bold transition-colors">Admin</a>
       </div>
     </div>
   </footer>
@@ -243,8 +221,8 @@
     </div>
   </div>
 
-  <script src="js/identicon.js?v=admin-role-6"></script>
-  <script src="js/data.js?v=admin-role-6"></script>
-  <script src="js/app.js?v=admin-role-6"></script>
+  <script src="js/identicon.js?v=dev101x-v7"></script>
+  <script src="js/data.js?v=dev101x-v7"></script>
+  <script src="js/app.js?v=dev101x-v7"></script>
 </body>
 </html>
