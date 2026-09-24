@@ -288,4 +288,14 @@ revalidateSession()
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
+  // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
+  if (navigator.serviceWorker.controller) {
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+  }
 }

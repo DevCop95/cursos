@@ -1,12 +1,13 @@
 /**
  * Dev101x — Service Worker
  *  - HTML: red primero (siempre la versión más reciente) con copia offline.
- *  - CSS/JS/imágenes propios: se sirven desde caché y se actualizan en segundo plano
- *    (stale-while-revalidate), así un despliegue nuevo llega sin tener que cambiar VERSION.
+ *  - CSS/JS/imágenes propios: también red primero (revalidando con el servidor) y caché solo sin
+ *    conexión. Los módulos se importan sin ?v=, así que servirlos desde caché podía mezclar un
+ *    main.js nuevo con módulos viejos tras un despliegue.
  *  - Fuentes de Google: caché primero (sus URLs son inmutables).
  *  - Google Identity, Supabase y demás orígenes: no se interceptan.
  */
-const VERSION = 'dev101x-v33';
+const VERSION = 'dev101x-v34';
 const STATIC_CACHE = `${VERSION}-static`;
 const FONT_CACHE = 'dev101x-fonts';
 
@@ -14,11 +15,11 @@ const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
-  './css/tailwind.css?v=dev101x-v33',
-  './css/app.css?v=dev101x-v33',
-  './js/main.js?v=dev101x-v33',
-  './js/identicon.js?v=dev101x-v33',
-  './js/water-reveal.js?v=dev101x-v33',
+  './css/tailwind.css?v=dev101x-v34',
+  './css/app.css?v=dev101x-v34',
+  './js/main.js?v=dev101x-v34',
+  './js/identicon.js?v=dev101x-v34',
+  './js/water-reveal.js?v=dev101x-v34',
   './js/config.js',
   './js/state.js',
   './js/router.js',
@@ -69,11 +70,16 @@ self.addEventListener('activate', event => {
 async function networkFirst(request) {
   const cache = await caches.open(STATIC_CACHE);
   try {
-    const response = await fetch(request);
+    // no-cache: pregunta al servidor aunque la caché HTTP tenga copia (responde 304 si no cambió).
+    // Las navegaciones no admiten opciones en fetch(): esas van tal cual.
+    const response = await fetch(request.mode === 'navigate' ? request : new Request(request, { cache: 'no-cache' }));
     if (response.ok) cache.put(request, response.clone());
     return response;
   } catch (e) {
-    return (await cache.match(request)) || (await cache.match('./index.html'));
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    if (request.mode === 'navigate') return (await cache.match('./index.html')) || Response.error();
+    return Response.error();
   }
 }
 
@@ -84,21 +90,6 @@ async function cacheFirst(request, cacheName) {
   const response = await fetch(request);
   if (response.ok || response.type === 'opaque') cache.put(request, response.clone());
   return response;
-}
-
-async function staleWhileRevalidate(event) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cached = await cache.match(event.request);
-  const update = fetch(event.request)
-    .then(response => {
-      if (response.ok) cache.put(event.request, response.clone());
-      return response;
-    });
-  if (cached) {
-    event.waitUntil(update.catch(() => {}));
-    return cached;
-  }
-  return update;
 }
 
 self.addEventListener('fetch', event => {
@@ -112,9 +103,5 @@ self.addEventListener('fetch', event => {
   }
   if (url.origin !== self.location.origin) return;
 
-  if (request.mode === 'navigate' || request.destination === 'document') {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-  event.respondWith(staleWhileRevalidate(event));
+  event.respondWith(networkFirst(request));
 });
