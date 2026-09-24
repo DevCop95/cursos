@@ -2,7 +2,7 @@
  * Dev101x — Service Worker Oficial
  * Gestión de Caché Resiliente y Soporte Offline PWA
  */
-const CACHE_NAME = 'dev101x-v15-cache';
+const CACHE_NAME = 'dev101x-v16-cache';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

@@ -195,9 +195,6 @@
           <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="mis-cursos" href="#/mis-cursos">
             Mis Cursos
           </a>
-          <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="verificacion" href="#/verificacion">
-            Verificación
-          </a>
         </nav>
       </div>
 
@@ -276,7 +273,6 @@
         <span class="font-medium text-[#282b29]">&copy; Dev<em class="not-italic text-[#005c38] font-bold">101x</em> Academy &bull; Ciberseguridad &amp; Inteligencia Artificial</span>
       </div>
       <div class="flex items-center gap-4">
-        <a href="#/verificacion" class="hover:text-[#005c38] transition-colors">Verificación</a>
         <a href="#/perfil" class="hover:text-[#005c38] transition-colors">Perfil</a>
         <a href="#/panel-admin" id="footer-admin-link" class="hidden hover:text-[#005c38] text-[#005c38] font-bold transition-colors">Admin</a>
       </div>
@@ -288,7 +284,7 @@
     <div class="w-full max-w-md bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden modal-enter flex flex-col">
       <div class="p-3 border-b border-[#E2E8F0] flex items-center gap-2">
         <span class="material-symbols-outlined text-slate-400 text-base">search</span>
-        <input id="quick-search-input" onkeyup="if(event.key==='Escape') document.getElementById('quick-search-modal').classList.add('hidden')" type="text" placeholder="Buscar cursos, verificación, perfil..." class="w-full text-xs outline-none text-slate-800 font-body-sm" autofocus />
+        <input id="quick-search-input" onkeyup="if(event.key==='Escape') document.getElementById('quick-search-modal').classList.add('hidden')" type="text" placeholder="Buscar cursos, temas, perfil..." class="w-full text-xs outline-none text-slate-800 font-body-sm" autofocus />
         <button onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="text-[10px] text-slate-400 px-1 py-0.5 rounded border border-slate-200 font-mono">ESC</button>
       </div>
       <div class="p-2 flex flex-col gap-0.5 text-xs font-mono">
@@ -299,10 +295,6 @@
         <a href="#/mis-cursos" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
           <span>Mis Cursos</span>
           <span class="text-slate-400">#/mis-cursos</span>
-        </a>
-        <a href="#/verificacion" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
-          <span>Centro de Verificación</span>
-          <span class="text-slate-400">#/verificacion</span>
         </a>
         <a href="#/diploma" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
           <span>Diploma Oficial</span>
@@ -334,10 +326,10 @@
     </div>
   </div>
 
-  <script src="js/identicon.js?v=dev101x-v15"></script>
-  <script src="js/data.js?v=dev101x-v15"></script>
-  <script src="js/app.js?v=dev101x-v15"></script>
-  <script src="js/water-reveal.js?v=dev101x-v15"></script>
+  <script src="js/identicon.js?v=dev101x-v16"></script>
+  <script src="js/data.js?v=dev101x-v16"></script>
+  <script src="js/app.js?v=dev101x-v16"></script>
+  <script src="js/water-reveal.js?v=dev101x-v16"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {

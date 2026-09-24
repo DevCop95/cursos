@@ -297,8 +297,7 @@
       const path = link.getAttribute('data-path');
       const isMatch = (path === currentRoute) ||
         (path === 'aula-interactiva' && currentRoute === 'aula-interactiva') ||
-        (path === 'mis-cursos' && currentRoute === 'mis-cursos') ||
-        (path === 'verificacion' && (currentRoute === 'verificacion' || currentRoute === 'validador-hash' || currentRoute === 'directorio-egresados'));
+        (path === 'mis-cursos' && currentRoute === 'mis-cursos');
 
       if (isMatch) {
         link.classList.add('bg-surface-container-low', 'text-primary', 'font-semibold');
@@ -387,10 +386,8 @@
       case 'verificacion':
       case 'directorio-egresados':
       case 'validador-hash':
-        renderVerificacion(appContainer, route === 'directorio-egresados' ? 'directorio' : 'validador');
-        break;
       case 'alerta-fraude':
-        renderAlertaFraude(appContainer);
+        window.location.hash = '#/mis-cursos';
         break;
       default:
         renderAulaInteractiva(appContainer, 'pentesting-101');
@@ -1528,7 +1525,7 @@
         <div class="bg-[#fdfcf9] p-4 rounded-2xl border border-[#d3cec5] shadow-xs flex items-center justify-between text-xs no-print flex-wrap gap-3">
           <div class="flex items-center gap-2.5 font-mono">
             <span class="material-symbols-outlined text-[#005c38] text-base">verified</span>
-            <span class="font-bold text-[#0c0d0e]">Diploma Oficial Verificado</span>
+            <span class="font-bold text-[#0c0d0e]">Diploma Oficial Dev101x</span>
             <span class="text-[#d3cec5]">•</span>
             <span class="text-[#005c38] font-bold">${folio}</span>
           </div>
@@ -1541,8 +1538,8 @@
               <span class="material-symbols-outlined text-sm">print</span>
               <span>Imprimir</span>
             </button>
-            <a href="#/verificacion" class="px-3 py-1.5 bg-[#f3f0ea] text-[#0c0d0e] hover:bg-[#e9e5dd] rounded-xl text-xs font-semibold border border-[#d3cec5]/80 transition-all">
-              Verificar
+            <a href="#/mis-cursos" class="px-3 py-1.5 bg-[#f3f0ea] text-[#0c0d0e] hover:bg-[#e9e5dd] rounded-xl text-xs font-semibold border border-[#d3cec5]/80 transition-all">
+              Mis Cursos
             </a>
           </div>
         </div>
@@ -1608,7 +1605,6 @@
             </div>
             <nav class="flex flex-col gap-1 text-xs font-mono">
               <a href="#/panel-admin" class="p-2 bg-slate-100 rounded text-primary font-bold">Control de Accesos</a>
-              <a href="#/verificacion" class="p-2 text-slate-600 hover:bg-slate-50 rounded">Verificación</a>
             </nav>
           </div>
           <a href="#/explorar-cursos" class="text-xs text-slate-400 hover:text-slate-800">← Volver</a>
@@ -1705,8 +1701,8 @@
           <span class="material-symbols-outlined text-3xl text-red-500">gpp_bad</span>
           <h1 class="text-base font-bold text-slate-900">Diploma No Encontrado</h1>
           <p class="text-xs text-slate-500">El hash ingresado no corresponde a ningún registro oficial de Dev101x.</p>
-          <a href="#/verificacion" class="mt-2 px-4 py-2 bg-primary-container text-white rounded text-xs font-semibold">
-            Volver a Verificación
+          <a href="#/mis-cursos" class="mt-2 px-4 py-2 bg-primary-container text-white rounded text-xs font-semibold">
+            Volver a Mis Cursos
           </a>
         </div>
       </div>
