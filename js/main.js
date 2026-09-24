@@ -8,7 +8,7 @@ import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRed
 import { showToast, closeModal, avatarFor } from './ui.js';
 import { initSearch, openSearch, closeSearch } from './search.js';
 import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js';
-import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail } from './views/courses.js';
 import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
 import { createHistory } from './lib/cmd-history.js';
@@ -146,6 +146,7 @@ const ACTIONS = {
   'c-seek': el => seekCourseVideo(Number(el.dataset.start) || 0),
   'c-hint': el => openCourseHint(el.dataset.step),
   'c-cheat': () => openCourseCheatSheet(),
+  'open-db-course': el => openDbCourseDetail(el.dataset.id),
   'c-resources': () => openCourseResources(),
   'c-expl': el => selectCourseExplanation(el.dataset.key),
   'c-reset': () => resetCourseLab(),

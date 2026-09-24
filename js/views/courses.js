@@ -6,10 +6,13 @@ import { appState } from '../state.js';
 import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js';
 import { TOTAL_LESSONS } from '../lab.js';
 import { currentProgress, fetchStreak } from '../progress.js';
-import { fetchCourses, fetchCourseProgress } from '../cloud.js';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js';
+import { computeCourseProgress } from '../lib/course-engine.js';
 import { openDialog } from '../ui.js';
 
 const COURSES = [COURSE];
+// Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
+const dbContent = new Map();
 const TOTAL_LINKS = NMAP_RESOURCES.reduce((n, c) => n + c.items.length, 0);
 
 function courseMeta(c) {
@@ -30,25 +33,42 @@ function ringHtml(percent) {
     </span>`;
 }
 
-// Tarjeta de un curso de pago (contenido en Supabase) en Mis Cursos.
-function dbTile(c, progress) {
-  const pct = progress ? progress.progress_percentage : 0;
+// Tarjeta de un curso de pago (contenido en Supabase) en Mis Cursos: misma forma que la de Nmap.
+function dbTile(c, progress, content) {
+  const steps = (progress && progress.steps) || {};
+  const p = content ? computeCourseProgress(content, steps) : null;
+  const pct = p ? p.percent : (progress ? Number(progress.progress_percentage) || 0 : 0);
+  const cta = pct === 100 ? 'Repasar' : pct > 0 ? 'Continuar' : 'Empezar';
+  const labs = content && Array.isArray(content.labs) ? content.labs.length : 0;
   return `
     <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
       <div class="relative bg-term px-4 py-4 flex items-center justify-between gap-3 overflow-hidden">
         <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
-          <span class="self-start px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
+          <span class="flex items-center gap-1.5 flex-wrap">
+            ${content && content.categoryLabel ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(content.categoryLabel)}</span>` : ''}
+            <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
+          </span>
           <span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">code</span>
         </div>
         <div class="relative">${ringHtml(pct)}</div>
       </div>
       <div class="p-4 flex flex-col gap-3 flex-1">
-        <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
-        <div class="mt-auto">
-          <a href="#/aula-interactiva/${esc(c.id)}" class="w-full h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>${pct > 0 ? (pct === 100 ? 'Repasar' : 'Continuar') : 'Empezar'}</span>
+        <div class="flex flex-col gap-1">
+          <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
+          ${p ? `<p class="text-xs text-muted truncate">${p.complete ? '✓ Curso completado' : `Siguiente: ${esc(p.nextLesson.title)}`}</p>` : ''}
+        </div>
+        ${p ? `
+        <div class="flex items-center gap-3 text-[11px] font-mono text-muted">
+          <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${p.lessonsDone.length}/${p.lessons.length}</span>
+          ${labs ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${labs} labs</span>` : ''}
+          ${content.video ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
+        </div>` : ''}
+        <div class="mt-auto flex items-center gap-2">
+          <a href="#/aula-interactiva/${esc(c.id)}" class="flex-1 h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>${cta}</span>
           </a>
+          ${content ? `<button type="button" data-action="open-db-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors" title="Ver temario">Temario</button>` : ''}
         </div>
       </div>
     </article>`;
@@ -105,8 +125,8 @@ export function renderMisCursos(container) {
           <h1 class="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">Hola, ${esc(firstName)} 👋</h1>
         </div>
         <div class="flex items-center gap-2 font-mono text-[11px]">
-          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-accent">${p.percent}%</strong> <span class="text-muted">progreso</span></span>
-          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-ink">${p.labsDone.length}/${LAB_STEPS.length}</strong> <span class="text-muted">labs</span></span>
+          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong id="stat-courses" class="text-ink">${enrolled.length}</strong> <span class="text-muted">cursos</span></span>
+          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong id="stat-done" class="text-accent">${p.complete ? 1 : 0}</strong> <span class="text-muted">terminados</span></span>
           <span id="streak-chip" class="hidden px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900" title="Días seguidos con actividad"></span>
         </div>
       </section>
@@ -124,11 +144,21 @@ export function renderMisCursos(container) {
     const grid = document.getElementById('my-courses-grid');
     if (!grid) return;
     const mine = courses.filter(c => c.has_content && !COURSES.some(l => l.id === c.id) && appState.enabledCourses.includes(c.id));
-    if (!mine.length) return;
-    const explore = grid.querySelector('a[href="#/explorar-cursos"]');
-    const html = mine.map(c => dbTile(c, (progress || []).find(r => r.course_id === c.id))).join('');
-    if (explore) explore.insertAdjacentHTML('beforebegin', html);
-    else grid.insertAdjacentHTML('beforeend', html);
+    if (!mine.length) return null;
+    return Promise.all(mine.map(c => dbContent.has(c.id)
+      ? dbContent.get(c.id)
+      : fetchCourseContent(c.id).then(ct => { if (ct) dbContent.set(c.id, ct); return ct; }).catch(() => null)
+    )).then(contents => {
+      const grid2 = document.getElementById('my-courses-grid');
+      if (!grid2) return;
+      const explore = grid2.querySelector('a[href="#/explorar-cursos"]');
+      const html = mine.map((c, i) => dbTile(c, (progress || []).find(r => r.course_id === c.id), contents[i])).join('');
+      if (explore) explore.insertAdjacentHTML('beforebegin', html);
+      else grid2.insertAdjacentHTML('beforeend', html);
+      const add = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = String(Number(el.textContent) + n); };
+      add('stat-courses', mine.length);
+      add('stat-done', mine.filter(c => ((progress || []).find(r => r.course_id === c.id) || {}).completed_at).length);
+    });
   }).catch(() => {});
   fetchStreak().then(streak => {
     const chip = document.getElementById('streak-chip');
@@ -266,6 +296,40 @@ export function openCourseDetail(courseId) {
         </div>
         <p class="text-[11px] font-mono text-muted">${courseMeta(course)} · Video en español de ${esc(COURSE_VIDEO.author)}</p>
         ${enrolled ? `<a href="#/aula-interactiva/${esc(course.id)}" class="h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span>Ir al aula</a>` : ''}
+      </div>`
+  });
+}
+
+// Temario de un curso de pago (con el contenido ya descargado en Mis Cursos).
+export function openDbCourseDetail(courseId) {
+  const course = dbContent.get(courseId);
+  if (!course) return;
+  const lessons = (course.syllabus || []).reduce((n, m) => n + m.lessons.length, 0);
+  openDialog({
+    title: course.title,
+    kicker: `${course.categoryLabel || 'CURSO'} · ${course.duration || ''}`,
+    body: `
+      <div class="flex flex-col gap-4">
+        ${course.description ? `<p class="text-[13px] leading-relaxed">${esc(course.description)}</p>` : ''}
+        ${(course.objectives || []).length ? `
+        <div>
+          <p class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide mb-2">Qué aprenderás</p>
+          <ul class="flex flex-col gap-1.5 text-[13px]">
+            ${course.objectives.map(o => `<li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">check_circle</span><span>${esc(o)}</span></li>`).join('')}
+          </ul>
+        </div>` : ''}
+        <div>
+          <p class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide mb-2">Temario</p>
+          <ol class="flex flex-col gap-1.5">
+            ${(course.syllabus || []).map((m, i) => `
+              <li class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-bg/70 border border-line/70 text-xs">
+                <span class="flex items-center gap-2 min-w-0"><span class="w-5 h-5 rounded-md bg-accent text-white text-[10px] font-bold flex items-center justify-center shrink-0">${i + 1}</span><span class="truncate font-semibold text-ink">${esc(String(m.module).replace(/^Módulo \d+:\s*/, ''))}</span></span>
+                <span class="font-mono text-[10px] text-muted shrink-0">${m.lessons.length} lecciones</span>
+              </li>`).join('')}
+          </ol>
+        </div>
+        <p class="text-[11px] font-mono text-muted">${(course.syllabus || []).length} módulos · ${lessons} lecciones · ${(course.labs || []).length} labs · ${esc(course.duration || '')}${course.video ? ` · Video en español de ${esc(course.video.author)}` : ''}</p>
+        <a href="#/aula-interactiva/${esc(courseId)}" class="h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span>Ir al aula</a>
       </div>`
   });
 }
