@@ -533,12 +533,16 @@
           </div>
           <h3 class="text-base sm:text-lg font-bold text-[#0c0d0e] font-sans leading-snug">${c.title}</h3>
           <p class="text-[13px] sm:text-sm text-[#80857e] font-sans leading-relaxed">${isComplete ? 'Laboratorios de reconocimiento y análisis completados con éxito' : (userProgress > 0 ? `Laboratorios en curso (${labsCount}/3 completados)` : c.userCurrentLesson)}</p>
-          <div class="w-full bg-[#f3f0ea] h-2.5 rounded-full overflow-hidden border border-[#d3cec5]/40">
-            <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${userProgress}%;"></div>
+          <div class="flex items-center gap-3">
+            <div class="flex-1 bg-[#f3f0ea] h-2 rounded-full overflow-hidden border border-[#d3cec5]/40">
+              <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${userProgress}%;"></div>
+            </div>
+            <span class="font-mono text-[11px] font-bold text-[#005c38] shrink-0 tabular-nums">${userProgress}%</span>
           </div>
         </div>
-        <div class="flex items-center gap-3 pt-3 border-t border-[#d3cec5]/60">
-          <a href="#/aula-interactiva/${c.id}" class="flex-1 min-h-[44px] py-2.5 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-[13px] sm:text-sm font-semibold shadow-xs transition-all flex items-center justify-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3.5 border-t border-[#d3cec5]/60">
+          <span class="font-mono text-[11px] text-[#80857e]">${c.modulesCount} módulos · ${c.labsCount} labs · ${c.duration}</span>
+          <a href="#/aula-interactiva/${c.id}" class="w-full sm:w-auto min-h-[44px] py-2.5 px-5 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-[13px] font-semibold shadow-xs transition-all inline-flex items-center justify-center gap-2 shrink-0">
             <span class="material-symbols-outlined text-sm">terminal</span>
             <span>${isComplete ? 'Repasar material' : (userProgress > 0 ? 'Continuar clase' : 'Entrar al aula')}</span>
           </a>
@@ -547,7 +551,7 @@
     `).join('');
 
     container.innerHTML = `
-      <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-6">
+      <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-6 max-w-4xl mx-auto">
         <!-- Tarjeta de Perfil del Estudiante -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs">
           <div class="flex items-center gap-3 min-w-0">
