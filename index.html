@@ -6,28 +6,32 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://i.ytimg.com; connect-src 'self' https://accounts.google.com/gsi/ https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; frame-src https://accounts.google.com/gsi/ https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-  <title>Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial</title>
-  <meta name="description" content="Plataforma de formación técnica en Ciberseguridad Ofensiva y Pentesting con laboratorios prácticos guiados: reconocimiento de redes con Nmap, PowerShell y consola de Windows en un entorno de prácticas aislado." />
-  <meta name="keywords" content="ciberseguridad, pentesting, ethical hacking, nmap, powershell, laboratorios tecnicos, dev101x, cursos online, red team, seguridad informatica" />
-  <meta name="author" content="Dev101x Academy" />
+  <title>Dev101x Cursos — Pentesting con Nmap y Git desde cero | Yared Henriquez (DevCop95)</title>
+  <meta name="description" content="Cursos prácticos en español de Dev101x (Yared Henriquez, DevCop95 en GitHub): pentesting y escaneo de redes con Nmap desde Windows, y Git y GitHub desde cero, con terminal interactiva en el navegador." />
+  <meta name="keywords" content="dev101x, devcop95, yared henriquez, cursos de ciberseguridad, pentesting, nmap, git, github, curso de git en español, ethical hacking, powershell" />
+  <meta name="author" content="Yared Henriquez (Dev101x)" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link rel="canonical" href="https://cursos.dev101x.online/" />
+  <link rel="author" href="https://dev101x.online/" />
+  <link rel="me" href="https://github.com/DevCop95" />
+  <link rel="me" href="https://dev101x.online/" />
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://cursos.dev101x.online/" />
-  <meta property="og:site_name" content="Dev101x Academy" />
+  <meta property="og:site_name" content="Dev101x Cursos" />
   <meta property="og:locale" content="es_ES" />
-  <meta property="og:title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
-  <meta property="og:description" content="Laboratorios prácticos en entornos Windows ofensivos y escaneos de red con Nmap, con consola interactiva y seguimiento de progreso." />
+  <meta property="og:title" content="Dev101x Cursos — Pentesting con Nmap y Git desde cero | Yared Henriquez (DevCop95)" />
+  <meta property="og:description" content="Cursos prácticos en español: Nmap desde Windows y Git y GitHub desde cero, con terminal interactiva. Por Dev101x (Yared Henriquez)." />
   <meta property="og:image" content="https://cursos.dev101x.online/assets/og-image.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Dev101x Academy — Plataforma de Cursos de Ciberseguridad &amp; Inteligencia Artificial" />
+  <meta property="og:image:alt" content="Dev101x Cursos — Pentesting con Nmap y Git desde cero" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
-  <meta name="twitter:description" content="Laboratorios prácticos en entornos Windows ofensivos con Nmap, consola interactiva y seguimiento de progreso." />
+  <meta name="twitter:creator" content="@Devcop101" />
+  <meta name="twitter:title" content="Dev101x Cursos — Pentesting con Nmap y Git desde cero | Yared Henriquez (DevCop95)" />
+  <meta name="twitter:description" content="Cursos prácticos en español: Nmap desde Windows y Git y GitHub desde cero, con terminal interactiva. Por Dev101x (Yared Henriquez)." />
   <meta name="twitter:image" content="https://cursos.dev101x.online/assets/og-image.jpg" />
   <meta name="twitter:image:alt" content="Dev101x Academy" />
 
@@ -36,14 +40,23 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Person",
+        "@id": "https://dev101x.online/#person",
+        "name": "Yared Henriquez",
+        "alternateName": ["Dev101x", "DevCop95"],
+        "url": "https://dev101x.online/",
+        "sameAs": ["https://dev101x.online/", "https://github.com/DevCop95", "https://x.com/Devcop101"]
+      },
+      {
         "@type": "EducationalOrganization",
         "@id": "https://cursos.dev101x.online/#organization",
-        "name": "Dev101x Academy",
+        "name": "Dev101x Cursos",
         "url": "https://cursos.dev101x.online/",
         "logo": "https://cursos.dev101x.online/assets/icon-512.png",
         "image": "https://cursos.dev101x.online/assets/og-image.jpg",
-        "description": "Academia de especialización técnica en Ciberseguridad Ofensiva y Modelos de Inteligencia Artificial.",
-        "sameAs": ["https://dev101x.online/"]
+        "description": "Cursos prácticos en español de ciberseguridad y desarrollo, con laboratorios en el navegador.",
+        "founder": { "@id": "https://dev101x.online/#person" },
+        "sameAs": ["https://dev101x.online/", "https://github.com/DevCop95"]
       },
       {
         "@type": "WebSite",
@@ -51,18 +64,32 @@
         "url": "https://cursos.dev101x.online/",
         "name": "Dev101x Cursos",
         "publisher": { "@id": "https://cursos.dev101x.online/#organization" },
-        "inLanguage": "es-ES"
+        "author": { "@id": "https://dev101x.online/#person" },
+        "inLanguage": "es"
       },
       {
         "@type": "Course",
         "@id": "https://cursos.dev101x.online/#course-pentesting",
         "name": "Pentesting 101: Fundamentos desde Windows",
-        "description": "Especialización práctica en reconocimiento de redes corporativas, escaneo con Nmap y técnicas Living-off-the-Land ejecutadas nativamente en entornos Windows.",
+        "description": "Reconocimiento de redes y escaneo de puertos con Nmap desde Windows, con consola interactiva y laboratorios guiados.",
         "provider": { "@id": "https://cursos.dev101x.online/#organization" },
+        "creator": { "@id": "https://dev101x.online/#person" },
         "image": "https://cursos.dev101x.online/assets/og-image.jpg",
-        "inLanguage": "es-ES",
+        "inLanguage": "es",
+        "isAccessibleForFree": true,
         "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT32H" },
         "offers": { "@type": "Offer", "category": "Free", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" }
+      },
+      {
+        "@type": "Course",
+        "@id": "https://cursos.dev101x.online/#course-git",
+        "name": "Git y GitHub desde cero",
+        "description": "Instala Git en Windows, versiona tus proyectos, trabaja con ramas y colabora en GitHub con Pull Requests, practicando en una terminal Git Bash dentro del navegador.",
+        "provider": { "@id": "https://cursos.dev101x.online/#organization" },
+        "creator": { "@id": "https://dev101x.online/#person" },
+        "inLanguage": "es",
+        "isAccessibleForFree": false,
+        "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT24H" }
       }
     ]
   }
@@ -79,13 +106,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />
 
-  <link rel="stylesheet" href="css/tailwind.css?v=dev101x-v37" />
-  <link rel="stylesheet" href="css/app.css?v=dev101x-v37" />
+  <link rel="stylesheet" href="css/tailwind.css?v=dev101x-v38" />
+  <link rel="stylesheet" href="css/app.css?v=dev101x-v38" />
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="js/identicon.js?v=dev101x-v37" defer></script>
-  <script src="js/water-reveal.js?v=dev101x-v37" defer></script>
-  <script type="module" src="js/main.js?v=dev101x-v37"></script>
+  <script src="js/identicon.js?v=dev101x-v38" defer></script>
+  <script src="js/water-reveal.js?v=dev101x-v38" defer></script>
+  <script type="module" src="js/main.js?v=dev101x-v38"></script>
 </head>
 
 <body class="bg-bg font-sans text-ink antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
@@ -151,7 +178,7 @@
   <main id="app-view" tabindex="-1" class="w-full flex-1 flex flex-col outline-none">
     <noscript>
       <div class="max-w-4xl mx-auto p-8">
-        <h1 class="text-3xl font-bold text-ink">Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial</h1>
+        <h1 class="text-3xl font-bold text-ink">Dev101x Cursos — Pentesting con Nmap y Git desde cero</h1>
         <p class="mt-4 text-ink2 leading-relaxed">Plataforma de formación técnica con laboratorios prácticos en entornos Windows, reconocimiento de redes con Nmap y consola interactiva. Necesitas JavaScript activado para usarla.</p>
       </div>
     </noscript>
@@ -174,7 +201,7 @@
 
   <footer id="app-footer" class="hidden max-md:!hidden w-full bg-surface border-t border-line py-5 text-xs text-muted font-mono">
     <div class="max-w-[1280px] mx-auto px-gutter flex items-center justify-between gap-4">
-      <span>&copy; Dev<em class="not-italic text-accent font-bold">101x</em> Academy</span>
+      <span>&copy; Dev<em class="not-italic text-accent font-bold">101x</em> · <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="hover:text-accent">Portafolio</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="hover:text-accent">GitHub</a></span>
       <a href="#/panel-admin" data-admin-only class="hidden text-accent font-bold hover:underline">Admin</a>
     </div>
   </footer>

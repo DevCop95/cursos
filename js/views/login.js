@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v37';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v37';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v37';
-import { esc } from '../lib/html.js?v=dev101x-v37';
-import { avatarFor, showToast } from '../ui.js?v=dev101x-v37';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v38';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v38';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v38';
+import { esc } from '../lib/html.js?v=dev101x-v38';
+import { avatarFor, showToast } from '../ui.js?v=dev101x-v38';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -220,6 +220,7 @@ export function renderLogin(container, onSuccess) {
       </section>
 
       <p class="text-center text-[11px] text-muted px-4 pb-2">Todo se practica contra un equipo simulado. Fuera del laboratorio, úsalo solo en sistemas con autorización.</p>
+      <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a></p>
     </div>
   `;
   if (isCloudEnabled()) paintActions();
