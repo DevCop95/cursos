@@ -466,14 +466,9 @@
                 <span class="material-symbols-outlined text-sm">terminal</span>
                 <span>Entrar al Aula y Terminal</span>
               </a>
-              <a href="#/login" class="h-9 px-3.5 bg-white text-slate-800 rounded text-xs font-semibold flex items-center gap-2 border border-[#E2E8F0] shadow-sm hover:bg-slate-50 transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24">
-                  <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
-                  <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" fill="#34A853"></path>
-                  <path d="M5.28 14.27A7.16 7.16 0 0 1 4.9 12c0-.79.14-1.57.38-2.27V6.58H1.25A11.96 11.96 0 0 0 0 12c0 1.92.45 3.74 1.25 5.42l4.03-3.15z" fill="#FBBC05"></path>
-                  <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
-                </svg>
-                <span>Acceso Google</span>
+              <a href="#/mis-cursos" class="h-9 px-3.5 bg-white text-slate-800 rounded text-xs font-semibold flex items-center gap-1.5 border border-[#E2E8F0] shadow-sm hover:bg-slate-50 transition-colors">
+                <span class="material-symbols-outlined text-sm">school</span>
+                <span>Ver mi progreso</span>
               </a>
             </div>
           </div>
@@ -1568,50 +1563,64 @@
     container.innerHTML = `
       <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-5 max-w-3xl mx-auto">
 
-        <!-- Cabecera de Perfil -->
-        <section class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden">
-          <div class="h-20 sm:h-24 bg-gradient-to-r from-[#003f27] via-[#005c38] to-[#00784a] relative">
-            <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 18% 25%, rgba(159,253,211,.55) 0, transparent 45%), radial-gradient(circle at 82% 75%, rgba(255,255,255,.3) 0, transparent 42%);"></div>
-          </div>
-          <div class="px-4 sm:px-6 pb-5 -mt-11 sm:-mt-12 flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
-            <img src="${identiconUri}" alt="${student.name}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-[#fdfcf9] bg-white shadow-md shrink-0" />
-            <div class="flex-1 min-w-0 sm:pb-1">
-              <h1 class="text-lg sm:text-2xl font-extrabold text-[#0c0d0e] font-sans tracking-tight leading-tight break-words">${student.name}</h1>
-              <p class="text-[11px] sm:text-xs text-[#80857e] font-mono mt-0.5 truncate">${student.email}</p>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap sm:pb-1.5">
-              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold ${isAdmin ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
-                ${isAdmin ? 'ADMINISTRADOR' : 'ESTUDIANTE'}
-              </span>
-              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-[#f3f0ea] text-[#80857e] border border-[#d3cec5]">Google SSO</span>
-            </div>
-          </div>
-        </section>
+        <!-- Cabecera: identidad + progreso en una sola tarjeta -->
+        <section class="relative bg-[#0e1013] rounded-2xl border border-[#30363d] shadow-md overflow-hidden">
+          <div class="absolute inset-0 opacity-[0.22] pointer-events-none" style="background-image: radial-gradient(circle at 12% 0%, #0a7a4d 0, transparent 42%), radial-gradient(circle at 95% 110%, #005c38 0, transparent 45%);"></div>
 
-        <!-- Progreso Real del Estudiante -->
-        <section class="bg-[#fdfcf9] p-4 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4">
-          <div class="flex items-end justify-between gap-3">
-            <div class="min-w-0">
-              <h2 class="text-sm font-bold text-[#0c0d0e] font-sans">Tu progreso</h2>
-              <p class="text-[11px] text-[#80857e] font-sans mt-0.5 truncate">Pentesting 101 — Fundamentos desde Windows</p>
+          <div class="relative p-4 sm:p-6 flex flex-col gap-5">
+            <div class="flex items-center gap-3.5 sm:gap-5">
+              <img src="${identiconUri}" alt="${student.name}" referrerpolicy="no-referrer" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover bg-[#161b22] ring-2 ring-emerald-500/30 shrink-0" />
+
+              <div class="flex-1 min-w-0">
+                <h1 class="text-lg sm:text-2xl font-extrabold text-white font-sans tracking-tight leading-tight break-words">${student.name}</h1>
+                <p class="text-[11px] sm:text-xs text-slate-400 font-mono mt-1 truncate">${student.email}</p>
+                <div class="flex items-center gap-1.5 flex-wrap mt-2">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${isAdmin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">
+                    ${isAdmin ? 'ADMINISTRADOR' : 'ESTUDIANTE'}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-white/5 text-slate-400 border border-white/10">Google SSO</span>
+                </div>
+              </div>
+
+              <!-- Anillo de progreso (en móvil se usa la barra de abajo) -->
+              <div class="relative shrink-0 hidden sm:block">
+                <svg class="w-20 h-20 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6" />
+                  <circle cx="32" cy="32" r="27" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round"
+                          stroke-dasharray="169.6" stroke-dashoffset="${(169.6 * (1 - userProgress / 100)).toFixed(1)}"
+                          style="transition: stroke-dashoffset .8s cubic-bezier(.16,1,.3,1);" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-lg font-extrabold text-white font-sans leading-none">${userProgress}%</span>
+                  <span class="text-[9px] font-mono text-slate-500 uppercase tracking-wide mt-0.5">curso</span>
+                </div>
+              </div>
             </div>
-            <span class="text-2xl sm:text-3xl font-extrabold text-[#005c38] font-sans leading-none shrink-0">${userProgress}<span class="text-base">%</span></span>
-          </div>
-          <div class="w-full bg-[#f3f0ea] h-2.5 rounded-full overflow-hidden border border-[#d3cec5]/50">
-            <div class="bg-[#005c38] h-full rounded-full transition-all duration-700" style="width: ${userProgress}%;"></div>
-          </div>
-          <div class="grid grid-cols-3 gap-2 sm:gap-3 text-center font-mono">
-            <div class="bg-[#f3f0ea] px-2 py-2.5 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-base sm:text-lg block leading-tight">${labsCount}/3</span>
-              <span class="text-[#80857e] text-[10px] sm:text-[11px]">Labs</span>
+
+            <!-- Barra de progreso (solo móvil) -->
+            <div class="sm:hidden flex flex-col gap-1.5">
+              <div class="flex items-center justify-between font-mono text-[10px]">
+                <span class="text-slate-500 uppercase tracking-wide">Progreso del curso</span>
+                <span class="text-emerald-400 font-bold">${userProgress}%</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div class="h-full rounded-full bg-emerald-400 transition-all duration-700" style="width: ${userProgress}%;"></div>
+              </div>
             </div>
-            <div class="bg-[#f3f0ea] px-2 py-2.5 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-base sm:text-lg block leading-tight">01</span>
-              <span class="text-[#80857e] text-[10px] sm:text-[11px]">Curso</span>
-            </div>
-            <div class="bg-[#f3f0ea] px-2 py-2.5 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-base sm:text-lg block leading-tight">08</span>
-              <span class="text-[#80857e] text-[10px] sm:text-[11px]">Comandos</span>
+
+            <div class="grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 pt-4 font-mono text-center">
+              <div>
+                <span class="block text-lg sm:text-xl font-bold ${labsCount > 0 ? 'text-emerald-400' : 'text-white'} leading-none">${labsCount}<span class="text-slate-500 text-sm">/3</span></span>
+                <span class="block text-[10px] text-slate-500 mt-1">Labs hechos</span>
+              </div>
+              <div>
+                <span class="block text-lg sm:text-xl font-bold text-white leading-none">01</span>
+                <span class="block text-[10px] text-slate-500 mt-1">Curso activo</span>
+              </div>
+              <div>
+                <span class="block text-lg sm:text-xl font-bold text-white leading-none">08</span>
+                <span class="block text-[10px] text-slate-500 mt-1">Comandos</span>
+              </div>
             </div>
           </div>
         </section>
