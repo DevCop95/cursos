@@ -1,6 +1,6 @@
 /** Dev101x — Tailwind (compilado con `npm run build:css`, sin CDN en producción) */
 export default {
-  content: ['./index.html', './js/**/*.js'],
+  content: ['./index.html', './js/**/*.js', './*/index.html', './scripts/*.mjs'],
   theme: {
     extend: {
       colors: {

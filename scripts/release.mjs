@@ -42,6 +42,11 @@ write('js/main.js', main);
 
 // 3. index.html y sw.js: versión y lista de precarga con las mismas URLs que usan los imports.
 write('index.html', read('index.html').replace(/dev101x-v\d+/g, next));
+// Páginas estáticas de cada curso (scripts/course-pages.mjs).
+const { courses } = JSON.parse(read('scripts/course-pages.json'));
+for (const { slug } of courses) {
+  try { write(`${slug}/index.html`, read(`${slug}/index.html`).replace(/dev101x-v\d+/g, next)); } catch (e) { /* aún no generada */ }
+}
 let sw = read('sw.js').replace(/dev101x-v\d+/g, next);
 sw = sw.replace(/'(\.\/js\/[^'?]+\.js)(?:\?v=[^']*)?'/g, `'$1?v=${next}'`);
 write('sw.js', sw);

@@ -7,8 +7,20 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://cursos.dev101x.online/assets/og-image.jpg</image:loc>
+      <image:loc>https://cursos.dev101x.online/assets/og-image.jpg?v=2</image:loc>
       <image:title>Dev101x Cursos — Pentesting con Nmap y Git desde cero</image:title>
     </image:image>
+  </url>
+  <url>
+    <loc>https://cursos.dev101x.online/pentesting-nmap/</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://cursos.dev101x.online/git-github/</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>

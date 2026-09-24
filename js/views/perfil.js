@@ -1,14 +1,14 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v39';
-import { appState } from '../state.js?v=dev101x-v39';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v39';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v39';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v39';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v39';
-import { isAdmin } from '../auth.js?v=dev101x-v39';
-import { fetchOwnCompletions, fetchCourseProgress, fetchCourses } from '../cloud.js?v=dev101x-v39';
+import { esc } from '../lib/html.js?v=dev101x-v40';
+import { appState } from '../state.js?v=dev101x-v40';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v40';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v40';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v40';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v40';
+import { isAdmin } from '../auth.js?v=dev101x-v40';
+import { fetchOwnCompletions, fetchCourseProgress, fetchCourses } from '../cloud.js?v=dev101x-v40';
 
 function formatDate(iso) {
   if (!iso) return '—';

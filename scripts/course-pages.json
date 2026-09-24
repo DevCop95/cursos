@@ -1,0 +1,40 @@
+{
+  "_nota": "Solo información pública (la misma que muestra el catálogo). Nunca contenido de pago, comandos del laboratorio ni respuestas.",
+  "courses": [
+    {
+      "slug": "pentesting-nmap",
+      "id": "pentesting-101",
+      "source": "content.js",
+      "seoTitle": "Curso de Nmap desde Windows gratis: Pentesting 101 | Dev101x",
+      "seoDescription": "Curso gratis en español de pentesting con Nmap desde Windows: ipconfig, netstat, escaneo de puertos, detección de servicios y enumeración de HTTP, SMB y RDP en una consola simulada en el navegador.",
+      "free": true,
+      "workload": "PT32H"
+    },
+    {
+      "slug": "git-github",
+      "id": "git-github-101",
+      "seoTitle": "Curso de Git y GitHub desde cero en español | Dev101x",
+      "seoDescription": "Aprende Git y GitHub desde cero en español: instalación en Windows, commits, ramas, conflictos, SSH y Pull Requests, practicando en una terminal Git Bash simulada en el navegador.",
+      "free": false,
+      "workload": "PT24H",
+      "title": "Git y GitHub desde cero",
+      "category": "DESARROLLO",
+      "duration": "3 Semanas",
+      "description": "Instala Git en Windows, versiona tus proyectos, trabaja con ramas y colabora en GitHub con Pull Requests, practicando cada comando en una terminal Git Bash dentro del navegador.",
+      "objectives": [
+        "Instalar y configurar Git en Windows con tu identidad.",
+        "Crear repositorios, guardar cambios y deshacerlos con seguridad.",
+        "Trabajar con ramas, fusionarlas y resolver conflictos.",
+        "Conectar con GitHub por SSH, subir proyectos y colaborar con Pull Requests."
+      ],
+      "modules": [
+        { "title": "Módulo 1: Instalación y configuración", "lessons": 2 },
+        { "title": "Módulo 2: Tu primer repositorio", "lessons": 4 },
+        { "title": "Módulo 3: Ramas", "lessons": 2 },
+        { "title": "Módulo 4: Colaborar en GitHub", "lessons": 6 }
+      ],
+      "labs": 3,
+      "videoAuthor": "MoureDev"
+    }
+  ]
+}
