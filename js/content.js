@@ -216,27 +216,6 @@ export const STEP_CONCEPTS = {
   'testnet': 'Prueba con PowerShell la conexión al puerto web (80) del objetivo.'
 };
 
-// Información pública del curso (página de inicio antes del login).
-export const COURSE_INFO = {
-  audience: 'Para quien empieza en ciberseguridad o trabaja en soporte y sistemas con Windows. No necesitas experiencia previa en hacking.',
-  requirements: [
-    'Saber usar Windows a nivel de usuario.',
-    'Una cuenta de Google para entrar.',
-    'Nada que instalar: la consola del laboratorio funciona en el navegador.'
-  ],
-  // Presentación del instructor: edítala con tus datos reales.
-  instructor: {
-    name: 'Equipo Dev101x',
-    bio: 'Formación práctica en ciberseguridad e inteligencia artificial, con laboratorios guiados y contenido en español.'
-  },
-  faq: [
-    ['¿Tengo que instalar algo?', 'No. La terminal del laboratorio es simulada y funciona en el navegador. Si quieres practicar en tu equipo, en Recursos tienes la descarga oficial de Nmap.'],
-    ['¿Es legal lo que se practica?', 'Sí, dentro del laboratorio: el objetivo es simulado. Fuera de él, estas técnicas solo se usan en sistemas propios o con autorización expresa.'],
-    ['¿Cómo se mide mi avance?', 'Cada lección se completa con sus comandos en la consola y una pregunta de comprobación. El curso termina con un reto final sobre el objetivo.'],
-    ['¿Cómo entro?', 'Con tu cuenta de Google. Solo usamos tu nombre, correo y foto de perfil.']
-  ]
-};
-
 // Pasos que la consola reconoce y qué hay que escribir para conseguirlos (se muestran como pista).
 export const STEP_HINTS = {
   'ipconfig': 'ipconfig /all',

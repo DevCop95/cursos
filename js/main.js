@@ -159,11 +159,7 @@ const ACTIONS = {
   'export-csv': () => exportCsv(),
   'admin-filter': el => setAdminFilter(el.dataset.filter),
   'google-login': el => loginWithGoogle(el),
-  'forget-account': () => forgetAccount(),
-  'scroll-to': el => {
-    const target = $(el.dataset.target);
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  'forget-account': () => forgetAccount()
 };
 
 document.addEventListener('click', e => {
