@@ -1,14 +1,14 @@
 /**
  * Vista: Aula interactiva (terminal simulada, ficha técnica del comando, recursos de Nmap y temario).
  */
-import { esc } from '../lib/html.js';
-import { appState, saveState, initialTerminal } from '../state.js';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js';
-import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js';
-import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js';
-import { showToast, openDialog } from '../ui.js';
-import { isCloudEnabled } from '../config.js';
-import * as cloud from '../cloud.js';
+import { esc } from '../lib/html.js?v=dev101x-v36';
+import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v36';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v36';
+import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v36';
+import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v36';
+import { showToast, openDialog } from '../ui.js?v=dev101x-v36';
+import { isCloudEnabled } from '../config.js?v=dev101x-v36';
+import * as cloud from '../cloud.js?v=dev101x-v36';
 
 const LINE_CLASSES = {
   error: 'text-red-400',

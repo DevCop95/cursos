@@ -1,14 +1,14 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js';
-import { appState } from '../state.js';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js';
-import { TOTAL_LESSONS } from '../lab.js';
-import { currentProgress, fetchStreak } from '../progress.js';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js';
-import { computeCourseProgress } from '../lib/course-engine.js';
-import { openDialog } from '../ui.js';
+import { esc } from '../lib/html.js?v=dev101x-v36';
+import { appState } from '../state.js?v=dev101x-v36';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v36';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v36';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v36';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js?v=dev101x-v36';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v36';
+import { openDialog } from '../ui.js?v=dev101x-v36';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
