@@ -5,7 +5,7 @@ import { esc } from '../lib/html.js';
 import { appState } from '../state.js';
 import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js';
 import { TOTAL_LESSONS } from '../lab.js';
-import { currentProgress } from '../progress.js';
+import { currentProgress, fetchStreak } from '../progress.js';
 import { openDialog } from '../ui.js';
 
 const COURSES = [COURSE];
@@ -82,6 +82,7 @@ export function renderMisCursos(container) {
         <div class="flex items-center gap-2 font-mono text-[11px]">
           <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-accent">${p.percent}%</strong> <span class="text-muted">progreso</span></span>
           <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-ink">${p.labsDone.length}/${LAB_STEPS.length}</strong> <span class="text-muted">labs</span></span>
+          <span id="streak-chip" class="hidden px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900" title="Días seguidos con actividad"></span>
         </div>
       </section>
 
@@ -93,7 +94,12 @@ export function renderMisCursos(container) {
         ${enrolled.length ? exploreTile : ''}
       </section>
     </div>
-  `;
+  `;  fetchStreak().then(streak => {
+    const chip = document.getElementById('streak-chip');
+    if (!chip || streak.current < 1) return;
+    chip.innerHTML = `🔥 <strong>${streak.current}</strong> ${streak.current === 1 ? 'día' : 'días'}`;
+    chip.classList.remove('hidden');
+  });
 }
 
 export function renderExplorar(container) {

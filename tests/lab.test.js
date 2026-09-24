@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runCommand, computeProgress, pendingHints, mergeSteps, TOTAL_LESSONS } from '../js/lab.js';
+import { runCommand, computeProgress, pendingHints, pendingChecks, mergeSteps, TOTAL_LESSONS } from '../js/lab.js';
 import { LAB_TARGET } from '../js/content.js';
 
 const steps = cmd => runCommand(cmd).steps;
@@ -51,14 +51,31 @@ test('la entrada del usuario se devuelve como texto, sin interpretarse', () => {
   assert.match(r.lines[0].text, /'<img'/);
 });
 
-test('computeProgress: 0% al inicio y 100% con todos los pasos', () => {
+const COMMANDS = ['ipconfig', 'ping', 'tracert', 'netstat', 'whoami', 'nmap-basic', 'nmap-sv', 'nmap-os', 'curl', 'smb', 'rdp', 'testnet'];
+const QUIZ = ['q-p1-1', 'q-p1-2', 'q-p1-3', 'q-p2-1', 'q-p2-2', 'q-p2-3', 'q-p3-1', 'q-p3-2', 'q-p3-3', 'q-p4-1'];
+const FLAGS = ['f-ports', 'f-web', 'f-build'];
+const stepsOf = list => Object.fromEntries(list.map(s => [s, '2026-01-01']));
+
+test('computeProgress: 0% al inicio y 100% con comandos, preguntas y reto final', () => {
   assert.equal(computeProgress({}).percent, 0);
-  const all = Object.fromEntries(['ipconfig', 'ping', 'tracert', 'netstat', 'whoami', 'nmap-basic', 'nmap-sv', 'nmap-os', 'curl', 'smb', 'rdp', 'testnet'].map(s => [s, '2026-01-01']));
-  const p = computeProgress(all);
+  const p = computeProgress(stepsOf([...COMMANDS, ...QUIZ, ...FLAGS]));
   assert.equal(p.percent, 100);
   assert.equal(p.lessonsDone.length, TOTAL_LESSONS);
   assert.equal(p.labsDone.length, 3);
   assert.equal(p.nextLesson, null);
+});
+
+test('sin las preguntas, los comandos solos no completan lecciones', () => {
+  const p = computeProgress(stepsOf(COMMANDS));
+  assert.equal(p.percent, 0);
+  assert.equal(p.labsDone.length, 3); // los labs dependen solo de la consola
+  assert.deepEqual(pendingChecks(stepsOf(COMMANDS)), ['q-p1-1']);
+});
+
+test('el reto final exige haber completado todas las lecciones anteriores', () => {
+  const p = computeProgress(stepsOf([...COMMANDS, ...QUIZ.slice(1), ...FLAGS]));
+  assert.ok(!p.lessonsDone.includes('p4-2'));
+  assert.equal(p.nextLesson.id, 'p1-1');
 });
 
 test('los labs exigen todos los pasos obligatorios', () => {

@@ -3,10 +3,12 @@
  */
 import { esc } from '../lib/html.js';
 import { appState, saveState, initialTerminal } from '../state.js';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js';
-import { runCommand, isLessonDone, pendingHints, MAX_TERMINAL_LINES } from '../lab.js';
-import { recordSteps, currentProgress, currentSteps } from '../progress.js';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js';
+import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js';
+import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js';
 import { showToast, openDialog } from '../ui.js';
+import { isCloudEnabled } from '../config.js';
+import * as cloud from '../cloud.js';
 
 const LINE_CLASSES = {
   error: 'text-red-400',
@@ -60,6 +62,7 @@ function progressLines() {
   }
   lines.push({ text: `Siguiente lección: ${p.nextLesson.title}`, type: 'info' });
   pendingHints(currentSteps()).forEach(h => lines.push({ text: `  → ${h.command}`, type: 'hint' }));
+  if (pendingChecks(currentSteps()).length) lines.push({ text: '  → Responde la pregunta en la ficha de la lección (pulsa su título).', type: 'hint' });
   return lines;
 }
 
@@ -299,17 +302,39 @@ function syllabusHtml() {
   }).join('<div class="border-t border-line/60 my-1"></div>');
 }
 
+// Pistas por niveles: 1) concepto, 2) comando exacto. Las preguntas se responden en la ficha de la lección.
+function hintHtml(step, n) {
+  return `
+    <details class="hint-step group">
+      <summary class="list-none cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-semibold select-none">
+        <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lightbulb</span>Pista ${n}
+      </summary>
+      <div class="mt-1.5 p-2.5 rounded-lg bg-white border border-line text-xs text-ink2 flex flex-col gap-2 max-w-md">
+        <span>${esc(STEP_CONCEPTS[step] || '')}</span>
+        <details>
+          <summary class="list-none cursor-pointer text-[11px] font-semibold text-accent hover:underline select-none">Ver el comando</summary>
+          <button type="button" data-action="run-cmd" data-cmd="${esc(STEP_HINTS[step])}" class="mt-1.5 px-2.5 py-1 rounded-lg bg-term text-emerald-300 font-mono text-[11px] hover:bg-term-3 transition-colors" title="Ejecutar en la consola">${esc(STEP_HINTS[step])}</button>
+        </details>
+      </div>
+    </details>`;
+}
+
 function nextStepHtml() {
   const p = currentProgress();
   if (p.complete) {
     return `<p class="text-xs text-accent font-semibold">✓ Has completado todas las lecciones del curso.</p>`;
   }
-  const hints = pendingHints(currentSteps());
+  const steps = currentSteps();
+  const hints = pendingHints(steps);
+  const checks = pendingChecks(steps);
   return `
-    <div class="flex flex-wrap items-center gap-1.5">
-      <span class="text-[11px] font-mono text-muted mr-1">Practica:</span>
-      ${hints.map(h => `
-        <button type="button" data-action="run-cmd" data-cmd="${esc(h.command)}" class="px-2.5 py-1 rounded-lg bg-term text-emerald-300 font-mono text-[11px] hover:bg-term-3 transition-colors" title="Ejecutar en la consola">${esc(h.command)}</button>`).join('')}
+    <div class="flex flex-wrap items-start gap-1.5">
+      <span class="text-[11px] font-mono text-muted mr-1 pt-1">${hints.length ? 'Practica:' : 'Siguiente:'}</span>
+      ${hints.map((h, i) => hintHtml(h.step, i + 1)).join('')}
+      ${!hints.length && checks.length ? `
+        <button type="button" data-action="open-lesson" data-id="${esc(p.nextLesson.id)}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent hover:bg-accent2 text-white text-[11px] font-semibold">
+          <span class="material-symbols-outlined text-[14px]" aria-hidden="true">quiz</span>${p.nextLesson.afterAll ? 'Resolver el reto final' : 'Responder la pregunta de la lección'}
+        </button>` : ''}
     </div>`;
 }
 
@@ -384,6 +409,42 @@ export function seekVideo(start) {
   if (list) list.innerHTML = chapterButtonsHtml(start);
 }
 
+function quizHtml(quiz, done) {
+  if (done) {
+    return `
+      <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">task_alt</span>Pregunta respondida correctamente.
+      </div>`;
+  }
+  return `
+    <form data-action="quiz" data-step="${esc(quiz.step)}" class="flex flex-col gap-2">
+      <p class="text-[13px] font-semibold text-ink">${esc(quiz.question)}</p>
+      ${quiz.options.map(([value, label]) => `
+        <label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-line hover:border-accent/60 bg-white cursor-pointer text-[13px] has-[:checked]:border-accent has-[:checked]:bg-emerald-50/60">
+          <input type="radio" name="answer" value="${esc(value)}" required class="accent-accent mt-0.5" />
+          <span>${esc(label)}</span>
+        </label>`).join('')}
+      <div class="flex items-center gap-3 pt-1">
+        <button type="submit" class="h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold">Comprobar</button>
+        <p data-quiz-result class="text-xs" role="status"></p>
+      </div>
+    </form>`;
+}
+
+function flagHtml(flag, done) {
+  return `
+    <form data-action="quiz" data-step="${esc(flag.step)}" class="flex flex-col gap-1.5">
+      <label class="text-[13px] font-semibold text-ink" for="flag-${esc(flag.step)}">${esc(flag.question)}</label>
+      ${done
+        ? '<p class="text-xs text-accent font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">task_alt</span>Respuesta correcta</p>'
+        : `<div class="flex items-center gap-2">
+            <input id="flag-${esc(flag.step)}" name="answer" type="text" required maxlength="100" autocomplete="off" spellcheck="false" placeholder="${esc(flag.placeholder)}" class="flex-1 min-w-0 h-9 px-3 rounded-lg border border-line bg-white font-mono text-xs outline-none focus:border-accent" />
+            <button type="submit" class="h-9 px-3 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold shrink-0">Enviar</button>
+          </div>
+          <p data-quiz-result class="text-xs" role="status"></p>`}
+    </form>`;
+}
+
 export function openLesson(id) {
   const lesson = ALL_LESSONS.find(l => l.id === id);
   if (!lesson) return;
@@ -391,24 +452,37 @@ export function openLesson(id) {
   const detail = LESSON_DETAILS[id] || {};
   const steps = currentSteps();
   const done = isLessonDone(lesson, steps);
-  const reqs = lesson.requires === 'all'
-    ? [...new Set(ALL_LESSONS.filter(l => l.requires !== 'all').flatMap(l => l.requires))]
-    : lesson.requires;
+  const commands = lesson.afterAll
+    ? [...new Set(ALL_LESSONS.flatMap(l => l.requires).filter(isCommandStep))]
+    : lesson.requires.filter(isCommandStep);
+  const quiz = QUIZZES[id];
 
-  const practice = reqs.map(step => {
+  const practice = commands.map(step => {
     const ok = Boolean(steps[step]);
     return `
-      <li class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-[16px] shrink-0 ${ok ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${ok ? 'check_circle' : 'radio_button_unchecked'}</span>
-        <button type="button" data-action="run-cmd" data-cmd="${esc(STEP_HINTS[step])}" class="flex-1 min-w-0 text-left px-2.5 py-1.5 rounded-lg bg-term hover:bg-term-3 text-emerald-300 font-mono text-[11px] truncate transition-colors" title="Ejecutar en la consola">${esc(STEP_HINTS[step])}</button>
+      <li class="flex items-start gap-2">
+        <span class="material-symbols-outlined text-[16px] shrink-0 mt-0.5 ${ok ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${ok ? 'check_circle' : 'radio_button_unchecked'}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] ${ok ? 'text-ink2' : 'text-ink'}">${esc(STEP_CONCEPTS[step] || '')}</p>
+          <details class="mt-1">
+            <summary class="list-none cursor-pointer text-[11px] font-semibold text-accent hover:underline select-none">${ok ? 'Ver el comando' : 'Pista: ver el comando'}</summary>
+            <button type="button" data-action="run-cmd" data-cmd="${esc(STEP_HINTS[step])}" class="mt-1.5 max-w-full text-left px-2.5 py-1.5 rounded-lg bg-term hover:bg-term-3 text-emerald-300 font-mono text-[11px] truncate transition-colors" title="Ejecutar en la consola">${esc(STEP_HINTS[step])}</button>
+          </details>
+        </div>
       </li>`;
   }).join('');
+
+  const section = (title, body) => `
+    <section class="flex flex-col gap-2">
+      <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">${title}</h3>
+      ${body}
+    </section>`;
 
   openDialog({
     title: lesson.title,
     kicker: `${module.module.toUpperCase()} · ${lesson.time}`,
     body: `
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-5" data-lesson="${esc(id)}">
         <span class="self-start px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${done ? 'bg-accent text-white' : 'bg-bg text-muted border border-line'}">${done ? '✓ COMPLETADA' : 'PENDIENTE'}</span>
         ${detail.objective ? `
           <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex gap-2.5">
@@ -427,12 +501,141 @@ export function openLesson(id) {
               <span class="block text-[13px] font-bold text-ink truncate">${esc(detail.video.label)}</span>
             </span>
           </button>` : ''}
-        <div>
-          <p class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide mb-2">Práctica en la consola</p>
-          <ul class="flex flex-col gap-1.5">${practice}</ul>
-        </div>
+        ${lesson.afterAll ? section('Reto final', `
+          <p class="text-xs text-ink2">Usa la consola sobre ${esc(LAB_TARGET)} para encontrar las respuestas. Tienes 3 intentos cada 10 minutos por pregunta.</p>
+          ${FINAL_CHALLENGE.map(f => flagHtml(f, Boolean(steps[f.step]))).join('')}`) : ''}
+        ${lesson.afterAll
+          ? `<details class="rounded-xl border border-line bg-white/60">
+              <summary class="list-none cursor-pointer p-3 text-[11px] font-mono font-bold text-muted uppercase tracking-wide select-none">Repaso: todos los comandos (${commands.filter(c => steps[c]).length}/${commands.length})</summary>
+              <ul class="flex flex-col gap-2.5 px-3 pb-3">${practice}</ul>
+            </details>`
+          : section('Práctica en la consola', `<ul class="flex flex-col gap-2.5">${practice}</ul>`)}
+        ${quiz ? section('Comprueba lo aprendido', quizHtml(quiz, Boolean(steps[quiz.step]))) : ''}
+        ${isCloudEnabled() ? section('Mis notas', `
+          <textarea data-note="${esc(id)}" maxlength="4000" rows="3" placeholder="Apuntes personales de esta lección (solo los ves tú)…" class="w-full p-3 rounded-xl border border-line bg-white text-[13px] outline-none focus:border-accent resize-y"></textarea>
+          <p data-note-status class="text-[11px] text-muted font-mono h-4"></p>`) : ''}
       </div>`
   });
+  loadNote(id);
+}
+
+// ---------------------------------------------------------------------------
+// Preguntas: la respuesta la valida el servidor (answer_quiz).
+// ---------------------------------------------------------------------------
+export async function submitQuiz(form) {
+  const step = form.dataset.step;
+  const input = form.querySelector('[name="answer"]:checked') || form.querySelector('input[name="answer"][type="text"]');
+  const answer = input ? input.value.trim() : '';
+  const out = form.querySelector('[data-quiz-result]');
+  if (!answer) return;
+  const button = form.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+  try {
+    const res = await cloud.answerQuiz(step, answer);
+    if (!res || !res.correct) {
+      const left = res && typeof res.remaining === 'number' ? res.remaining : null;
+      if (out) {
+        out.className = 'text-xs text-rose-700';
+        out.textContent = left === 0 ? 'Incorrecto. Sin intentos: repasa la lección y vuelve en unos minutos.' : `Incorrecto. Te quedan ${left ?? 'algunos'} intentos.`;
+      }
+      return;
+    }
+    const rec = applyServerSteps(res.steps);
+    refreshSyllabus();
+    refreshNextStep();
+    rec.newLessons.forEach(lid => {
+      const l = ALL_LESSONS.find(x => x.id === lid);
+      if (l) showToast(`Lección completada: ${l.title}`, 'success');
+    });
+    if (rec.progress.complete && rec.newLessons.length) showToast('¡Felicidades! Has completado el 100% del curso.', 'success');
+    else if (!rec.newLessons.length) showToast('¡Correcto!', 'success');
+    const lessonId = form.closest('[data-lesson]') && form.closest('[data-lesson]').dataset.lesson;
+    if (lessonId) openLesson(lessonId);
+  } catch (err) {
+    console.error(err);
+    if (out) {
+      out.className = 'text-xs text-rose-700';
+      out.textContent = /intentos/i.test(err.message || '') ? err.message : 'No se pudo comprobar la respuesta. Inténtalo de nuevo.';
+    }
+  } finally {
+    if (button && document.body.contains(button)) button.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Notas personales (se guardan solas a los 800 ms de dejar de escribir)
+// ---------------------------------------------------------------------------
+let noteTimer = null;
+
+async function loadNote(lessonId) {
+  const area = document.querySelector(`textarea[data-note="${lessonId}"]`);
+  if (!area) return;
+  area.disabled = true;
+  try {
+    const note = await cloud.fetchNote(lessonId);
+    if (note && document.body.contains(area) && !area.value) area.value = note.body;
+  } catch (e) {
+    console.warn('No se pudo cargar la nota:', e.message || e);
+  } finally {
+    area.disabled = false;
+  }
+}
+
+export function onNoteInput(area) {
+  const status = area.parentElement.querySelector('[data-note-status]');
+  if (status) status.textContent = 'Escribiendo…';
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(async () => {
+    try {
+      await cloud.saveNote(area.dataset.note, area.value.slice(0, 4000));
+      if (status && document.body.contains(status)) status.textContent = '✓ Guardado';
+    } catch (e) {
+      console.warn('No se pudo guardar la nota:', e.message || e);
+      if (status && document.body.contains(status)) status.textContent = 'No se pudo guardar';
+    }
+  }, 800);
+}
+
+// ---------------------------------------------------------------------------
+// Hoja de comandos (imprimible / guardar como PDF)
+// ---------------------------------------------------------------------------
+export function openCheatSheet() {
+  const rows = Object.values(PENTESTING_COMMANDS).map(c => `
+    <tr class="border-b border-line/70 align-top">
+      <td class="py-2 pr-3 font-mono text-[11px] text-accent font-bold whitespace-nowrap">${esc(c.name)}</td>
+      <td class="py-2 pr-3"><code class="font-mono text-[11px] text-ink break-all">${esc(c.cmd)}</code></td>
+      <td class="py-2 text-[11px] text-ink2">${esc(c.title)}</td>
+    </tr>`).join('');
+  const flags = (PENTESTING_COMMANDS.nmap && PENTESTING_COMMANDS.nmap.flags) || [];
+  openDialog({
+    title: 'Hoja de comandos',
+    kicker: `${COURSE.title.toUpperCase()}`,
+    size: 'lg',
+    body: `
+      <div class="cheatsheet flex flex-col gap-4">
+        <table class="w-full text-left border-collapse">
+          <thead><tr class="border-b border-line text-[10px] font-mono text-muted uppercase"><th class="py-1.5 pr-3">Herramienta</th><th class="py-1.5 pr-3">Comando</th><th class="py-1.5">Para qué</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        ${flags.length ? `
+          <div>
+            <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide mb-1.5">Flags de Nmap</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+              ${flags.map(f => `<p class="text-[11px]"><code class="font-mono font-bold text-accent">${esc(f.flag)}</code> <span class="text-ink2">${esc(f.name)}</span></p>`).join('')}
+            </div>
+          </div>` : ''}
+        <p class="text-[10px] text-muted">Objetivo del laboratorio: ${esc(LAB_TARGET)} · Usa estas técnicas solo en sistemas con autorización.</p>
+        <button type="button" data-action="print-cheatsheet" class="no-print self-start h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold inline-flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span>Imprimir o guardar PDF
+        </button>
+      </div>`
+  });
+}
+
+export function printCheatSheet() {
+  document.body.classList.add('printing-dialog');
+  window.print();
+  setTimeout(() => document.body.classList.remove('printing-dialog'), 500);
 }
 
 const DOWNLOADS = [
@@ -514,12 +717,15 @@ export function renderAula(container, courseId) {
             </div>
             <button type="button" data-action="open-lesson" id="aula-lesson-title" data-id="${p.nextLesson ? esc(p.nextLesson.id) : ''}" class="block text-left text-[15px] sm:text-lg font-bold text-ink mt-1.5 leading-snug hover:text-accent transition-colors" title="Ver la ficha de la lección">${esc(p.nextLesson ? p.nextLesson.title : 'Curso completado')}</button>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 shrink-0 flex-wrap">
             <button type="button" data-action="open-video" data-start="0" class="h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors">
               <span class="material-symbols-outlined text-[18px] text-rose-500" aria-hidden="true">smart_display</span><span>Video de la clase</span>
             </button>
             <button type="button" data-action="open-resources" class="h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors">
               <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">menu_book</span><span>Recursos</span>
+            </button>
+            <button type="button" data-action="open-cheatsheet" class="h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors" title="Hoja de comandos imprimible">
+              <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">description</span><span class="hidden sm:inline">Hoja de comandos</span>
             </button>
           </div>
         </div>
@@ -530,6 +736,10 @@ export function renderAula(container, courseId) {
           <span id="aula-percent" class="font-mono text-[11px] font-bold text-accent tabular-nums">${p.percent}%</span>
         </div>
         <div id="next-step">${nextStepHtml()}</div>
+        <p class="flex items-start gap-1.5 text-[11px] text-muted pt-2 border-t border-line/60">
+          <span class="material-symbols-outlined text-[14px] text-amber-600 mt-px" aria-hidden="true">gavel</span>
+          <span>Practica solo en este laboratorio o en sistemas propios o con autorización expresa. Escanear equipos ajenos sin permiso puede ser un delito.</span>
+        </p>
       </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">

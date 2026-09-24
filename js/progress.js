@@ -2,8 +2,9 @@
  * Registro del progreso del alumno: guarda en localStorage y, en modo nube, sincroniza con Supabase.
  */
 import { appState, saveState, getProgressRecord } from './state.js';
-import { computeProgress, mergeSteps } from './lab.js';
+import { computeProgress, mergeSteps, isCommandStep } from './lab.js';
 import * as cloud from './cloud.js';
+import { computeStreak } from './lib/activity.js';
 
 // Señal de presencia para el panel de admin: cada minuto mientras la pestaña está visible.
 const PRESENCE_INTERVAL_MS = 60 * 1000;
@@ -27,8 +28,16 @@ function cloudUserId() {
   return s && s.mode === 'cloud' ? s.userId : null;
 }
 
+function diff(before, after) {
+  return {
+    newLessons: after.lessonsDone.filter(id => !before.lessonsDone.includes(id)),
+    newLabs: after.labsDone.filter(id => !before.labsDone.includes(id)),
+    progress: after
+  };
+}
+
 /**
- * Registra los pasos completados. Devuelve qué lecciones y labs se acaban de completar.
+ * Registra los pasos completados en la consola. Devuelve qué lecciones y labs se acaban de completar.
  */
 export function recordSteps(steps) {
   const record = getProgressRecord();
@@ -44,12 +53,20 @@ export function recordSteps(steps) {
   if (after.complete && !record.completedAt) record.completedAt = nowIso;
   saveState(appState);
   pushProgressToCloud();
-  return {
-    changed: true,
-    newLessons: after.lessonsDone.filter(id => !before.lessonsDone.includes(id)),
-    newLabs: after.labsDone.filter(id => !before.labsDone.includes(id)),
-    progress: after
-  };
+  return { changed: true, ...diff(before, after) };
+}
+
+/**
+ * Aplica los pasos que devuelve el servidor (p. ej. tras acertar una pregunta).
+ */
+export function applyServerSteps(serverSteps) {
+  const record = getProgressRecord();
+  const before = computeProgress(record.steps);
+  record.steps = mergeSteps(record.steps, serverSteps || {});
+  const after = computeProgress(record.steps);
+  if (after.complete && !record.completedAt) record.completedAt = new Date().toISOString();
+  saveState(appState);
+  return diff(before, after);
 }
 
 let pushTimer = null;
@@ -58,7 +75,8 @@ export function pushProgressToCloud() {
   if (!userId) return;
   clearTimeout(pushTimer);
   pushTimer = setTimeout(() => {
-    cloud.recordSteps(Object.keys(getProgressRecord().steps))
+    // Solo comandos: las preguntas y el reto final los valida el servidor por separado.
+    cloud.recordSteps(Object.keys(getProgressRecord().steps).filter(isCommandStep))
       .catch(err => console.warn('No se pudo sincronizar el progreso:', err.message || err));
   }, 600);
 }
@@ -86,4 +104,11 @@ export function currentProgress() {
 
 export function currentSteps() {
   return getProgressRecord().steps;
+}
+
+// Racha de días con actividad (la fecha de cada día la pone el servidor). Sin nube: sin racha.
+export async function fetchStreak() {
+  if (!cloudUserId()) return computeStreak([]);
+  const days = await cloud.fetchOwnActivityDays().catch(() => []);
+  return computeStreak(days);
 }

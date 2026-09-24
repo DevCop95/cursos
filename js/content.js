@@ -15,42 +15,43 @@ export const COURSE = {
   description: 'Reconocimiento y escaneo de puertos con Nmap usando la consola de Windows como plataforma de entrada.',
   badge: 'WIN-PENTEST',
   instructor: 'Dev101x',
-  // Cada lección se marca como hecha cuando el alumno completa en la consola los pasos de `requires`.
-  // `requires: 'all'` significa que se completa al terminar el resto de lecciones.
+  // Una lección se completa con los pasos de `requires`: comandos en la consola, su pregunta (q-…)
+  // y, en la evaluación final, las respuestas del reto (f-…). `afterAll`: exige además todas las anteriores.
+  // Las respuestas correctas solo existen en el servidor.
   syllabus: [
     {
       module: 'Módulo 1: Reconocimiento y Redes en Windows',
       duration: '1 semana',
       lessons: [
-        { id: 'p1-1', title: '1.1 Diagnóstico de interfaz: ipconfig y ping', time: '25 min', requires: ['ipconfig', 'ping'] },
-        { id: 'p1-2', title: '1.2 Mapeo de rutas con tracert y netstat', time: '30 min', requires: ['tracert', 'netstat'] },
-        { id: 'p1-3', title: '1.3 Identidad y privilegios: whoami y PowerShell', time: '30 min', requires: ['whoami'] }
+        { id: 'p1-1', title: '1.1 Diagnóstico de interfaz: ipconfig y ping', time: '25 min', requires: ['ipconfig', 'ping', 'q-p1-1'] },
+        { id: 'p1-2', title: '1.2 Mapeo de rutas con tracert y netstat', time: '30 min', requires: ['tracert', 'netstat', 'q-p1-2'] },
+        { id: 'p1-3', title: '1.3 Identidad y privilegios: whoami y PowerShell', time: '30 min', requires: ['whoami', 'q-p1-3'] }
       ]
     },
     {
       module: 'Módulo 2: Escaneo de Red con Nmap',
       duration: '1 semana',
       lessons: [
-        { id: 'p2-1', title: '2.1 Nmap en Windows: instalación y sintaxis base', time: '35 min', requires: ['nmap-basic'] },
-        { id: 'p2-2', title: '2.2 Flags esenciales: -sS, -sV, -Pn y rangos', time: '40 min', requires: ['nmap-sv'] },
-        { id: 'p2-3', title: '2.3 Detección de versiones y sistemas operativos', time: '35 min', requires: ['nmap-os'] }
+        { id: 'p2-1', title: '2.1 Nmap en Windows: instalación y sintaxis base', time: '35 min', requires: ['nmap-basic', 'q-p2-1'] },
+        { id: 'p2-2', title: '2.2 Flags esenciales: -sS, -sV, -Pn y rangos', time: '40 min', requires: ['nmap-sv', 'q-p2-2'] },
+        { id: 'p2-3', title: '2.3 Detección de versiones y sistemas operativos', time: '35 min', requires: ['nmap-os', 'q-p2-3'] }
       ]
     },
     {
       module: 'Módulo 3: Enumeración de Servicios desde Windows',
       duration: '1 semana',
       lessons: [
-        { id: 'p3-1', title: '3.1 Inspección HTTP con curl y banner grabbing', time: '30 min', requires: ['curl'] },
-        { id: 'p3-2', title: '3.2 Enumeración de SMB (445) y RPC (135)', time: '40 min', requires: ['smb'] },
-        { id: 'p3-3', title: '3.3 Verificación de acceso RDP (3389)', time: '30 min', requires: ['rdp'] }
+        { id: 'p3-1', title: '3.1 Inspección HTTP con curl y banner grabbing', time: '30 min', requires: ['curl', 'q-p3-1'] },
+        { id: 'p3-2', title: '3.2 Enumeración de SMB (445) y RPC (135)', time: '40 min', requires: ['smb', 'q-p3-2'] },
+        { id: 'p3-3', title: '3.3 Verificación de acceso RDP (3389)', time: '30 min', requires: ['rdp', 'q-p3-3'] }
       ]
     },
     {
       module: 'Módulo 4: Automatización y Laboratorio Práctico',
       duration: '1 semana',
       lessons: [
-        { id: 'p4-1', title: '4.1 Cmdlets PowerShell para auditoría (Test-NetConnection)', time: '45 min', requires: ['testnet'] },
-        { id: 'p4-2', title: '4.2 Evaluación práctica: Escaneo de target y reporte', time: '50 min', requires: 'all' }
+        { id: 'p4-1', title: '4.1 Cmdlets PowerShell para auditoría (Test-NetConnection)', time: '45 min', requires: ['testnet', 'q-p4-1'] },
+        { id: 'p4-2', title: '4.2 Evaluación práctica: Escaneo de target y reporte', time: '50 min', requires: ['f-ports', 'f-web', 'f-build'], afterAll: true }
       ]
     }
   ]
@@ -136,6 +137,104 @@ export const LESSON_DETAILS = {
     objective: 'Aplicar todo el proceso sobre el objetivo y documentar los hallazgos.',
     summary: 'Repite el ciclo completo: reconocimiento, escaneo de puertos, detección de versiones y enumeración de servicios. Por cada hallazgo anota la evidencia (el comando y su salida), el riesgo y una recomendación. Recuerda: estas técnicas solo se usan en sistemas con autorización.'
   }
+};
+
+// Pregunta de comprobación de cada lección. La respuesta correcta NO está aquí: la valida el servidor.
+export const QUIZZES = {
+  'p1-1': { step: 'q-p1-1', question: 'Haces ping al objetivo y no responde. ¿Qué puedes concluir?', options: [
+    ['a', 'Que el equipo está apagado.'],
+    ['b', 'Que puede estar activo pero bloqueando ICMP con un firewall.'],
+    ['c', 'Que la red del laboratorio no existe.'],
+    ['d', 'Que tienes que reiniciar tu equipo.']] },
+  'p1-2': { step: 'q-p1-2', question: '¿Qué muestra netstat -ano?', options: [
+    ['a', 'Los routers (saltos) hasta el objetivo.'],
+    ['b', 'La IP pública de tu conexión.'],
+    ['c', 'Las conexiones y puertos en escucha de tu equipo, con su PID.'],
+    ['d', 'Los usuarios del dominio.']] },
+  'p1-3': { step: 'q-p1-3', question: '¿Para qué sirve whoami /priv antes de una auditoría?', options: [
+    ['a', 'Para ver los privilegios de la sesión con la que trabajas.'],
+    ['b', 'Para cambiar tu contraseña.'],
+    ['c', 'Para escanear puertos.'],
+    ['d', 'Para elevar tus privilegios automáticamente.']] },
+  'p2-1': { step: 'q-p2-1', question: 'Nmap marca un puerto como "filtered". ¿Qué significa?', options: [
+    ['a', 'Que está abierto.'],
+    ['b', 'Que está cerrado y responde.'],
+    ['c', 'Que un firewall impide saber si está abierto o cerrado.'],
+    ['d', 'Que el servicio tiene una vulnerabilidad.']] },
+  'p2-2': { step: 'q-p2-2', question: 'El objetivo bloquea el ping. ¿Qué flag de Nmap omite el descubrimiento de host?', options: [
+    ['a', '-sV'],
+    ['b', '-Pn'],
+    ['c', '-O'],
+    ['d', '-p-']] },
+  'p2-3': { step: 'q-p2-3', question: '¿Qué hace el modo agresivo -A de Nmap?', options: [
+    ['a', 'Solo acelera el escaneo.'],
+    ['b', 'Ataca al objetivo para explotarlo.'],
+    ['c', 'Oculta tu dirección IP.'],
+    ['d', 'Combina detección de versiones, sistema operativo, scripts y traceroute.']] },
+  'p3-1': { step: 'q-p3-1', question: '¿Qué cabecera HTTP suele revelar el software del servidor web?', options: [
+    ['a', 'Content-Type'],
+    ['b', 'Server'],
+    ['c', 'Date'],
+    ['d', 'Accept']] },
+  'p3-2': { step: 'q-p3-2', question: '¿Por qué tener SMB (445) accesible es un hallazgo a reportar?', options: [
+    ['a', 'Expone recursos compartidos y ha tenido fallos críticos como EternalBlue.'],
+    ['b', 'Porque hace que la red vaya lenta.'],
+    ['c', 'Porque consume mucho ancho de banda.'],
+    ['d', 'No es un hallazgo: es un puerto normal.']] },
+  'p3-3': { step: 'q-p3-3', question: '¿Qué puerto usa por defecto el Escritorio remoto (RDP)?', options: [
+    ['a', '22'],
+    ['b', '445'],
+    ['c', '3389'],
+    ['d', '8080']] },
+  'p4-1': { step: 'q-p4-1', question: 'En la salida de Test-NetConnection, ¿qué campo confirma que el puerto acepta conexiones?', options: [
+    ['a', 'PingSucceeded'],
+    ['b', 'RemoteAddress'],
+    ['c', 'InterfaceAlias'],
+    ['d', 'TcpTestSucceeded : True']] }
+};
+
+// Reto final (lección 4.2): respuestas que solo se obtienen usando la consola sobre el objetivo.
+export const FINAL_CHALLENGE = [
+  { step: 'f-ports', question: '¿Cuántos puertos TCP abiertos tiene el objetivo?', placeholder: 'Un número' },
+  { step: 'f-web', question: '¿Qué software y versión responde como servidor web en el puerto 80?', placeholder: 'Ej.: apache/2.4.1' },
+  { step: 'f-build', question: '¿Qué número de build de Windows Server detecta Nmap en el objetivo?', placeholder: 'Un número' }
+];
+
+// Pista de nivel 1 (concepto) para cada paso; el nivel 2 es el comando exacto (STEP_HINTS).
+export const STEP_CONCEPTS = {
+  'ipconfig': 'Revisa la configuración IP completa de tu propia interfaz.',
+  'ping': 'Comprueba si el objetivo responde a paquetes ICMP enviando solo unos pocos.',
+  'tracert': 'Traza la ruta hasta el objetivo sin resolver nombres DNS.',
+  'netstat': 'Lista todas las conexiones y puertos de tu equipo con el PID de cada proceso.',
+  'whoami': 'Consulta qué privilegios tiene el usuario con el que trabajas.',
+  'nmap-basic': 'Haz un escaneo básico de puertos del objetivo con Nmap.',
+  'nmap-sv': 'Vuelve a escanear pidiendo las versiones de los servicios y sin descubrimiento por ping.',
+  'nmap-os': 'Pide a Nmap que intente identificar el sistema operativo.',
+  'curl': 'Pide solo las cabeceras HTTP del servidor web del objetivo.',
+  'smb': 'Comprueba con PowerShell si el puerto de SMB acepta conexiones.',
+  'rdp': 'Comprueba con PowerShell si el puerto del Escritorio remoto acepta conexiones.',
+  'testnet': 'Prueba con PowerShell la conexión al puerto web (80) del objetivo.'
+};
+
+// Información pública del curso (página de inicio antes del login).
+export const COURSE_INFO = {
+  audience: 'Para quien empieza en ciberseguridad o trabaja en soporte y sistemas con Windows. No necesitas experiencia previa en hacking.',
+  requirements: [
+    'Saber usar Windows a nivel de usuario.',
+    'Una cuenta de Google para entrar.',
+    'Nada que instalar: la consola del laboratorio funciona en el navegador.'
+  ],
+  // Presentación del instructor: edítala con tus datos reales.
+  instructor: {
+    name: 'Equipo Dev101x',
+    bio: 'Formación práctica en ciberseguridad e inteligencia artificial, con laboratorios guiados y contenido en español.'
+  },
+  faq: [
+    ['¿Tengo que instalar algo?', 'No. La terminal del laboratorio es simulada y funciona en el navegador. Si quieres practicar en tu equipo, en Recursos tienes la descarga oficial de Nmap.'],
+    ['¿Es legal lo que se practica?', 'Sí, dentro del laboratorio: el objetivo es simulado. Fuera de él, estas técnicas solo se usan en sistemas propios o con autorización expresa.'],
+    ['¿Cómo se mide mi avance?', 'Cada lección se completa con sus comandos en la consola y una pregunta de comprobación. El curso termina con un reto final sobre el objetivo.'],
+    ['¿Cómo entro?', 'Con tu cuenta de Google. Solo usamos tu nombre, correo y foto de perfil.']
+  ]
 };
 
 // Pasos que la consola reconoce y qué hay que escribir para conseguirlos (se muestran como pista).

@@ -37,18 +37,16 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Desactivar rebote elástico y scroll en móviles para pantalla fija */
-html.login-active,
-body.login-active {
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  width: 100vw !important;
-  position: fixed !important;
-  inset: 0 !important;
-  touch-action: none !important;
+/* Página pública: tarjetas legibles sobre el fondo animado */
+.landing-card {
+  position: relative;
+  background-color: rgba(253, 252, 249, 0.93);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 48px rgba(12, 13, 14, 0.07), 0 2px 10px rgba(12, 13, 14, 0.03);
 }
+.landing-card details > summary::-webkit-details-marker { display: none; }
 
 ::selection {
   background: var(--accent);
@@ -423,3 +421,18 @@ input:focus-visible,
     scroll-behavior: auto !important;
   }
 }
+
+/* Impresión de la hoja de comandos: solo el contenido de la ventana emergente */
+@media print {
+  body.printing-dialog > *:not(#app-dialog) { display: none !important; }
+  body.printing-dialog { background: #fff !important; }
+  body.printing-dialog #app-dialog { position: static !important; display: block !important; background: none !important; backdrop-filter: none !important; padding: 0 !important; }
+  body.printing-dialog #app-dialog-panel { max-height: none !important; box-shadow: none !important; border: none !important; max-width: none !important; overflow: visible !important; }
+  body.printing-dialog #app-dialog-body { overflow: visible !important; }
+  body.printing-dialog .no-print,
+  body.printing-dialog [data-action="close-modal"] { display: none !important; }
+}
+
+/* Pistas por niveles (details/summary sin el triángulo por defecto) */
+.hint-step > summary::-webkit-details-marker,
+#app-dialog details > summary::-webkit-details-marker { display: none; }

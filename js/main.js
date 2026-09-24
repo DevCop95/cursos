@@ -9,7 +9,7 @@ import { showToast, closeModal, avatarFor } from './ui.js';
 import { initSearch, openSearch, closeSearch } from './search.js';
 import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js';
 import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources } from './views/aula.js';
+import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
 import { renderAdmin, toggleCourseAccess, exportCsv, setAdminFilter, openUserDetails } from './views/admin.js';
 import { startPresence } from './progress.js';
@@ -59,7 +59,7 @@ function render() {
   window.scrollTo(0, 0);
 
   if (route === 'login') {
-    view.className = 'w-full min-h-screen flex-1 flex flex-col justify-center items-center px-4 py-8';
+    view.className = 'w-full flex-1 flex flex-col px-4 py-5 sm:py-8';
     renderLogin(view, onLoggedIn);
     return;
   }
@@ -131,6 +131,8 @@ const ACTIONS = {
   'open-video': el => openVideo(Number(el.dataset.start) || 0),
   'video-seek': el => seekVideo(Number(el.dataset.start) || 0),
   'open-resources': () => openResources(),
+  'open-cheatsheet': () => openCheatSheet(),
+  'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),
   'close-modal': el => closeModal(el.dataset.target),
@@ -157,7 +159,11 @@ const ACTIONS = {
   'export-csv': () => exportCsv(),
   'admin-filter': el => setAdminFilter(el.dataset.filter),
   'google-login': el => loginWithGoogle(el),
-  'forget-account': () => forgetAccount()
+  'forget-account': () => forgetAccount(),
+  'scroll-to': el => {
+    const target = $(el.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 };
 
 document.addEventListener('click', e => {
@@ -178,6 +184,11 @@ document.addEventListener('change', e => {
 
 document.addEventListener('submit', e => {
   const form = e.target;
+  if (form.dataset.action === 'quiz') {
+    e.preventDefault();
+    submitQuiz(form);
+    return;
+  }
   if (form.dataset.action === 'terminal') {
     e.preventDefault();
     const input = $('terminal-input');
@@ -186,6 +197,11 @@ document.addEventListener('submit', e => {
       input.value = '';
     }
   }
+});
+
+// Notas de lección: guardado automático al escribir.
+document.addEventListener('input', e => {
+  if (e.target.matches && e.target.matches('textarea[data-note]')) onNoteInput(e.target);
 });
 
 document.addEventListener('keydown', e => {

@@ -37,6 +37,36 @@ export function relativeTime(ms, now = Date.now()) {
   return `hace ${d} ${d === 1 ? 'día' : 'días'}`;
 }
 
+// ---------------------------------------------------------------------------
+// Racha de días con actividad. Los días llegan como 'YYYY-MM-DD' (fecha de Colombia, la pone el servidor).
+// ---------------------------------------------------------------------------
+export function todayInBogota(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(date);
+}
+
+function dayNumber(ymd) {
+  const [y, m, d] = String(ymd).split('-').map(Number);
+  return Math.round(Date.UTC(y, m - 1, d) / 86400000);
+}
+
+// current: días seguidos hasta hoy (o hasta ayer, si hoy aún no hubo actividad). best: la racha más larga.
+export function computeStreak(days = [], today = todayInBogota()) {
+  const nums = [...new Set(days.filter(Boolean).map(dayNumber))].filter(n => !Number.isNaN(n)).sort((a, b) => b - a);
+  const t = dayNumber(today);
+  let current = 0;
+  if (nums.length && (nums[0] === t || nums[0] === t - 1)) {
+    current = 1;
+    for (let i = 1; i < nums.length && nums[i] === nums[i - 1] - 1; i++) current++;
+  }
+  let best = nums.length ? 1 : 0;
+  let run = 1;
+  for (let i = 1; i < nums.length; i++) {
+    run = nums[i] === nums[i - 1] - 1 ? run + 1 : 1;
+    if (run > best) best = run;
+  }
+  return { current, best, activeToday: nums[0] === t };
+}
+
 // Filtro del panel: 'all', 'online' o 'active' (en línea + últimos 7 días). Ordena por actividad reciente.
 export function filterByActivity(rows, filter, now = Date.now()) {
   const keep = row => {

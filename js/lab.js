@@ -360,10 +360,13 @@ export function runCommand(raw, { now = new Date() } = {}) {
 const ALL_LESSONS = COURSE.syllabus.flatMap(m => m.lessons);
 export const TOTAL_LESSONS = ALL_LESSONS.length;
 
+// Pasos de comando (consola) frente a preguntas (q-…) y respuestas del reto final (f-…).
+export function isCommandStep(step) {
+  return !/^(q|f)-/.test(step);
+}
+
 export function isLessonDone(lesson, steps) {
-  if (lesson.requires === 'all') {
-    return ALL_LESSONS.filter(l => l.requires !== 'all').every(l => isLessonDone(l, steps));
-  }
+  if (lesson.afterAll && !ALL_LESSONS.filter(l => !l.afterAll).every(l => isLessonDone(l, steps))) return false;
   return lesson.requires.every(s => Boolean(steps[s]));
 }
 
@@ -386,14 +389,20 @@ export function computeProgress(steps = {}) {
   return { lessonsDone, labsDone, percent, nextLesson, currentModule, skills, complete: percent === 100 };
 }
 
-// Pasos que faltan para la siguiente lección, con el comando sugerido.
+// Comandos que faltan para la siguiente lección (las preguntas se responden en la ficha de la lección).
 export function pendingHints(steps = {}) {
   const { nextLesson } = computeProgress(steps);
   if (!nextLesson) return [];
-  const req = nextLesson.requires === 'all'
-    ? [...new Set(ALL_LESSONS.filter(l => l.requires !== 'all').flatMap(l => l.requires))]
-    : nextLesson.requires;
-  return req.filter(s => !steps[s]).map(s => ({ step: s, command: STEP_HINTS[s] }));
+  return nextLesson.requires
+    .filter(s => isCommandStep(s) && !steps[s])
+    .map(s => ({ step: s, command: STEP_HINTS[s] }));
+}
+
+// Preguntas o respuestas del reto que faltan en la siguiente lección.
+export function pendingChecks(steps = {}) {
+  const { nextLesson } = computeProgress(steps);
+  if (!nextLesson) return [];
+  return nextLesson.requires.filter(s => !isCommandStep(s) && !steps[s]);
 }
 
 // Une dos registros de pasos conservando la fecha más antigua de cada uno.

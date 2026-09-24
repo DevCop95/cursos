@@ -112,6 +112,40 @@ export async function recordSteps(stepKeys) {
   return data;
 }
 
+// Pregunta de lección o respuesta del reto final: la valida el servidor.
+// Devuelve { correct, steps? , remaining? }; lanza error si hay demasiados intentos.
+export async function answerQuiz(step, answer) {
+  const client = await getClient();
+  if (!client) throw new Error('Las preguntas necesitan conexión con el servidor.');
+  const { data, error } = await client.rpc('answer_quiz', { p_step: step, p_answer: String(answer || '').slice(0, 200) });
+  if (error) throw error;
+  return data;
+}
+
+// Días con actividad del propio alumno (para la racha), más recientes primero.
+export async function fetchOwnActivityDays() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.from('activity_days').select('day').order('day', { ascending: false }).limit(400);
+  if (error) throw error;
+  return data.map(r => r.day);
+}
+
+export async function fetchNote(lessonId) {
+  const client = await getClient();
+  if (!client) return null;
+  const { data, error } = await client.from('lesson_notes').select('body, updated_at').eq('lesson_id', lessonId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function saveNote(lessonId, body) {
+  const client = await getClient();
+  if (!client) throw new Error('Las notas necesitan conexión con el servidor.');
+  const { error } = await client.from('lesson_notes').upsert({ lesson_id: lessonId, body, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
 // Marca al usuario como activo (last_seen = now() en el servidor).
 export async function touchPresence() {
   const client = await getClient();

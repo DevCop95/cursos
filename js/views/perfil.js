@@ -3,9 +3,9 @@
  */
 import { esc } from '../lib/html.js';
 import { appState } from '../state.js';
-import { LAB_STEPS } from '../content.js';
-import { isLabDone, TOTAL_LESSONS } from '../lab.js';
-import { currentProgress, currentSteps } from '../progress.js';
+import { TOTAL_LESSONS } from '../lab.js';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js';
+import { computeBadges } from '../lib/badges.js';
 import { avatarFor, openDialog } from '../ui.js';
 import { isAdmin } from '../auth.js';
 
@@ -18,6 +18,23 @@ function formatDate(iso) {
   }
 }
 
+function badgesHtml(steps, bestStreak) {
+  return computeBadges(steps, { bestStreak }).map(b => `
+    <div class="flex flex-col items-center text-center gap-1.5 p-2.5 rounded-xl border ${b.earned ? 'border-emerald-200 bg-emerald-50/60' : 'border-line bg-bg/50'}" title="${esc(b.desc)}">
+      <span class="w-10 h-10 rounded-full flex items-center justify-center ${b.earned ? 'bg-accent text-white' : 'bg-white text-[#c4bfb6] border border-line'}">
+        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">${b.earned ? esc(b.icon) : 'lock'}</span>
+      </span>
+      <span class="text-[11px] font-semibold leading-tight ${b.earned ? 'text-ink' : 'text-muted'}">${esc(b.title)}</span>
+    </div>`).join('');
+}
+
+function paintBadgeCount(steps, bestStreak) {
+  const title = document.getElementById('badges-title');
+  if (!title) return;
+  const all = computeBadges(steps, { bestStreak });
+  title.textContent = `Insignias · ${all.filter(b => b.earned).length}/${all.length}`;
+}
+
 export function renderPerfil(container) {
   const user = appState.session;
   const admin = isAdmin();
@@ -25,15 +42,6 @@ export function renderPerfil(container) {
   const steps = currentSteps();
   const ring = 169.6;
 
-  const labsHtml = LAB_STEPS.map(lab => {
-    const done = isLabDone(lab, steps);
-    return `
-      <li class="flex items-center gap-3 py-2.5">
-        <span class="material-symbols-outlined text-[20px] shrink-0 ${done ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${done ? 'check_circle' : lab.icon}</span>
-        <span class="flex-1 min-w-0 text-[13px] font-semibold ${done ? 'text-accent' : 'text-ink'} truncate">${esc(lab.title)}</span>
-        <span class="text-[10px] font-mono font-bold shrink-0 px-2 py-0.5 rounded-full ${done ? 'bg-accent text-white' : 'bg-bg text-muted border border-line'}">${done ? 'HECHO' : 'PENDIENTE'}</span>
-      </li>`;
-  }).join('');
 
   container.innerHTML = `
     <div class="flex flex-col w-full py-4 sm:py-6 gap-4 max-w-2xl mx-auto">
@@ -47,6 +55,7 @@ export function renderPerfil(container) {
             <div class="flex items-center gap-3 mt-2 font-mono text-[11px]">
               <span class="px-2 py-0.5 rounded-md font-bold ${admin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">${admin ? 'ADMIN' : 'ESTUDIANTE'}</span>
               <span class="text-slate-400"><strong class="text-white">${p.lessonsDone.length}</strong>/${TOTAL_LESSONS} lecciones</span>
+              <span id="profile-streak" class="text-slate-400 hidden" title="Días seguidos con actividad"></span>
             </div>
           </div>
           <div class="relative shrink-0">
@@ -59,12 +68,12 @@ export function renderPerfil(container) {
         </div>
       </section>
 
-      <section class="bg-surface px-4 sm:px-5 py-3 rounded-2xl border border-line">
-        <div class="flex items-center justify-between gap-2 pt-1">
-          <h2 class="text-sm font-bold text-ink">Laboratorios · ${p.labsDone.length}/${LAB_STEPS.length}</h2>
+      <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias</h2>
           <a href="#/aula-interactiva/pentesting-101" class="text-[11px] font-mono font-bold text-accent hover:underline shrink-0">Ir al aula →</a>
         </div>
-        <ul class="flex flex-col divide-y divide-line/60">${labsHtml}</ul>
+        <div id="badges-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
       </section>
 
       <div class="grid grid-cols-2 gap-3">
@@ -77,6 +86,18 @@ export function renderPerfil(container) {
       </div>
     </div>
   `;
+  paintBadgeCount(steps, 0);
+  // La racha llega del servidor: se pinta cuando responde.
+  fetchStreak().then(streak => {
+    const el = document.getElementById('profile-streak');
+    if (el && streak.current > 0) {
+      el.innerHTML = `🔥 <strong class="text-white">${streak.current}</strong> ${streak.current === 1 ? 'día' : 'días'}`;
+      el.classList.remove('hidden');
+    }
+    const grid = document.getElementById('badges-grid');
+    if (grid) grid.innerHTML = badgesHtml(steps, streak.best);
+    paintBadgeCount(steps, streak.best);
+  });
 }
 
 export function openAccountDetails() {

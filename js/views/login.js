@@ -1,10 +1,11 @@
 /**
- * Vista: Login con Google.
+ * Vista: página pública del curso + login con Google.
  *  - Modo nube: botón propio → redirección OAuth de Supabase. Si este navegador recuerda la
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
 import { CONFIG, isCloudEnabled } from '../config.js';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, COURSE_INFO, LAB_STEPS } from '../content.js';
 import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js';
 import { esc } from '../lib/html.js';
 import { avatarFor, showToast } from '../ui.js';
@@ -182,35 +183,147 @@ async function mountGoogleButton() {
 }
 
 // ---------------------------------------------------------------------------
+// Página pública (antes del login): qué se aprende, temario, requisitos y acceso.
+// ---------------------------------------------------------------------------
+function section(id, kicker, title, body) {
+  return `
+    <section id="${id}" class="landing-card w-full rounded-3xl p-6 sm:p-8 flex flex-col gap-5 scroll-mt-6">
+      <div>
+        <p class="text-[11px] font-mono font-bold text-accent">${kicker}</p>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">${title}</h2>
+      </div>
+      ${body}
+    </section>`;
+}
+
 export function renderLogin(container, onSuccess) {
   onLoginSuccess = onSuccess;
+  const lessons = COURSE.syllabus.reduce((n, m) => n + m.lessons.length, 0);
+  const meta = [
+    ['schedule', COURSE.duration],
+    ['menu_book', `${lessons} lecciones`],
+    ['science', `${LAB_STEPS.length} laboratorios`],
+    ['smart_display', 'Video en español']
+  ];
+  const steps = [
+    ['auto_stories', 'Aprende', 'Cada lección tiene su objetivo, una explicación breve y el tramo del video que la cubre.'],
+    ['terminal', 'Practica', 'Una consola de Windows simulada en el navegador y un objetivo de laboratorio para escanear sin riesgo.'],
+    ['quiz', 'Demuestra', 'Una pregunta por lección y un reto final sobre el objetivo. El progreso se guarda en tu cuenta.']
+  ];
+
   container.innerHTML = `
-    <div class="relative w-full min-h-[82vh] flex flex-col items-center justify-center py-10 px-4 z-10">
-      <div class="login-card-editorial w-full max-w-[400px] rounded-[28px] p-7 sm:p-9 flex flex-col gap-7 modal-enter">
-        <header class="flex flex-col items-center text-center gap-4">
-          <div class="relative group cursor-default">
-            <div class="absolute -inset-2 rounded-2xl bg-gradient-to-tr from-accent/20 via-[#9ffdd3]/30 to-accent/10 blur-md opacity-60 group-hover:opacity-100 transition-all duration-500" aria-hidden="true"></div>
-            <div class="relative w-16 h-16 rounded-2xl bg-white border border-line flex items-center justify-center p-2.5 group-hover:scale-105 transition-transform duration-300">
-              <img src="assets/icon-192.png" alt="" class="w-11 h-11 rounded-lg object-contain pixelated" />
+    <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col gap-5 sm:gap-6">
+      <header class="flex items-center justify-between gap-3 px-1">
+        <div class="flex items-center gap-2.5">
+          <img src="assets/icon-192.png" alt="" class="w-9 h-9 rounded-lg pixelated" />
+          <span class="font-extrabold text-xl tracking-tight text-ink">Dev<em class="not-italic text-accent">101x</em></span>
+        </div>
+        <button type="button" data-action="scroll-to" data-target="acceso" class="h-9 px-3.5 rounded-xl bg-white/90 border border-line hover:border-accent/60 text-xs font-semibold text-ink">Entrar</button>
+      </header>
+
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-9 grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-7 lg:gap-10 items-center modal-enter">
+        <div class="flex flex-col gap-4 min-w-0">
+          <span class="self-start px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-accent font-mono text-[10px] font-bold">CURSO PRÁCTICO · ${esc(COURSE.categoryLabel)}</span>
+          <h1 class="text-[30px] sm:text-[40px] leading-[1.08] font-extrabold text-ink tracking-tight">Aprende pentesting desde Windows, practicando.</h1>
+          <p class="text-[15px] text-ink2 leading-relaxed">${esc(COURSE.description)}</p>
+          <p class="text-[13px] text-muted flex items-start gap-2"><span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">person_check</span><span>${esc(COURSE_INFO.audience)}</span></p>
+          <ul class="flex flex-wrap gap-2 font-mono text-[11px] text-ink2">
+            ${meta.map(([icon, label]) => `<li class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-line"><span class="material-symbols-outlined text-[15px] text-accent" aria-hidden="true">${icon}</span>${esc(label)}</li>`).join('')}
+          </ul>
+          <div id="acceso" class="flex flex-col gap-3 pt-1 max-w-[400px] scroll-mt-6">
+            <div id="login-actions" class="flex flex-col gap-3 min-h-[48px]"></div>
+            <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+            <p class="flex items-start gap-2 text-[11px] leading-relaxed text-muted">
+              <span class="material-symbols-outlined text-[15px] text-accent mt-px" aria-hidden="true">lock</span>
+              <span>Acceso con tu cuenta de Google. Solo usamos tu nombre, correo y foto de perfil.</span>
+            </p>
+          </div>
+        </div>
+        <button type="button" data-action="open-video" data-start="0" class="group relative w-full aspect-video rounded-2xl overflow-hidden bg-term border border-term-line shadow-xl text-left">
+          <img src="https://i.ytimg.com/vi/${COURSE_VIDEO.id}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <span class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></span>
+          <span class="absolute inset-0 flex items-center justify-center">
+            <span class="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-accent text-4xl" aria-hidden="true">play_arrow</span></span>
+          </span>
+          <span class="absolute left-4 right-4 bottom-3 text-white">
+            <span class="block text-[10px] font-mono font-bold text-emerald-300">VISTA PREVIA · ${esc(COURSE_VIDEO.duration)}</span>
+            <span class="block text-sm font-bold leading-snug">${esc(COURSE_VIDEO.title)}</span>
+          </span>
+        </button>
+      </section>
+
+      ${section('como-funciona', 'CÓMO FUNCIONA', 'Aprende, practica y demuéstralo', `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          ${steps.map(([icon, title, text], i) => `
+            <div class="p-4 rounded-2xl bg-white border border-line flex flex-col gap-2">
+              <span class="w-9 h-9 rounded-xl bg-accent text-white flex items-center justify-center"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">${icon}</span></span>
+              <p class="text-sm font-bold text-ink">${i + 1}. ${title}</p>
+              <p class="text-[13px] text-ink2 leading-relaxed">${text}</p>
+            </div>`).join('')}
+        </div>`)}
+
+      ${section('aprenderas', 'QUÉ APRENDERÁS', 'Al terminar sabrás…', `
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          ${COURSE_OBJECTIVES.map(o => `<li class="flex gap-2.5 p-3.5 rounded-2xl bg-white border border-line text-[13px] text-ink2"><span class="material-symbols-outlined text-[18px] text-accent shrink-0" aria-hidden="true">check_circle</span><span>${esc(o)}</span></li>`).join('')}
+        </ul>`)}
+
+      ${section('temario', 'TEMARIO', `${COURSE.syllabus.length} módulos · ${lessons} lecciones`, `
+        <div class="flex flex-col gap-2">
+          ${COURSE.syllabus.map((m, i) => `
+            <details class="group rounded-2xl bg-white border border-line" ${i === 0 ? 'open' : ''}>
+              <summary class="list-none cursor-pointer flex items-center justify-between gap-3 p-4 select-none">
+                <span class="flex items-center gap-2.5 min-w-0">
+                  <span class="w-7 h-7 rounded-lg bg-accent text-white text-xs font-bold flex items-center justify-center shrink-0">${i + 1}</span>
+                  <span class="text-sm font-bold text-ink">${esc(m.module.replace(/^Módulo \d+:\s*/, ''))}</span>
+                </span>
+                <span class="flex items-center gap-2 shrink-0 text-[11px] font-mono text-muted">${m.lessons.length} lecciones<span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180" aria-hidden="true">expand_more</span></span>
+              </summary>
+              <ul class="px-4 pb-4 flex flex-col gap-1.5">
+                ${m.lessons.map(l => `<li class="flex items-center justify-between gap-3 text-[13px] text-ink2"><span class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-[16px] text-[#b6b2a9]" aria-hidden="true">${l.afterAll ? 'flag' : 'play_circle'}</span><span class="truncate">${esc(l.title)}</span></span><span class="font-mono text-[11px] text-muted shrink-0">${esc(l.time)}</span></li>`).join('')}
+              </ul>
+            </details>`).join('')}
+        </div>`)}
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+        ${section('requisitos', 'ANTES DE EMPEZAR', 'Requisitos', `
+          <ul class="flex flex-col gap-2.5">
+            ${COURSE_INFO.requirements.map(r => `<li class="flex gap-2.5 text-[13px] text-ink2"><span class="material-symbols-outlined text-[18px] text-accent shrink-0" aria-hidden="true">task_alt</span><span>${esc(r)}</span></li>`).join('')}
+          </ul>
+          <p class="flex items-start gap-2 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-[12px] text-amber-950 leading-relaxed">
+            <span class="material-symbols-outlined text-[18px] text-amber-600 shrink-0" aria-hidden="true">gavel</span>
+            <span><strong>Uso responsable.</strong> Todo se practica contra un objetivo simulado. Fuera del laboratorio, estas técnicas solo se aplican sobre sistemas propios o con autorización expresa.</span>
+          </p>`)}
+        ${section('instructor', 'QUIÉN LO ENSEÑA', 'Instructor', `
+          <div class="flex items-center gap-4">
+            <img src="assets/icon-192.png" alt="" class="w-14 h-14 rounded-2xl bg-white border border-line p-2 pixelated" />
+            <div>
+              <p class="text-base font-bold text-ink">${esc(COURSE_INFO.instructor.name)}</p>
+              <p class="text-[13px] text-ink2 leading-relaxed">${esc(COURSE_INFO.instructor.bio)}</p>
             </div>
           </div>
-          <div class="flex flex-col gap-1.5">
-            <h1 class="text-[28px] sm:text-[32px] leading-tight font-extrabold text-ink tracking-tight">Bienvenido a Dev<em class="not-italic text-accent">101x</em></h1>
-            <p class="text-sm text-ink2">Pentesting y ciberseguridad con laboratorios prácticos.</p>
-          </div>
-        </header>
-
-        <div class="flex flex-col gap-3">
-          <div id="login-actions" class="flex flex-col gap-3 min-h-[48px]"></div>
-          <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
-        </div>
-
-        <footer class="pt-5 border-t border-line/70 flex items-start gap-2.5 text-[11px] leading-relaxed text-muted">
-          <span class="material-symbols-outlined text-[16px] text-accent mt-px" aria-hidden="true">lock</span>
-          <span>Acceso seguro con tu cuenta de Google. Solo usamos tu nombre, correo y foto de perfil.</span>
-        </footer>
+          <p class="text-[12px] text-muted">Video de apoyo: <strong class="text-ink2">${esc(COURSE_VIDEO.author)}</strong> (YouTube).</p>`)}
       </div>
-      <p class="w-full max-w-[400px] mt-5 text-center text-[11px] text-muted">&copy; ${new Date().getFullYear()} Dev<em class="not-italic text-accent font-bold">101x</em> &bull; Plataforma Oficial de Aprendizaje</p>
+
+      ${section('faq', 'PREGUNTAS FRECUENTES', 'Dudas habituales', `
+        <div class="flex flex-col gap-2">
+          ${COURSE_INFO.faq.map(([q, a]) => `
+            <details class="group rounded-2xl bg-white border border-line">
+              <summary class="list-none cursor-pointer flex items-center justify-between gap-3 p-4 text-sm font-semibold text-ink select-none">${esc(q)}<span class="material-symbols-outlined text-[18px] text-muted transition-transform group-open:rotate-180" aria-hidden="true">expand_more</span></summary>
+              <p class="px-4 pb-4 text-[13px] text-ink2 leading-relaxed">${esc(a)}</p>
+            </details>`).join('')}
+        </div>`)}
+
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-extrabold text-ink tracking-tight">¿Empezamos?</h2>
+          <p class="text-[13px] text-ink2">Entra con Google y empieza por la lección 1.1.</p>
+        </div>
+        <button type="button" data-action="scroll-to" data-target="acceso" class="h-11 px-5 rounded-xl bg-accent hover:bg-accent2 text-white text-sm font-semibold inline-flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">login</span>Entrar con Google
+        </button>
+      </section>
+
+      <p class="w-full text-center text-[11px] text-muted pb-2">&copy; ${new Date().getFullYear()} Dev<em class="not-italic text-accent font-bold">101x</em> Academy</p>
     </div>
   `;
   if (isCloudEnabled()) paintActions();
