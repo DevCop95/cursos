@@ -8,7 +8,7 @@ import { currentProgress, currentSteps, fetchStreak } from '../progress.js';
 import { computeBadges } from '../lib/badges.js';
 import { avatarFor, openDialog } from '../ui.js';
 import { isAdmin } from '../auth.js';
-import { fetchOwnCompletions } from '../cloud.js';
+import { fetchOwnCompletions, fetchCourseProgress, fetchCourses } from '../cloud.js';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -78,6 +78,11 @@ export function renderPerfil(container) {
         <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
       </section>
 
+      <section id="profile-courses" class="hidden bg-surface p-4 sm:p-5 rounded-2xl border border-line">
+        <h2 class="text-sm font-bold text-ink mb-3">Otros cursos</h2>
+        <div id="profile-courses-list" class="flex flex-col gap-2.5"></div>
+      </section>
+
       <div class="grid grid-cols-2 gap-3">
         <button type="button" data-action="open-account" class="h-12 px-4 bg-surface hover:bg-bg rounded-2xl text-sm font-semibold border border-line hover:border-accent/60 transition-colors flex items-center justify-center gap-2 text-ink">
           <span class="material-symbols-outlined text-base text-accent" aria-hidden="true">insights</span><span>Habilidades<span class="hidden sm:inline"> y cuenta</span></span>
@@ -108,6 +113,23 @@ export function renderPerfil(container) {
     el.textContent = '✓ Curso terminado';
     el.title = `Terminado el ${formatDate(done.completed_at)}`;
     el.classList.remove('hidden');
+  }).catch(() => {});
+  // Progreso en los cursos guardados en la base de datos (de pago).
+  Promise.all([fetchCourseProgress(), fetchCourses()]).then(([rows, courses]) => {
+    const box = document.getElementById('profile-courses');
+    const list = document.getElementById('profile-courses-list');
+    if (!box || !list || !rows || !rows.length) return;
+    list.innerHTML = rows.map(r => {
+      const pct = Number(r.progress_percentage) || 0;
+      const title = (courses.find(c => c.id === r.course_id) || { title: r.course_id }).title;
+      return `
+        <a href="#/aula-interactiva/${encodeURIComponent(r.course_id)}" class="flex items-center gap-3 p-2.5 -mx-1 rounded-xl hover:bg-bg transition-colors">
+          <span class="flex-1 min-w-0 truncate text-[13px] font-semibold text-ink">${esc(title)}</span>
+          <span class="w-24 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${pct}%"></span></span>
+          <span class="w-12 text-right text-[11px] font-mono font-bold ${r.completed_at ? 'text-accent' : 'text-ink2'}">${r.completed_at ? '✓' : `${pct}%`}</span>
+        </a>`;
+    }).join('');
+    box.classList.remove('hidden');
   }).catch(() => {});
 }
 

@@ -7,17 +7,25 @@ import { esc } from '../lib/html.js';
 import { showToast, openDialog, closeModal } from '../ui.js';
 import { isCloudEnabled } from '../config.js';
 import * as cloud from '../cloud.js';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep } from '../lib/course-engine.js';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor } from '../lib/course-engine.js';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
   hint: 'text-amber-300', system: 'text-slate-200', out: 'text-slate-200'
 };
 const MAX_LINES = 200;
+const SAVED_LINES = 80; // líneas de la terminal que se guardan en el servidor
+const SAVE_DELAY = 1500;
+const TAB_ACTIVE = 'font-bold bg-accent text-white';
+const TAB_IDLE = 'font-semibold bg-white hover:bg-bg2 text-ink border border-line/70';
 const TAB_BTN = 'h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors';
 
 // Estado del curso abierto (en memoria: el contenido de pago no se guarda en el navegador).
-let S = null; // { id, content, steps, lines }
+// El estado de la terminal (variables, últimas líneas y ficha abierta) se guarda en Supabase
+// (user_course_state), así el alumno retoma el laboratorio en cualquier dispositivo.
+let S = null; // { id, content, steps, lines, state, expl }
+let saveTimer = null;
+let pendingSave = null;
 
 const safeVideoId = id => (/^[\w-]{11}$/.test(String(id || '')) ? id : null);
 const fmtTime = sec => `${Math.floor(sec / 3600) ? Math.floor(sec / 3600) + ':' : ''}${String(Math.floor(sec % 3600 / 60)).padStart(Math.floor(sec / 3600) ? 2 : 1, '0')}:${String(sec % 60).padStart(2, '0')}`;
@@ -43,8 +51,13 @@ export async function renderCourseAula(container, courseId) {
   container.innerHTML = '<p class="py-16 text-center text-sm text-muted">Cargando curso…</p>';
   let content = null;
   let progress = null;
+  let saved = null;
   try {
-    [content, progress] = await Promise.all([cloud.fetchCourseContent(courseId), cloud.fetchCourseProgress(courseId)]);
+    [content, progress, saved] = await Promise.all([
+      cloud.fetchCourseContent(courseId),
+      cloud.fetchCourseProgress(courseId),
+      cloud.fetchCourseState(courseId).catch(() => null)
+    ]);
   } catch (e) {
     console.error(e);
   }
@@ -54,8 +67,63 @@ export async function renderCourseAula(container, courseId) {
     return;
   }
   const steps = (progress && progress[0] && progress[0].steps) || {};
-  S = { id: courseId, content, steps, lines: (content.terminal.intro || []).map(([text, type]) => ({ text, type })) };
+  flushSave();
+  S = restoreState(courseId, content, steps, saved);
   paintAula(container);
+}
+
+const introLines = content => (content.terminal.intro || []).map(([text, type]) => ({ text, type }));
+
+// El estado guardado lo escribe el propio alumno: se valida antes de usarlo (solo variables
+// conocidas, textos cortos y tipos de línea permitidos).
+function restoreState(id, content, steps, saved) {
+  const explKeys = (content.explanations || []).map(e => e.key);
+  const S0 = { id, content, steps, lines: introLines(content), state: initialCourseState(content.terminal), expl: explKeys[0] || null };
+  if (!saved || typeof saved !== 'object') return S0;
+  if (saved.vars && typeof saved.vars === 'object') {
+    Object.keys(S0.state).forEach(k => {
+      const v = saved.vars[k];
+      if (typeof v === 'string' && v.length <= 120) S0.state[k] = v;
+    });
+  }
+  if (Array.isArray(saved.lines)) {
+    const lines = saved.lines
+      .filter(l => l && typeof l.text === 'string' && LINE_CLASSES[l.type])
+      .slice(-SAVED_LINES)
+      .map(l => ({ text: l.text.slice(0, 400), type: l.type }));
+    if (lines.length) S0.lines = [...lines, { text: '— Sesión restaurada: sigues donde lo dejaste —', type: 'slate' }];
+  }
+  if (explKeys.includes(saved.expl)) S0.expl = saved.expl;
+  return S0;
+}
+
+function scheduleSave() {
+  if (!S) return;
+  pendingSave = { id: S.id, data: { v: 1, vars: S.state, lines: S.lines.slice(-SAVED_LINES), expl: S.expl } };
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, SAVE_DELAY);
+}
+
+// Guarda lo pendiente (tras la pausa, al cambiar de curso o al salir de la página).
+function flushSave() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  if (!pendingSave) return;
+  const { id, data } = pendingSave;
+  pendingSave = null;
+  cloud.saveCourseState(id, data).catch(err => console.warn('No se pudo guardar el estado del laboratorio:', err.message || err));
+}
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+
+export function resetCourseLab() {
+  if (!S) return;
+  if (!window.confirm('¿Reiniciar el laboratorio? La terminal vuelve al principio; tu progreso y tus respuestas se conservan.')) return;
+  S.state = initialCourseState(S.content.terminal);
+  S.lines = introLines(S.content);
+  renderScreen();
+  updatePrompt();
+  scheduleSave();
 }
 
 function paintAula(container) {
@@ -76,6 +144,7 @@ function paintAula(container) {
           </div>
           <div class="flex items-center gap-2 shrink-0 flex-wrap">
             ${video ? `<button type="button" data-action="c-video" data-start="0" class="${TAB_BTN}"><span class="material-symbols-outlined text-[18px] text-rose-500" aria-hidden="true">smart_display</span><span>Video de la clase</span></button>` : ''}
+            ${(content.resources || []).length ? `<button type="button" data-action="c-resources" class="${TAB_BTN}" title="Documentación, libros y práctica extra"><span class="material-symbols-outlined text-[18px] text-sky-600" aria-hidden="true">menu_book</span><span class="hidden sm:inline">Recursos</span></button>` : ''}
             <button type="button" data-action="c-cheat" class="${TAB_BTN}" title="Hoja de comandos imprimible"><span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">description</span><span class="hidden sm:inline">Hoja de comandos</span></button>
           </div>
         </div>
@@ -89,24 +158,28 @@ function paintAula(container) {
       </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
-        <section class="lg:col-span-8 bg-term rounded-2xl border border-term-line overflow-hidden font-mono text-xs" aria-label="Terminal del laboratorio">
+        <div class="lg:col-span-8 flex flex-col gap-4 sm:gap-5 min-w-0">
+        <section class="bg-term rounded-2xl border border-term-line overflow-hidden font-mono text-xs" aria-label="Terminal del laboratorio">
           <div class="p-3 bg-term-2 text-slate-300 flex items-center justify-between gap-2 text-[11px] border-b border-term-line">
             <div class="flex items-center gap-2.5 min-w-0">
               <div class="hidden sm:flex items-center gap-1.5" aria-hidden="true"><span class="w-3 h-3 rounded-full bg-[#ff5f56]/80"></span><span class="w-3 h-3 rounded-full bg-[#ffbd2e]/80"></span><span class="w-3 h-3 rounded-full bg-[#27c93f]/80"></span></div>
               <span class="font-bold text-slate-100 truncate">${esc(content.terminal.title || 'Terminal')}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
+              <button type="button" data-action="c-reset" title="Vuelve a empezar el laboratorio (no borra tu progreso)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
               <button type="button" data-action="c-run" data-cmd="clear" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">clear</button>
               <button type="button" data-action="c-run" data-cmd="help" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
             </div>
           </div>
           <div id="c-screen" role="log" aria-live="polite" class="p-3.5 sm:p-4 h-64 sm:h-96 overflow-y-auto space-y-1 text-slate-200 text-[11px] sm:text-xs leading-relaxed whitespace-pre-wrap break-words"></div>
           <form data-action="c-terminal" class="p-3 bg-term-deep border-t border-term-line flex items-center gap-2">
-            <label for="c-input" class="text-emerald-400 text-xs shrink-0 select-none font-bold"><span class="hidden md:inline">${esc(content.terminal.prompt || '$ ')}</span><span class="md:hidden">${esc(content.terminal.promptShort || '$')}</span></label>
+            <label for="c-input" class="text-emerald-400 text-xs shrink-0 select-none font-bold max-w-[55%] truncate"><span id="c-prompt" class="hidden md:inline">${esc(promptFor(content.terminal, S.state).trim())}</span><span class="md:hidden">${esc(content.terminal.promptShort || '$')}</span></label>
             <input id="c-input" type="text" maxlength="300" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${esc(content.terminal.placeholder || 'help')}" class="flex-1 min-w-0 bg-transparent text-emerald-300 text-[13px] sm:text-xs outline-none font-mono py-1.5" />
             <button type="submit" class="px-3.5 sm:px-4 py-2 bg-accent hover:bg-accent2 rounded-xl text-white text-xs font-semibold shrink-0 transition-colors">Ejecutar</button>
           </form>
         </section>
+        ${explanationsPanelHtml()}
+        </div>
 
         <div class="lg:col-span-4 flex flex-col gap-4 sm:gap-5">
           ${video ? `
@@ -128,7 +201,19 @@ function paintAula(container) {
               <span class="text-[11px] text-muted font-mono">${esc(content.duration || '')}</span>
             </div>
             <div id="c-syllabus" class="flex flex-col gap-1">${syllabusHtml()}</div>
+            ${(content.objectives || []).length ? `
+            <details class="mt-1 pt-3 border-t border-line/60 text-xs">
+              <summary class="cursor-pointer font-semibold text-ink2 hover:text-accent">Qué aprenderás</summary>
+              <ul class="mt-2 flex flex-col gap-1.5 text-ink2">
+                ${content.objectives.map(o => `<li class="flex gap-1.5"><span class="material-symbols-outlined text-[14px] text-accent mt-px" aria-hidden="true">check</span><span>${esc(o)}</span></li>`).join('')}
+              </ul>
+            </details>` : ''}
           </section>
+          ${(content.labs || []).length ? `
+          <section class="bg-surface rounded-2xl border border-line p-4 flex flex-col gap-2.5">
+            <h3 class="text-xs font-bold text-ink uppercase font-mono">Laboratorios</h3>
+            <div id="c-labs" class="flex flex-col gap-2">${labsHtml()}</div>
+          </section>` : ''}
         </div>
       </div>
     </div>`;
@@ -159,6 +244,90 @@ function syllabusHtml() {
   }).join('<div class="border-t border-line/60 my-1"></div>');
 }
 
+function labsHtml() {
+  const p = computeCourseProgress(S.content, S.steps);
+  return (S.content.labs || []).map(lab => {
+    const done = p.labsDone.includes(lab.id);
+    const count = lab.all.filter(s => S.steps[s]).length;
+    return `
+      <div class="flex items-start gap-2.5 p-2.5 rounded-xl border ${done ? 'border-emerald-200 bg-emerald-50/60' : 'border-line bg-white/60'}">
+        <span class="material-symbols-outlined text-[18px] shrink-0 ${done ? 'text-accent' : 'text-muted'}" aria-hidden="true">${done ? 'verified' : esc(lab.icon || 'science')}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-[12px] font-bold text-ink truncate">${esc(lab.title)}</p>
+            <span class="text-[10px] font-mono shrink-0 ${done ? 'text-accent font-bold' : 'text-muted'}">${done ? '✓' : `${count}/${lab.all.length}`}</span>
+          </div>
+          <p class="text-[11px] text-ink2 leading-snug mt-0.5">${esc(lab.hint || '')}</p>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Fichas de los comandos, debajo de la terminal (como en el curso de Nmap).
+function explanationsPanelHtml() {
+  if (!(S.content.explanations || []).length) return '';
+  return `
+    <section class="bg-surface rounded-2xl border border-line overflow-hidden">
+      <div class="px-3.5 py-3 bg-bg/70 border-b border-line/80 flex items-center gap-2.5 min-w-0">
+        <span class="material-symbols-outlined text-accent text-base shrink-0" aria-hidden="true">psychology</span>
+        <div id="c-expl-tabs" class="flex items-center gap-1.5 overflow-x-auto pb-0.5 max-w-full font-mono text-[11px] cmd-tab-bar">${explTabsHtml()}</div>
+      </div>
+      <div id="c-expl" class="p-4 sm:p-6 flex flex-col gap-4 text-xs">${explanationCardHtml()}</div>
+    </section>`;
+}
+
+function explTabsHtml() {
+  return (S.content.explanations || []).map(e => `
+    <button type="button" data-action="c-expl" data-key="${esc(e.key)}" aria-pressed="${e.key === S.expl}" class="px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${e.key === S.expl ? TAB_ACTIVE : TAB_IDLE}">${esc(e.name)}</button>`).join('');
+}
+
+function explanationCardHtml() {
+  const e = (S.content.explanations || []).find(x => x.key === S.expl);
+  if (!e) return '';
+  return `
+    <div class="flex items-start justify-between gap-3 pb-3.5 border-b border-line">
+      <h3 class="text-base font-bold text-ink">${esc(e.title)}</h3>
+      <button type="button" data-action="copy-cmd" data-cmd="${esc(e.cmd)}" class="px-3 py-1.5 rounded-xl bg-bg hover:bg-bg2 text-ink font-mono text-xs font-semibold flex items-center gap-1 border border-line transition-colors shrink-0">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">content_copy</span><span>Copiar</span>
+      </button>
+    </div>
+    <div class="bg-term p-3.5 rounded-xl border border-term-line font-mono text-xs overflow-x-auto">
+      <span class="text-emerald-400 select-none font-bold">$ </span><span class="text-emerald-300 font-bold whitespace-nowrap">${esc(e.cmd)}</span>
+    </div>
+    <p class="text-ink2 leading-relaxed text-[13px]">${esc(e.purpose)}</p>
+    ${(e.flags || []).length ? `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      ${e.flags.map(([flag, desc]) => `
+        <div class="bg-bg/60 p-3 rounded-xl border border-line/80 flex flex-col gap-1">
+          <code class="self-start font-mono font-bold text-accent bg-emerald-100/80 px-1.5 py-0.5 rounded text-[11px] break-all">${esc(flag)}</code>
+          <p class="text-ink2 text-[11px] leading-snug">${esc(desc)}</p>
+        </div>`).join('')}
+    </div>` : ''}
+    ${e.tip ? `
+    <p class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs leading-relaxed flex gap-2">
+      <span class="material-symbols-outlined text-[16px] text-amber-500 shrink-0" aria-hidden="true">tips_and_updates</span><span>${esc(e.tip)}</span>
+    </p>` : ''}`;
+}
+
+export function selectCourseExplanation(key) {
+  if (!S || !(S.content.explanations || []).some(e => e.key === key)) return;
+  S.expl = key;
+  const tabs = document.getElementById('c-expl-tabs');
+  if (tabs) tabs.innerHTML = explTabsHtml();
+  const card = document.getElementById('c-expl');
+  if (card) card.innerHTML = explanationCardHtml();
+  scheduleSave();
+}
+
+// Ficha que corresponde al comando escrito (git commit → "git add · commit", ssh-keygen → "SSH").
+function explanationFor(cmd) {
+  const parts = cmd.toLowerCase().split(' ');
+  const word = (parts[0] === 'git' ? parts[1] : parts[0].split('-')[0]) || '';
+  if (!word || word.startsWith('-')) return null;
+  const hit = (S.content.explanations || []).find(e => String(e.name).toLowerCase().split(/[^a-z0-9]+/).includes(word));
+  return hit ? hit.key : null;
+}
+
 function nextStepHtml() {
   const p = computeCourseProgress(S.content, S.steps);
   if (p.complete) return '<p class="text-xs text-accent font-semibold">✓ Has completado todas las lecciones del curso.</p>';
@@ -186,6 +355,7 @@ function refreshProgress() {
   set('c-pct', el => { el.textContent = `${p.percent}%`; });
   set('c-lesson-title', el => { el.textContent = p.nextLesson ? p.nextLesson.title : 'Curso completado'; el.dataset.id = p.nextLesson ? p.nextLesson.id : ''; });
   set('c-module', el => { el.textContent = p.nextLesson ? p.nextLesson.module : 'Curso completado'; });
+  set('c-labs', el => { el.innerHTML = labsHtml(); });
 }
 
 function applyServerSteps(serverSteps) {
@@ -193,6 +363,10 @@ function applyServerSteps(serverSteps) {
   S.steps = { ...S.steps, ...(serverSteps || {}) };
   const after = computeCourseProgress(S.content, S.steps);
   refreshProgress();
+  after.labsDone.filter(id => !before.labsDone.includes(id)).forEach(id => {
+    const lab = (S.content.labs || []).find(x => x.id === id);
+    if (lab) showToast(`Laboratorio superado: ${lab.title}`, 'success');
+  });
   after.lessonsDone.filter(id => !before.lessonsDone.includes(id)).forEach(id => {
     const l = after.lessons.find(x => x.id === id);
     if (l) showToast(`Lección completada: ${l.title}`, 'success');
@@ -210,6 +384,11 @@ function lineNode(l) {
   return div;
 }
 
+function updatePrompt() {
+  const el = document.getElementById('c-prompt');
+  if (el && S) el.textContent = promptFor(S.content.terminal, S.state).trim();
+}
+
 function renderScreen() {
   const screen = document.getElementById('c-screen');
   if (!screen || !S) return;
@@ -221,11 +400,17 @@ export function runCourseCmd(raw) {
   if (!S) return;
   const cmd = String(raw || '').trim();
   if (!cmd) return;
-  const r = runCourseCommand(S.content.terminal, cmd);
-  if (r.clear) { S.lines = []; renderScreen(); return; }
-  S.lines.push({ text: (S.content.terminal.promptShort || '$') + ' ' + cmd, type: 'cmd' }, ...r.lines);
+  const prompt = promptFor(S.content.terminal, S.state);
+  const r = runCourseCommand(S.content.terminal, cmd, S.state);
+  if (r.clear) { S.lines = []; renderScreen(); scheduleSave(); return; }
+  S.state = r.state;
+  S.lines.push({ text: prompt + cmd, type: 'cmd' }, ...r.lines);
   if (S.lines.length > MAX_LINES) S.lines.splice(0, S.lines.length - MAX_LINES);
   renderScreen();
+  updatePrompt();
+  const key = explanationFor(cmd.replace(/\s+/g, ' '));
+  if (key && key !== S.expl) selectCourseExplanation(key);
+  else scheduleSave();
   const fresh = r.steps.filter(s => !S.steps[s]);
   if (fresh.length) {
     cloud.recordCourseSteps(S.id, fresh)
@@ -452,5 +637,30 @@ export function openCourseCheatSheet() {
           <span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span>Imprimir o guardar PDF
         </button>
       </div>`
+  });
+}
+
+export function openCourseResources() {
+  if (!S) return;
+  const list = (S.content.resources || []).filter(r => /^https:\/\/[^\s"'<>]+$/.test(String(r.url || '')));
+  openDialog({
+    title: 'Recursos del curso',
+    kicker: String(S.content.title).toUpperCase(),
+    body: `
+      <ul class="flex flex-col gap-2">
+        ${list.map(r => `
+          <li>
+            <a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="flex items-start gap-3 p-3 rounded-xl border border-line hover:border-accent/60 bg-white transition-colors">
+              <span class="material-symbols-outlined text-[18px] text-accent shrink-0 mt-0.5" aria-hidden="true">open_in_new</span>
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[13px] font-bold text-ink">${esc(r.title)}</span>
+                  ${r.tag ? `<span class="px-1.5 py-0.5 rounded bg-bg border border-line text-[10px] font-mono text-muted">${esc(r.tag)}</span>` : ''}
+                </span>
+                ${r.desc ? `<span class="block text-[12px] text-ink2 mt-0.5">${esc(r.desc)}</span>` : ''}
+              </span>
+            </a>
+          </li>`).join('')}
+      </ul>`
   });
 }

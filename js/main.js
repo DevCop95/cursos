@@ -11,7 +11,7 @@ import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './v
 import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
 import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
-import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, submitCourseQuiz } from './views/course-aula.js';
+import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz } from './views/course-aula.js';
 import { COURSE } from './content.js';
 import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag } from './views/admin.js';
 import { startPresence } from './progress.js';
@@ -145,6 +145,9 @@ const ACTIONS = {
   'c-seek': el => seekCourseVideo(Number(el.dataset.start) || 0),
   'c-hint': el => openCourseHint(el.dataset.step),
   'c-cheat': () => openCourseCheatSheet(),
+  'c-resources': () => openCourseResources(),
+  'c-expl': el => selectCourseExplanation(el.dataset.key),
+  'c-reset': () => resetCourseLab(),
   'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),

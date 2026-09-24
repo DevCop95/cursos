@@ -209,6 +209,22 @@ export async function answerCourseQuiz(courseId, step, answer) {
   return data;
 }
 
+// Estado del alumno en un curso (terminal, historial, última lección). Solo lo lee y escribe su dueño.
+export async function fetchCourseState(courseId) {
+  const client = await getClient();
+  if (!client) return null;
+  const { data, error } = await client.from('user_course_state').select('data, updated_at').eq('course_id', courseId).maybeSingle();
+  if (error) throw error;
+  return data ? data.data : null;
+}
+
+export async function saveCourseState(courseId, data) {
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client.from('user_course_state').upsert({ course_id: courseId, data, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
 // Catálogo: los alumnos ven los publicados; los admin, todos.
 export async function fetchCourses() {
   const client = await getClient();
@@ -222,19 +238,21 @@ export async function fetchCourses() {
 export async function adminListStudents() {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
-  const [profiles, progress, access, completions] = await Promise.all([
+  const [profiles, progress, access, completions, courseProgress] = await Promise.all([
     client.from('profiles').select('id, email, full_name, avatar_url, role, access_level, last_login, last_seen, created_at').order('created_at', { ascending: false }),
     client.from('student_progress').select('user_id, steps, progress_percentage, completed_at'),
     client.from('course_access').select('user_id, course_id, enabled'),
-    client.from('course_completions').select('user_id, course_id, completed_at')
+    client.from('course_completions').select('user_id, course_id, completed_at'),
+    client.from('course_progress').select('user_id, course_id, progress_percentage, completed_at')
   ]);
-  const err = profiles.error || progress.error || access.error || completions.error;
+  const err = profiles.error || progress.error || access.error || completions.error || courseProgress.error;
   if (err) throw err;
   return profiles.data.map(p => ({
     ...p,
     progress: progress.data.find(r => r.user_id === p.id) || null,
     access: access.data.filter(r => r.user_id === p.id),
-    completions: completions.data.filter(r => r.user_id === p.id)
+    completions: completions.data.filter(r => r.user_id === p.id),
+    courseProgress: courseProgress.data.filter(r => r.user_id === p.id)
   }));
 }
 

@@ -306,6 +306,16 @@ export function openUserDetails(userId) {
           <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Cursos</h3>
           <ul id="user-courses" class="flex flex-col divide-y divide-line/60">${userCoursesHtml(r)}</ul>
         </section>
+        ${(r.courseProgress || []).length ? `
+        <section class="flex flex-col gap-2">
+          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Progreso en cursos de pago</h3>
+          ${r.courseProgress.map(cp => `
+            <div class="flex items-center gap-3 text-xs">
+              <span class="flex-1 min-w-0 truncate text-ink font-semibold">${esc((lastCourses.find(x => x.id === cp.course_id) || { title: cp.course_id }).title)}</span>
+              <span class="w-20 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${Number(cp.progress_percentage) || 0}%"></span></span>
+              <span class="w-10 text-right font-mono font-bold ${cp.completed_at ? 'text-accent' : 'text-ink2'}">${cp.completed_at ? '✓' : `${Number(cp.progress_percentage) || 0}%`}</span>
+            </div>`).join('')}
+        </section>` : ''}
         <ul class="flex flex-col gap-1.5">
           ${LAB_STEPS.map(lab => {
             const done = isLabDone(lab, steps);
