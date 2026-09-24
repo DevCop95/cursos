@@ -6,7 +6,7 @@ import { appState } from '../state.js';
 import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js';
 import { TOTAL_LESSONS } from '../lab.js';
 import { currentProgress, fetchStreak } from '../progress.js';
-import { fetchCourses } from '../cloud.js';
+import { fetchCourses, fetchCourseProgress } from '../cloud.js';
 import { openDialog } from '../ui.js';
 
 const COURSES = [COURSE];
@@ -28,6 +28,30 @@ function ringHtml(percent) {
       </svg>
       <span class="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-white tabular-nums">${percent}%</span>
     </span>`;
+}
+
+// Tarjeta de un curso de pago (contenido en Supabase) en Mis Cursos.
+function dbTile(c, progress) {
+  const pct = progress ? progress.progress_percentage : 0;
+  return `
+    <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
+      <div class="relative bg-term px-4 py-4 flex items-center justify-between gap-3 overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
+        <div class="relative flex flex-col gap-2 min-w-0">
+          <span class="self-start px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
+          <span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">code</span>
+        </div>
+        <div class="relative">${ringHtml(pct)}</div>
+      </div>
+      <div class="p-4 flex flex-col gap-3 flex-1">
+        <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
+        <div class="mt-auto">
+          <a href="#/aula-interactiva/${esc(c.id)}" class="w-full h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>${pct > 0 ? (pct === 100 ? 'Repasar' : 'Continuar') : 'Empezar'}</span>
+          </a>
+        </div>
+      </div>
+    </article>`;
 }
 
 export function renderMisCursos(container) {
@@ -87,7 +111,7 @@ export function renderMisCursos(container) {
         </div>
       </section>
 
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section id="my-courses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         ${enrolled.length ? enrolled.map(tile).join('') : `
           <div class="p-6 bg-surface rounded-2xl border border-line text-center text-sm text-muted sm:col-span-2 lg:col-span-3">
             No tienes cursos habilitados. <a href="#/explorar-cursos" class="text-accent font-semibold hover:underline">Ver catálogo</a>
@@ -95,7 +119,18 @@ export function renderMisCursos(container) {
         ${enrolled.length ? exploreTile : ''}
       </section>
     </div>
-  `;  fetchStreak().then(streak => {
+  `;  // Cursos de pago (contenido en Supabase) a los que el alumno tiene acceso.
+  Promise.all([fetchCourses(), fetchCourseProgress().catch(() => [])]).then(([courses, progress]) => {
+    const grid = document.getElementById('my-courses-grid');
+    if (!grid) return;
+    const mine = courses.filter(c => c.has_content && !COURSES.some(l => l.id === c.id) && appState.enabledCourses.includes(c.id));
+    if (!mine.length) return;
+    const explore = grid.querySelector('a[href="#/explorar-cursos"]');
+    const html = mine.map(c => dbTile(c, (progress || []).find(r => r.course_id === c.id))).join('');
+    if (explore) explore.insertAdjacentHTML('beforebegin', html);
+    else grid.insertAdjacentHTML('beforeend', html);
+  }).catch(() => {});
+  fetchStreak().then(streak => {
     const chip = document.getElementById('streak-chip');
     if (!chip || streak.current < 1) return;
     chip.innerHTML = `🔥 <strong>${streak.current}</strong> ${streak.current === 1 ? 'día' : 'días'}`;
@@ -140,8 +175,25 @@ export function renderExplorar(container) {
       </article>`;
   };
 
-  // Cursos del catálogo (Supabase) que aún no tienen contenido en la app.
-  const upcomingTile = c => `
+  // Cursos del catálogo guardados en Supabase: con contenido (disponibles o con candado) o próximamente.
+  const upcomingTile = c => {
+    if (!c.has_content) return soonDbTile(c);
+    const ok = appState.enabledCourses.includes(c.id);
+    return `
+    <article class="min-w-0 rounded-2xl border border-line bg-surface flex flex-col gap-3 p-4 min-h-[220px] card-lift">
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${c.is_free ? 'bg-emerald-50 text-accent border border-emerald-200' : 'bg-amber-50 text-amber-900 border border-amber-200'}">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
+        <span class="material-symbols-outlined text-[22px] text-accent" aria-hidden="true">code</span>
+      </div>
+      <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
+      <div class="mt-auto">
+        ${ok
+          ? `<a href="#/aula-interactiva/${esc(c.id)}" class="w-full h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span>Ir al aula</a>`
+          : `<span class="w-full h-10 rounded-xl bg-bg border border-line text-[13px] font-semibold text-muted inline-flex items-center justify-center gap-1.5" title="Pide acceso al administrador"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock</span>Requiere acceso</span>`}
+      </div>
+    </article>`;
+  };
+  const soonDbTile = c => `
     <article class="min-w-0 rounded-2xl border border-line bg-surface/70 flex flex-col gap-3 p-4 min-h-[220px]">
       <div class="flex items-center justify-between gap-2">
         <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${c.is_free ? 'bg-emerald-50 text-accent border border-emerald-200' : 'bg-amber-50 text-amber-900 border border-amber-200'}">${c.is_free ? 'GRATIS' : 'ACCESO TOTAL'}</span>

@@ -11,6 +11,8 @@ import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './v
 import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
 import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
+import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, submitCourseQuiz } from './views/course-aula.js';
+import { COURSE } from './content.js';
 import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag } from './views/admin.js';
 import { startPresence } from './progress.js';
 
@@ -66,7 +68,11 @@ function render() {
 
   view.className = 'w-full pt-[76px] pb-6 sm:pt-20 sm:pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col';
   switch (route) {
-    case 'aula-interactiva': renderAula(view, param); break;
+    case 'aula-interactiva':
+      // El curso de Nmap vive en el código; el resto (de pago) se carga desde Supabase.
+      if (param === COURSE.id) renderAula(view, param);
+      else renderCourseAula(view, param);
+      break;
     case 'explorar-cursos': renderExplorar(view); break;
     case 'perfil': renderPerfil(view); break;
     case 'panel-admin': renderAdmin(view); break;
@@ -133,6 +139,12 @@ const ACTIONS = {
   'open-resources': () => openResources(),
   'open-cheatsheet': () => openCheatSheet(),
   'open-hint': el => openHint(el.dataset.step),
+  'c-run': el => runCourseCmdFromUi(el),
+  'c-lesson': el => openCourseLesson(el.dataset.id),
+  'c-video': el => openCourseVideo(Number(el.dataset.start) || 0),
+  'c-seek': el => seekCourseVideo(Number(el.dataset.start) || 0),
+  'c-hint': el => openCourseHint(el.dataset.step),
+  'c-cheat': () => openCourseCheatSheet(),
   'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),
@@ -187,6 +199,20 @@ document.addEventListener('submit', e => {
   if (form.dataset.action === 'quiz') {
     e.preventDefault();
     submitQuiz(form);
+    return;
+  }
+  if (form.dataset.action === 'c-quiz') {
+    e.preventDefault();
+    submitCourseQuiz(form);
+    return;
+  }
+  if (form.dataset.action === 'c-terminal') {
+    e.preventDefault();
+    const input = $('c-input');
+    if (input) {
+      runCourseCmd(input.value);
+      input.value = '';
+    }
     return;
   }
   if (form.dataset.action === 'terminal') {

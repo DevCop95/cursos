@@ -1,0 +1,456 @@
+/**
+ * Vista: aula de un curso cuyo contenido vive en Supabase (cursos de pago).
+ * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
+ * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
+ */
+import { esc } from '../lib/html.js';
+import { showToast, openDialog, closeModal } from '../ui.js';
+import { isCloudEnabled } from '../config.js';
+import * as cloud from '../cloud.js';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep } from '../lib/course-engine.js';
+
+const LINE_CLASSES = {
+  error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
+  hint: 'text-amber-300', system: 'text-slate-200', out: 'text-slate-200'
+};
+const MAX_LINES = 200;
+const TAB_BTN = 'h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors';
+
+// Estado del curso abierto (en memoria: el contenido de pago no se guarda en el navegador).
+let S = null; // { id, content, steps, lines }
+
+const safeVideoId = id => (/^[\w-]{11}$/.test(String(id || '')) ? id : null);
+const fmtTime = sec => `${Math.floor(sec / 3600) ? Math.floor(sec / 3600) + ':' : ''}${String(Math.floor(sec % 3600 / 60)).padStart(Math.floor(sec / 3600) ? 2 : 1, '0')}:${String(sec % 60).padStart(2, '0')}`;
+
+// ---------------------------------------------------------------------------
+// Carga y render principal
+// ---------------------------------------------------------------------------
+function messageHtml(icon, title, text) {
+  return `
+    <div class="max-w-lg mx-auto my-12 p-6 bg-surface rounded-2xl border border-line text-center flex flex-col gap-3 items-center">
+      <span class="material-symbols-outlined text-3xl text-muted" aria-hidden="true">${icon}</span>
+      <h1 class="text-lg font-bold text-ink">${title}</h1>
+      <p class="text-sm text-muted">${text}</p>
+      <a href="#/explorar-cursos" class="px-4 py-2 bg-accent hover:bg-accent2 text-white rounded-xl text-sm font-semibold">Ver catálogo</a>
+    </div>`;
+}
+
+export async function renderCourseAula(container, courseId) {
+  if (!isCloudEnabled()) {
+    container.innerHTML = messageHtml('cloud_off', 'Curso no disponible', 'Este curso necesita conexión con el servidor.');
+    return;
+  }
+  container.innerHTML = '<p class="py-16 text-center text-sm text-muted">Cargando curso…</p>';
+  let content = null;
+  let progress = null;
+  try {
+    [content, progress] = await Promise.all([cloud.fetchCourseContent(courseId), cloud.fetchCourseProgress(courseId)]);
+  } catch (e) {
+    console.error(e);
+  }
+  if (!document.body.contains(container)) return;
+  if (!content) {
+    container.innerHTML = messageHtml('lock', 'No tienes acceso a este curso', 'Es un curso de pago. Pide acceso al administrador de la plataforma.');
+    return;
+  }
+  const steps = (progress && progress[0] && progress[0].steps) || {};
+  S = { id: courseId, content, steps, lines: (content.terminal.intro || []).map(([text, type]) => ({ text, type })) };
+  paintAula(container);
+}
+
+function paintAula(container) {
+  const { content } = S;
+  const p = computeCourseProgress(content, S.steps);
+  const video = safeVideoId(content.video && content.video.id);
+
+  container.innerHTML = `
+    <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-5">
+      <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line flex flex-col gap-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 font-mono text-[11px] flex-wrap text-muted">
+              <span class="px-2 py-0.5 rounded-md bg-accent text-white font-bold">${esc(content.title)}</span>
+              <span id="c-module">${esc(p.nextLesson ? p.nextLesson.module : 'Curso completado')}</span>
+            </div>
+            <button type="button" data-action="c-lesson" id="c-lesson-title" data-id="${esc(p.nextLesson ? p.nextLesson.id : '')}" class="block text-left text-[15px] sm:text-lg font-bold text-ink mt-1.5 leading-snug hover:text-accent transition-colors">${esc(p.nextLesson ? p.nextLesson.title : 'Curso completado')}</button>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 flex-wrap">
+            ${video ? `<button type="button" data-action="c-video" data-start="0" class="${TAB_BTN}"><span class="material-symbols-outlined text-[18px] text-rose-500" aria-hidden="true">smart_display</span><span>Video de la clase</span></button>` : ''}
+            <button type="button" data-action="c-cheat" class="${TAB_BTN}" title="Hoja de comandos imprimible"><span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">description</span><span class="hidden sm:inline">Hoja de comandos</span></button>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex-1 bg-bg h-1.5 rounded-full overflow-hidden" role="progressbar" aria-valuenow="${p.percent}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso del curso">
+            <div id="c-bar" class="bg-accent h-full rounded-full transition-all duration-500" style="width: ${p.percent}%;"></div>
+          </div>
+          <span id="c-pct" class="font-mono text-[11px] font-bold text-accent tabular-nums">${p.percent}%</span>
+        </div>
+        <div id="c-next">${nextStepHtml()}</div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
+        <section class="lg:col-span-8 bg-term rounded-2xl border border-term-line overflow-hidden font-mono text-xs" aria-label="Terminal del laboratorio">
+          <div class="p-3 bg-term-2 text-slate-300 flex items-center justify-between gap-2 text-[11px] border-b border-term-line">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="hidden sm:flex items-center gap-1.5" aria-hidden="true"><span class="w-3 h-3 rounded-full bg-[#ff5f56]/80"></span><span class="w-3 h-3 rounded-full bg-[#ffbd2e]/80"></span><span class="w-3 h-3 rounded-full bg-[#27c93f]/80"></span></div>
+              <span class="font-bold text-slate-100 truncate">${esc(content.terminal.title || 'Terminal')}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" data-action="c-run" data-cmd="clear" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">clear</button>
+              <button type="button" data-action="c-run" data-cmd="help" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
+            </div>
+          </div>
+          <div id="c-screen" role="log" aria-live="polite" class="p-3.5 sm:p-4 h-64 sm:h-96 overflow-y-auto space-y-1 text-slate-200 text-[11px] sm:text-xs leading-relaxed whitespace-pre-wrap break-words"></div>
+          <form data-action="c-terminal" class="p-3 bg-term-deep border-t border-term-line flex items-center gap-2">
+            <label for="c-input" class="text-emerald-400 text-xs shrink-0 select-none font-bold"><span class="hidden md:inline">${esc(content.terminal.prompt || '$ ')}</span><span class="md:hidden">${esc(content.terminal.promptShort || '$')}</span></label>
+            <input id="c-input" type="text" maxlength="300" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${esc(content.terminal.placeholder || 'help')}" class="flex-1 min-w-0 bg-transparent text-emerald-300 text-[13px] sm:text-xs outline-none font-mono py-1.5" />
+            <button type="submit" class="px-3.5 sm:px-4 py-2 bg-accent hover:bg-accent2 rounded-xl text-white text-xs font-semibold shrink-0 transition-colors">Ejecutar</button>
+          </form>
+        </section>
+
+        <div class="lg:col-span-4 flex flex-col gap-4 sm:gap-5">
+          ${video ? `
+          <button type="button" data-action="c-video" data-start="0" class="group bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden text-left transition-colors">
+            <span class="relative block w-full aspect-video bg-term">
+              <img src="https://i.ytimg.com/vi/${video}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <span class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+                <span class="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg"><span class="material-symbols-outlined text-accent text-3xl" aria-hidden="true">play_arrow</span></span>
+              </span>
+            </span>
+            <span class="block p-3.5">
+              <span class="block text-[10px] font-mono font-bold text-rose-600 mb-0.5">VIDEO EN ESPAÑOL · ${esc(content.video.author)}</span>
+              <span class="block text-[13px] font-bold text-ink leading-snug">${esc(content.video.title)}</span>
+            </span>
+          </button>` : ''}
+          <section class="bg-surface rounded-2xl border border-line p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-ink uppercase font-mono">Plan de estudio</h3>
+              <span class="text-[11px] text-muted font-mono">${esc(content.duration || '')}</span>
+            </div>
+            <div id="c-syllabus" class="flex flex-col gap-1">${syllabusHtml()}</div>
+          </section>
+        </div>
+      </div>
+    </div>`;
+  renderScreen();
+}
+
+function syllabusHtml() {
+  const p = computeCourseProgress(S.content, S.steps);
+  return (S.content.syllabus || []).map(m => {
+    const done = m.lessons.filter(l => p.lessonsDone.includes(l.id)).length;
+    return `
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center justify-between gap-2 px-1 pb-0.5">
+          <span class="font-bold text-ink text-[11px] leading-snug">${esc(m.module)}</span>
+          <span class="text-[10px] shrink-0 font-mono ${done === m.lessons.length ? 'text-accent font-bold' : 'text-muted'}">${done === m.lessons.length ? '✓' : `${done}/${m.lessons.length}`}</span>
+        </div>
+        ${m.lessons.map(l => {
+          const isDone = p.lessonsDone.includes(l.id);
+          const active = p.nextLesson && p.nextLesson.id === l.id;
+          return `
+            <button type="button" data-action="c-lesson" data-id="${esc(l.id)}" class="w-full flex items-center gap-2 py-2 px-2 rounded-lg text-left transition-colors ${active ? 'bg-emerald-100/70 text-accent' : 'hover:bg-bg'}">
+              <span class="material-symbols-outlined text-[16px] shrink-0 ${isDone || active ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${isDone ? 'check_circle' : active ? 'play_circle' : 'radio_button_unchecked'}</span>
+              <span class="flex-1 min-w-0 truncate text-[12px] ${active ? 'font-bold' : 'text-ink2'}">${esc(l.title)}</span>
+              <span class="text-[10px] shrink-0 font-mono text-muted">${esc(l.time || '')}</span>
+            </button>`;
+        }).join('')}
+      </div>`;
+  }).join('<div class="border-t border-line/60 my-1"></div>');
+}
+
+function nextStepHtml() {
+  const p = computeCourseProgress(S.content, S.steps);
+  if (p.complete) return '<p class="text-xs text-accent font-semibold">✓ Has completado todas las lecciones del curso.</p>';
+  const { commands, checks } = pendingCourseSteps(S.content, S.steps);
+  return `
+    <div class="flex flex-wrap items-center gap-1.5">
+      <span class="text-[11px] font-mono text-muted mr-1">${commands.length ? 'Practica:' : 'Siguiente:'}</span>
+      ${commands.map((step, i) => `
+        <button type="button" data-action="c-hint" data-step="${esc(step)}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-semibold">
+          <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lightbulb</span>Pista ${i + 1}
+        </button>`).join('')}
+      ${!commands.length && checks.length ? `
+        <button type="button" data-action="c-lesson" data-id="${esc(p.nextLesson.id)}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent hover:bg-accent2 text-white text-[11px] font-semibold">
+          <span class="material-symbols-outlined text-[14px]" aria-hidden="true">quiz</span>${p.nextLesson.afterAll ? 'Resolver el reto final' : 'Responder la pregunta de la lección'}
+        </button>` : ''}
+    </div>`;
+}
+
+function refreshProgress() {
+  const p = computeCourseProgress(S.content, S.steps);
+  const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+  set('c-next', el => { el.innerHTML = nextStepHtml(); });
+  set('c-syllabus', el => { el.innerHTML = syllabusHtml(); });
+  set('c-bar', el => { el.style.width = `${p.percent}%`; });
+  set('c-pct', el => { el.textContent = `${p.percent}%`; });
+  set('c-lesson-title', el => { el.textContent = p.nextLesson ? p.nextLesson.title : 'Curso completado'; el.dataset.id = p.nextLesson ? p.nextLesson.id : ''; });
+  set('c-module', el => { el.textContent = p.nextLesson ? p.nextLesson.module : 'Curso completado'; });
+}
+
+function applyServerSteps(serverSteps) {
+  const before = computeCourseProgress(S.content, S.steps);
+  S.steps = { ...S.steps, ...(serverSteps || {}) };
+  const after = computeCourseProgress(S.content, S.steps);
+  refreshProgress();
+  after.lessonsDone.filter(id => !before.lessonsDone.includes(id)).forEach(id => {
+    const l = after.lessons.find(x => x.id === id);
+    if (l) showToast(`Lección completada: ${l.title}`, 'success');
+  });
+  if (after.complete && !before.complete) showToast('¡Felicidades! Has completado el curso.', 'success');
+}
+
+// ---------------------------------------------------------------------------
+// Terminal
+// ---------------------------------------------------------------------------
+function lineNode(l) {
+  const div = document.createElement('div');
+  div.className = LINE_CLASSES[l.type] || LINE_CLASSES.out;
+  div.textContent = l.text || ' ';
+  return div;
+}
+
+function renderScreen() {
+  const screen = document.getElementById('c-screen');
+  if (!screen || !S) return;
+  screen.replaceChildren(...S.lines.map(lineNode));
+  screen.scrollTop = screen.scrollHeight;
+}
+
+export function runCourseCmd(raw) {
+  if (!S) return;
+  const cmd = String(raw || '').trim();
+  if (!cmd) return;
+  const r = runCourseCommand(S.content.terminal, cmd);
+  if (r.clear) { S.lines = []; renderScreen(); return; }
+  S.lines.push({ text: (S.content.terminal.promptShort || '$') + ' ' + cmd, type: 'cmd' }, ...r.lines);
+  if (S.lines.length > MAX_LINES) S.lines.splice(0, S.lines.length - MAX_LINES);
+  renderScreen();
+  const fresh = r.steps.filter(s => !S.steps[s]);
+  if (fresh.length) {
+    cloud.recordCourseSteps(S.id, fresh)
+      .then(applyServerSteps)
+      .catch(err => { console.warn('No se pudo guardar el progreso:', err.message || err); showToast('No se pudo guardar el progreso', 'error'); });
+  }
+}
+
+export function runCourseCmdFromUi(el) {
+  if (el.closest('#app-dialog')) {
+    closeModal('app-dialog');
+    const screen = document.getElementById('c-screen');
+    if (screen) screen.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  runCourseCmd(el.dataset.cmd);
+}
+
+// ---------------------------------------------------------------------------
+// Ventanas: pista, lección, video y hoja de comandos
+// ---------------------------------------------------------------------------
+export function openCourseHint(step) {
+  if (!S) return;
+  const info = S.content.steps[step] || {};
+  const p = computeCourseProgress(S.content, S.steps);
+  openDialog({
+    title: 'Pista',
+    kicker: p.nextLesson ? p.nextLesson.title.toUpperCase() : '',
+    body: `
+      <div class="flex flex-col gap-4">
+        <p class="flex items-start gap-3 text-[15px] leading-relaxed text-ink">
+          <span class="material-symbols-outlined text-[22px] text-amber-500 shrink-0" aria-hidden="true">lightbulb</span><span>${esc(info.concept || '')}</span>
+        </p>
+        <details class="rounded-xl border border-line bg-bg/60">
+          <summary class="list-none cursor-pointer px-4 py-3 text-xs font-semibold text-accent select-none">¿Sigues sin verlo? Muestra el comando</summary>
+          <div class="px-4 pb-4 flex flex-col gap-2">
+            <code class="block px-3 py-2 rounded-lg bg-term text-emerald-300 font-mono text-xs break-all">${esc(info.command || '')}</code>
+            <button type="button" data-action="c-run" data-cmd="${esc(info.command || '')}" class="self-start h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold">Ejecutar en la terminal</button>
+          </div>
+        </details>
+      </div>`
+  });
+}
+
+function quizHtml(quiz, done) {
+  if (done) return '<p class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-900">✓ Pregunta respondida correctamente.</p>';
+  return `
+    <form data-action="c-quiz" data-step="${esc(quiz.step)}" class="flex flex-col gap-2">
+      <p class="text-[13px] font-semibold text-ink">${esc(quiz.question)}</p>
+      ${(quiz.options || []).map(([value, label]) => `
+        <label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-line hover:border-accent/60 bg-white cursor-pointer text-[13px] has-[:checked]:border-accent has-[:checked]:bg-emerald-50/60">
+          <input type="radio" name="answer" value="${esc(value)}" required class="accent-accent mt-0.5" /><span>${esc(label)}</span>
+        </label>`).join('')}
+      <div class="flex items-center gap-3 pt-1">
+        <button type="submit" class="h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold">Comprobar</button>
+        <p data-quiz-result class="text-xs" role="status"></p>
+      </div>
+    </form>`;
+}
+
+function flagHtml(flag, done) {
+  return `
+    <form data-action="c-quiz" data-step="${esc(flag.step)}" class="flex flex-col gap-1.5">
+      <label class="text-[13px] font-semibold text-ink" for="cf-${esc(flag.step)}">${esc(flag.question)}</label>
+      ${done
+        ? '<p class="text-xs text-accent font-semibold">✓ Respuesta correcta</p>'
+        : `<div class="flex items-center gap-2">
+            <input id="cf-${esc(flag.step)}" name="answer" type="text" required maxlength="100" autocomplete="off" spellcheck="false" placeholder="${esc(flag.placeholder || '')}" class="flex-1 min-w-0 h-9 px-3 rounded-lg border border-line bg-white font-mono text-xs outline-none focus:border-accent" />
+            <button type="submit" class="h-9 px-3 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold shrink-0">Enviar</button>
+          </div>
+          <p data-quiz-result class="text-xs" role="status"></p>`}
+    </form>`;
+}
+
+export function openCourseLesson(id) {
+  if (!S) return;
+  const p = computeCourseProgress(S.content, S.steps);
+  const lesson = p.lessons.find(l => l.id === id);
+  if (!lesson) return;
+  const done = p.lessonsDone.includes(id);
+  const quiz = S.content.quizzes && S.content.quizzes[id];
+  const video = safeVideoId(S.content.video && S.content.video.id);
+  const commands = (lesson.afterAll ? p.lessons.flatMap(l => l.requires) : lesson.requires).filter(s => !isCheckStep(s));
+  const uniqueCommands = [...new Set(commands)];
+
+  const practice = uniqueCommands.map(step => {
+    const info = S.content.steps[step] || {};
+    const ok = Boolean(S.steps[step]);
+    return `
+      <li class="flex items-start gap-2">
+        <span class="material-symbols-outlined text-[16px] shrink-0 mt-0.5 ${ok ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${ok ? 'check_circle' : 'radio_button_unchecked'}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] ${ok ? 'text-ink2' : 'text-ink'}">${esc(info.concept || step)}</p>
+          <details class="mt-1">
+            <summary class="list-none cursor-pointer text-[11px] font-semibold text-accent hover:underline select-none">${ok ? 'Ver el comando' : 'Pista: ver el comando'}</summary>
+            <button type="button" data-action="c-run" data-cmd="${esc(info.command || '')}" class="mt-1.5 max-w-full text-left px-2.5 py-1.5 rounded-lg bg-term hover:bg-term-3 text-emerald-300 font-mono text-[11px] truncate transition-colors">${esc(info.command || '')}</button>
+          </details>
+        </div>
+      </li>`;
+  }).join('');
+  const section = (title, body) => `<section class="flex flex-col gap-2"><h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">${title}</h3>${body}</section>`;
+
+  openDialog({
+    title: lesson.title,
+    kicker: `${String(lesson.module).toUpperCase()} · ${lesson.time || ''}`,
+    body: `
+      <div class="flex flex-col gap-5" data-c-lesson="${esc(id)}">
+        <span class="self-start px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${done ? 'bg-accent text-white' : 'bg-bg text-muted border border-line'}">${done ? '✓ COMPLETADA' : 'PENDIENTE'}</span>
+        ${lesson.objective ? `
+          <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex gap-2.5">
+            <span class="material-symbols-outlined text-accent text-[18px] shrink-0" aria-hidden="true">flag</span>
+            <div><p class="text-[11px] font-mono font-bold text-accent mb-0.5">OBJETIVO</p><p class="text-[13px] text-emerald-950 leading-relaxed">${esc(lesson.objective)}</p></div>
+          </div>` : ''}
+        ${lesson.summary ? `<p class="text-[13px] leading-relaxed text-ink2">${esc(lesson.summary)}</p>` : ''}
+        ${video && lesson.video ? `
+          <button type="button" data-action="c-video" data-start="${Number(lesson.video.start) || 0}" class="flex items-center gap-3 p-2.5 rounded-xl border border-line hover:border-accent/60 bg-white text-left transition-colors">
+            <span class="relative w-24 aspect-video rounded-lg overflow-hidden bg-term shrink-0">
+              <img src="https://i.ytimg.com/vi/${video}/mqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <span class="absolute inset-0 flex items-center justify-center bg-black/25"><span class="material-symbols-outlined text-white text-2xl" aria-hidden="true">play_circle</span></span>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-[11px] font-mono text-muted">Ver en el video · ${fmtTime(Number(lesson.video.start) || 0)}</span>
+              <span class="block text-[13px] font-bold text-ink truncate">${esc(lesson.video.label)}</span>
+            </span>
+          </button>` : ''}
+        ${lesson.afterAll && Array.isArray(S.content.final) ? section('Reto final', `
+          <p class="text-xs text-ink2">Usa la terminal para encontrar las respuestas. Tienes 3 intentos cada 10 minutos por pregunta.</p>
+          ${S.content.final.map(f => flagHtml(f, Boolean(S.steps[f.step]))).join('')}`) : ''}
+        ${uniqueCommands.length ? (lesson.afterAll
+          ? `<details class="rounded-xl border border-line bg-white/60"><summary class="list-none cursor-pointer p-3 text-[11px] font-mono font-bold text-muted uppercase tracking-wide select-none">Repaso: todos los comandos</summary><ul class="flex flex-col gap-2.5 px-3 pb-3">${practice}</ul></details>`
+          : section('Práctica en la terminal', `<ul class="flex flex-col gap-2.5">${practice}</ul>`)) : ''}
+        ${quiz ? section('Comprueba lo aprendido', quizHtml(quiz, Boolean(S.steps[quiz.step]))) : ''}
+        ${section('Mis notas', `
+          <textarea data-note="${esc(id)}" maxlength="4000" rows="3" placeholder="Apuntes personales de esta lección (solo los ves tú)…" class="w-full p-3 rounded-xl border border-line bg-white text-[13px] outline-none focus:border-accent resize-y"></textarea>
+          <p data-note-status class="text-[11px] text-muted font-mono h-4"></p>`)}
+      </div>`
+  });
+  const area = document.querySelector(`textarea[data-note="${id}"]`);
+  if (area) cloud.fetchNote(id).then(n => { if (n && document.body.contains(area) && !area.value) area.value = n.body; }).catch(() => {});
+}
+
+export async function submitCourseQuiz(form) {
+  if (!S) return;
+  const step = form.dataset.step;
+  const input = form.querySelector('[name="answer"]:checked') || form.querySelector('input[name="answer"][type="text"]');
+  const answer = input ? input.value.trim() : '';
+  const out = form.querySelector('[data-quiz-result]');
+  if (!answer) return;
+  const button = form.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+  try {
+    const res = await cloud.answerCourseQuiz(S.id, step, answer);
+    if (!res || !res.correct) {
+      const left = res && typeof res.remaining === 'number' ? res.remaining : null;
+      if (out) { out.className = 'text-xs text-rose-700'; out.textContent = left === 0 ? 'Incorrecto. Sin intentos: repasa la lección y vuelve en unos minutos.' : `Incorrecto. Te quedan ${left ?? 'algunos'} intentos.`; }
+      return;
+    }
+    const before = computeCourseProgress(S.content, S.steps).lessonsDone.length;
+    applyServerSteps(res.steps);
+    if (computeCourseProgress(S.content, S.steps).lessonsDone.length === before) showToast('¡Correcto!', 'success');
+    const holder = form.closest('[data-c-lesson]');
+    if (holder) openCourseLesson(holder.dataset.cLesson);
+  } catch (err) {
+    console.error(err);
+    if (out) { out.className = 'text-xs text-rose-700'; out.textContent = /intentos/i.test(err.message || '') ? err.message : 'No se pudo comprobar la respuesta. Inténtalo de nuevo.'; }
+  } finally {
+    if (button && document.body.contains(button)) button.disabled = false;
+  }
+}
+
+function videoSrc(start, autoplay) {
+  return `https://www.youtube-nocookie.com/embed/${safeVideoId(S.content.video.id)}?rel=0&start=${Number(start) || 0}${autoplay ? '&autoplay=1' : ''}`;
+}
+
+function chaptersHtml(active) {
+  return (S.content.video.chapters || []).map(c => `
+    <button type="button" data-action="c-seek" data-start="${Number(c.start) || 0}" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors ${Number(c.start) === active ? 'bg-emerald-100/80 text-accent font-bold' : 'hover:bg-bg text-ink2'}">
+      <span class="font-mono text-[11px] w-12 shrink-0 ${Number(c.start) === active ? 'text-accent' : 'text-muted'}">${fmtTime(Number(c.start) || 0)}</span><span class="truncate">${esc(c.label)}</span>
+    </button>`).join('');
+}
+
+export function openCourseVideo(start = 0) {
+  if (!S || !safeVideoId(S.content.video && S.content.video.id)) return;
+  const v = S.content.video;
+  openDialog({
+    title: v.title,
+    kicker: `VIDEO DE LA CLASE · ${v.author} · ${v.duration}`,
+    size: 'lg',
+    body: `
+      <div class="flex flex-col gap-4">
+        <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-term border border-term-line">
+          <iframe id="c-video" class="absolute inset-0 w-full h-full" src="${videoSrc(start, true)}" title="${esc(v.title)}" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div>
+          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide mb-1.5">Capítulos</h3>
+          <div id="c-chapters" class="grid grid-cols-1 sm:grid-cols-2 gap-0.5">${chaptersHtml(Number(start) || 0)}</div>
+        </div>
+        <p class="text-[11px] text-muted">Video de <strong class="text-ink2">${esc(v.author)}</strong> en YouTube.</p>
+      </div>`
+  });
+}
+
+export function seekCourseVideo(start) {
+  const frame = document.getElementById('c-video');
+  if (!frame) return openCourseVideo(start);
+  frame.src = videoSrc(start, true);
+  const list = document.getElementById('c-chapters');
+  if (list) list.innerHTML = chaptersHtml(Number(start) || 0);
+}
+
+export function openCourseCheatSheet() {
+  if (!S) return;
+  openDialog({
+    title: 'Hoja de comandos',
+    kicker: String(S.content.title).toUpperCase(),
+    size: 'lg',
+    body: `
+      <div class="cheatsheet flex flex-col gap-4">
+        <table class="w-full text-left border-collapse">
+          <thead><tr class="border-b border-line text-[10px] font-mono text-muted uppercase"><th class="py-1.5 pr-3">Comando</th><th class="py-1.5">Para qué</th></tr></thead>
+          <tbody>${(S.content.cheatsheet || []).map(([cmd, desc]) => `
+            <tr class="border-b border-line/70 align-top"><td class="py-2 pr-3"><code class="font-mono text-[11px] text-accent font-bold break-all">${esc(cmd)}</code></td><td class="py-2 text-[11px] text-ink2">${esc(desc)}</td></tr>`).join('')}</tbody>
+        </table>
+        <button type="button" data-action="print-cheatsheet" class="no-print self-start h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold inline-flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span>Imprimir o guardar PDF
+        </button>
+      </div>`
+  });
+}

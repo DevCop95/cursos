@@ -172,11 +172,48 @@ export async function fetchAccessibleCourses() {
   return data || [];
 }
 
+// ---------------------------------------------------------------------------
+// Cursos con el contenido en la base de datos (de pago). Solo se entregan a quien tiene acceso.
+// ---------------------------------------------------------------------------
+export async function fetchCourseContent(courseId) {
+  const client = await getClient();
+  if (!client) return null;
+  const { data, error } = await client.from('course_content').select('content').eq('course_id', courseId).maybeSingle();
+  if (error) throw error;
+  return data ? data.content : null;
+}
+
+export async function fetchCourseProgress(courseId) {
+  const client = await getClient();
+  if (!client) return null;
+  let q = client.from('course_progress').select('course_id, steps, progress_percentage, completed_at');
+  if (courseId) q = q.eq('course_id', courseId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
+export async function recordCourseSteps(courseId, steps) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está disponible.');
+  const { data, error } = await client.rpc('record_course_steps', { p_course: courseId, p_steps: steps });
+  if (error) throw error;
+  return data;
+}
+
+export async function answerCourseQuiz(courseId, step, answer) {
+  const client = await getClient();
+  if (!client) throw new Error('Las preguntas necesitan conexión con el servidor.');
+  const { data, error } = await client.rpc('answer_course_quiz', { p_course: courseId, p_step: step, p_answer: String(answer || '').slice(0, 200) });
+  if (error) throw error;
+  return data;
+}
+
 // Catálogo: los alumnos ven los publicados; los admin, todos.
 export async function fetchCourses() {
   const client = await getClient();
   if (!client) return [];
-  const { data, error } = await client.from('courses').select('id, title, is_free, published, sort').order('sort').order('id');
+  const { data, error } = await client.from('courses').select('id, title, is_free, published, has_content, sort').order('sort').order('id');
   if (error) throw error;
   return data;
 }

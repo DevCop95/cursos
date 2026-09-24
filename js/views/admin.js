@@ -316,7 +316,9 @@ export function openUserDetails(userId) {
           ${row('Último login', esc(formatDate(r.last_login)))}
           ${row('Última actividad', esc(formatDate(r.last_seen)))}
           ${row('Registrado', esc(formatDate(r.created_at)))}
-          ${row('Curso terminado', completedAt(r) ? `<span class="text-accent">✓ ${esc(formatDate(completedAt(r)))}</span>` : 'No')}
+          ${row('Cursos terminados', (r.completions || []).length
+            ? r.completions.map(c => `<span class="block text-accent">✓ ${esc((lastCourses.find(x => x.id === c.course_id) || { title: c.course_id }).title)} · ${esc(formatDate(c.completed_at))}</span>`).join('')
+            : 'Ninguno')}
         </dl>
       </div>`
   });
