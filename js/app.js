@@ -274,6 +274,12 @@
       return { route: 'mis-cursos', param: null };
     }
 
+    const validRoutes = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'inicio', 'perfil', 'diploma', 'verificacion-diploma', 'panel-admin'];
+    if (!validRoutes.includes(route)) {
+      window.location.hash = '#/mis-cursos';
+      return { route: 'mis-cursos', param: null };
+    }
+
     return { route, param };
   }
 
@@ -281,8 +287,17 @@
     const mainHeader = document.getElementById('main-header');
     const appFooter = document.getElementById('app-footer');
     const waterWrapper = document.getElementById('water-bg-wrapper');
+    const isLogin = !isUserAuthenticated() || currentRoute === 'login';
 
-    if (!isUserAuthenticated() || currentRoute === 'login' || currentRoute === 'panel-admin') {
+    if (isLogin) {
+      document.body.classList.add('login-active');
+      document.documentElement.classList.add('login-active');
+    } else {
+      document.body.classList.remove('login-active');
+      document.documentElement.classList.remove('login-active');
+    }
+
+    if (isLogin || currentRoute === 'panel-admin') {
       if (mainHeader) mainHeader.classList.add('hidden');
       if (appFooter) appFooter.classList.add('hidden');
       if (waterWrapper) waterWrapper.classList.toggle('hidden', currentRoute === 'panel-admin');
@@ -1005,7 +1020,7 @@
     return `
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         ${cat.items.map(item => `
-          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="p-3.5 bg-[#fdfcf9] hover:bg-[#f3f0ea]/70 border border-[#d3cec5] hover:border-[#005c38]/60 rounded-xl flex flex-col justify-between gap-2.5 transition-all shadow-xs group">
+          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="resource-card p-4 bg-[#fdfcf9] hover:bg-[#f3f0ea]/70 border border-[#d3cec5] hover:border-[#005c38]/60 rounded-xl flex flex-col justify-between gap-3 shadow-xs group">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-[#005c38] text-base shrink-0 group-hover:scale-110 transition-transform">${cat.icon}</span>
@@ -1074,7 +1089,7 @@
           <span class="material-symbols-outlined text-sm">tune</span>
           <span>2. Desglose de Flags y Parámetros</span>
         </h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           ${data.flags.map(f => `
             <div class="bg-[#f3f0ea]/60 p-3 rounded-xl border border-[#d3cec5]/80 flex flex-col gap-1">
               <div class="flex items-center justify-between">
@@ -1165,9 +1180,9 @@
     const activeCatIdx = appState.activeNmapCategory || 0;
 
     container.innerHTML = `
-      <div class="flex flex-col w-full py-4 gap-4">
+      <div class="flex flex-col w-full py-6 gap-6">
         <!-- Header Exclusivo Pentesting 101 -->
-        <div class="flex items-center justify-between gap-3 bg-[#fdfcf9] p-4 rounded-2xl border border-[#d3cec5] shadow-xs flex-wrap">
+        <div class="flex items-center justify-between gap-3 bg-[#fdfcf9] p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex-wrap card-lift">
           <div class="flex items-center gap-2.5">
             <span class="px-2.5 py-1 rounded-lg bg-[#005c38] text-white font-mono text-xs font-bold shadow-xs">DEV101X LABS</span>
             <span class="text-xs font-bold text-[#0c0d0e] font-sans">${course.title}</span>
@@ -1182,7 +1197,7 @@
         </div>
 
         <!-- Banner de Contexto y Sesión Activa -->
-        <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs card-lift">
           <div>
             <div class="flex items-center gap-2 font-mono">
               <span class="text-[#005c38] font-bold">${course.title}</span>
@@ -1205,10 +1220,10 @@
         </div>
 
         <!-- Grid Principal: Consola + Explicaciones + Recursos | Guía Rápida + Syllabus -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           <!-- Columna Izquierda (8 cols): Consola, Explicación Técnica y Directorio Nmap -->
-          <div class="lg:col-span-8 flex flex-col gap-4">
+          <div class="lg:col-span-8 flex flex-col gap-6">
             
             <!-- Terminal Windows PowerShell -->
             <div class="bg-[#0e1013] rounded-2xl border border-[#30363d] overflow-hidden font-mono text-xs shadow-md">
@@ -1243,7 +1258,7 @@
               </div>
 
               <!-- Terminal Output Screen -->
-              <div id="terminal-screen" class="p-3.5 h-64 overflow-y-auto space-y-1 text-slate-200">
+              <div id="terminal-screen" class="p-4 h-72 sm:h-80 overflow-y-auto space-y-1 text-slate-200">
                 ${appState.terminalLines.map(l => `<div class="${l.type === 'error' ? 'text-red-400' : l.type === 'cmd' ? 'text-emerald-400 font-bold' : l.type === 'info' ? 'text-sky-300' : l.type === 'slate' ? 'text-slate-400' : 'text-slate-200'}">${l.text}</div>`).join('')}
               </div>
 
@@ -1262,7 +1277,7 @@
                   <span class="material-symbols-outlined text-[#005c38] text-base">psychology</span>
                   <h2 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono tracking-wider">Explicación Técnica del Comando</h2>
                 </div>
-                <div class="flex items-center gap-1 overflow-x-auto pb-0.5 max-w-full font-mono text-[11px]">
+                <div class="flex items-center gap-1 overflow-x-auto pb-0.5 max-w-full font-mono text-[11px] cmd-tab-bar">
                   ${Object.keys(PENTESTING_COMMANDS).map(k => `
                     <button onclick="window.Dev101x.selectExplanation('${k}', false)" data-cmd-key="${k}" class="cmd-tab-btn px-2.5 py-1 rounded-lg transition-all ${k === activeCmdKey ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#e9e5dd] text-[#0c0d0e] border border-[#d3cec5]/70'}">
                       ${PENTESTING_COMMANDS[k].name}
@@ -1272,13 +1287,13 @@
               </div>
 
               <!-- Contenedor Dinámico de la Explicación -->
-              <div id="command-explanation-card" class="p-4 sm:p-5 flex flex-col gap-4 text-xs">
+              <div id="command-explanation-card" class="p-5 sm:p-6 flex flex-col gap-5 text-xs">
                 ${getExplanationCardHtml(activeCmdKey)}
               </div>
             </div>
 
             <!-- Directorio Completo de Recursos & Enlaces Oficiales de Nmap -->
-            <div id="seccion-recursos-nmap" class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden flex flex-col gap-3 p-4 sm:p-5">
+            <div id="seccion-recursos-nmap" class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden flex flex-col gap-4 p-5 sm:p-6">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#d3cec5]">
                 <div>
                   <div class="flex items-center gap-2 mb-1">
@@ -1311,10 +1326,10 @@
           </div>
 
           <!-- Columna Lateral (4 cols): Enlaces Rápidos + Guía de Comandos + Temario -->
-          <div class="lg:col-span-4 flex flex-col gap-4">
+          <div class="lg:col-span-4 flex flex-col gap-6">
             
             <!-- Accesos Oficiales Nmap Destacados -->
-            <div class="bg-[#0e1013] text-white p-4 sm:p-5 rounded-2xl border border-[#30363d] shadow-xs flex flex-col gap-2.5 font-mono text-xs">
+            <div class="bg-[#0e1013] text-white p-5 sm:p-6 rounded-2xl border border-[#30363d] shadow-xs flex flex-col gap-3 font-mono text-xs card-lift">
               <div class="flex items-center justify-between pb-2 border-b border-[#30363d]">
                 <span class="font-bold text-emerald-400 text-xs flex items-center gap-1">
                   <span class="material-symbols-outlined text-sm">download</span>
@@ -1347,7 +1362,7 @@
             </div>
 
             <!-- Guía Rápida de Comandos Pentesting -->
-            <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-3">
+            <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4 card-lift">
               <div class="flex items-center justify-between pb-2 border-b border-[#d3cec5]">
                 <div class="flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-[#005c38] text-base">terminal</span>
@@ -1380,7 +1395,7 @@
             </div>
 
             <!-- Temario / Plan de Estudio -->
-            <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-3">
+            <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4 card-lift">
               <div class="flex items-center justify-between pb-2 border-b border-[#d3cec5]">
                 <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Plan de Estudio</h3>
                 <span class="text-[11px] text-[#80857e] font-mono">${course.duration}</span>

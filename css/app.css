@@ -35,6 +35,21 @@ html, body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desactivar rebote elástico y scroll en móviles para pantalla fija */
+html.login-active,
+body.login-active {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  width: 100vw !important;
+  position: fixed !important;
+  inset: 0 !important;
+  touch-action: none !important;
 }
 
 ::selection {
@@ -178,5 +193,72 @@ a, button {
   justify-content: center;
   align-items: center;
   width: 100%;
+}
+
+/* ---- Layout Improvements: Breathing Room & Mobile Polish ---- */
+
+/* Smooth scroll for authenticated pages */
+html:not(.login-active) {
+  scroll-behavior: smooth;
+}
+
+/* Better card interaction feel */
+.card-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(12, 13, 14, 0.08), 0 2px 8px rgba(12, 13, 14, 0.04);
+}
+
+/* Section divider with breathing room */
+.section-gap {
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+/* Responsive gutter for px-gutter utility */
+@media (max-width: 640px) {
+  .px-gutter {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+@media (min-width: 641px) {
+  .px-gutter {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .px-gutter {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Command tab bar: hide scrollbar but keep scrollable */
+.cmd-tab-bar::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+.cmd-tab-bar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Terminal output smooth scroll */
+#terminal-screen {
+  scroll-behavior: smooth;
+}
+
+/* Resource card hover glow */
+.resource-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.resource-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 92, 56, 0.08);
 }
 

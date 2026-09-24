@@ -181,7 +181,7 @@ const DEV101X_DATA = {
       signatureAlgorithm: "Ed25519 / SHA-256",
       enclaveId: "AWS Nitro Enclave",
       merkleRoot: "0x81fa99...bc12",
-      qrVerifyUrl: "https://cursos.dev101x.com/#/diploma/D101X-RED-74192"
+      qrVerifyUrl: "https://cursos.dev101x.online/#/diploma/D101X-RED-74192"
     }
   ],
 

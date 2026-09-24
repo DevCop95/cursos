@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dev101x Academy — Redirigiendo...</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f3f0ea;
+      color: #0c0d0e;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+    }
+    .card {
+      background: #fdfcf9;
+      padding: 32px;
+      border-radius: 20px;
+      border: 1px solid #d3cec5;
+      max-width: 440px;
+      box-shadow: 0 10px 30px rgba(12,13,14,0.06);
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    p {
+      font-size: 13px;
+      color: #80857e;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      background: #005c38;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background-color 0.2s;
+    }
+    .btn:hover {
+      background: #003f27;
+    }
+  </style>
+  <script>
+    // GitHub Pages SPA Fallback Router:
+    // Captures direct URL paths (e.g. /mis-cursos, /aula-interactiva) and smoothly redirects to /#/mis-cursos
+    (function () {
+      var path = window.location.pathname.replace(/^\/+/, '');
+      var search = window.location.search || '';
+      var hash = window.location.hash || '';
+      
+      var validRoutes = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'perfil', 'diploma', 'panel-admin', 'login'];
+      var isRecognized = validRoutes.some(function(r) { return path.indexOf(r) === 0; });
+      
+      if (path && isRecognized) {
+        window.location.replace('/#/' + path + search + hash);
+      } else if (path) {
+        window.location.replace('/#/mis-cursos' + search);
+      } else {
+        window.location.replace('/' + search + hash);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="card">
+    <img src="assets/favicon.png" alt="Dev101x" style="width: 48px; height: 48px; border-radius: 12px; margin-bottom: 16px;">
+    <h1>Dev101x Academy</h1>
+    <p>Redirigiendo de forma segura al aula virtual...</p>
+    <a href="./#/mis-cursos" class="btn">Continuar a Mis Cursos</a>
+  </div>
+</body>
+</html>
