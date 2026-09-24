@@ -11,7 +11,7 @@ import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './v
 import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
 import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
-import { renderAdmin, toggleCourseAccess, exportCsv, setAdminFilter, openUserDetails } from './views/admin.js';
+import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag } from './views/admin.js';
 import { startPresence } from './progress.js';
 
 const $ = id => document.getElementById(id);
@@ -176,7 +176,10 @@ document.addEventListener('click', e => {
 
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.dataset && el.dataset.action === 'toggle-access') toggleCourseAccess(el);
+  const action = el.dataset && el.dataset.action;
+  if (action === 'admin-level') setAccessLevel(el);
+  else if (action === 'admin-override') setCourseOverride(el);
+  else if (action === 'admin-course-flag') setCourseFlag(el);
 });
 
 document.addEventListener('submit', e => {

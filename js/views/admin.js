@@ -1,15 +1,18 @@
 /**
  * Vista: Panel de administración (datos reales desde Supabase; RLS solo los entrega a administradores).
- * Una sola tarjeta: barra con contadores y filtros + tabla compacta. El detalle de cada usuario
- * se abre en una ventana emergente.
+ *  - Usuarios: actividad, progreso y nivel de acceso (Gratis / Total). El detalle de cada alumno
+ *    (con las excepciones por curso) se abre en una ventana emergente.
+ *  - Cursos: catálogo con los interruptores Gratis y Publicado.
+ * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
 import { esc, toCsv } from '../lib/html.js';
 import { isCloudEnabled } from '../config.js';
 import { COURSE, LAB_STEPS } from '../content.js';
 import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js';
-import { adminListStudents, adminSetCourseAccess } from '../cloud.js';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js';
 import { avatarFor, showToast, openDialog } from '../ui.js';
 import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -23,8 +26,14 @@ const STATUS_BADGE = {
   inactive: { label: 'Inactivo', dot: 'bg-[#b6b2a9]', text: 'text-muted' },
   never: { label: 'Sin actividad', dot: 'bg-[#d3cec5]', text: 'text-muted' }
 };
+const OVERRIDES = [
+  { id: 'auto', label: 'Según su nivel' },
+  { id: 'grant', label: 'Conceder' },
+  { id: 'block', label: 'Bloquear' }
+];
 
 let lastRows = [];
+let lastCourses = [];
 let currentFilter = 'active';
 let refreshTimer = null;
 
@@ -34,9 +43,13 @@ function completedAt(row, courseId = COURSE.id) {
   return rec ? rec.completed_at : null;
 }
 
-function hasAccess(row, courseId) {
+function overrideMode(row, courseId) {
   const rec = row.access.find(a => a.course_id === courseId);
-  return rec ? rec.enabled : true; // sin registro = acceso por defecto
+  return rec ? (rec.enabled ? 'grant' : 'block') : 'auto';
+}
+
+function accessFor(row, course) {
+  return courseAccess(course, row, row.access);
 }
 
 function formatDate(iso) {
@@ -48,14 +61,17 @@ function notConfiguredHtml() {
   return `
     <div class="max-w-xl mx-auto my-10 p-6 bg-surface rounded-2xl border border-line flex flex-col gap-3">
       <h1 class="text-lg font-bold text-ink">Panel de administración no disponible</h1>
-      <p class="text-sm text-ink2">El panel necesita la base de datos en la nube. Para activarlo:</p>
-      <ol class="list-decimal pl-5 text-sm text-ink2 space-y-1">
-        <li>Ejecuta <code class="font-mono text-xs bg-bg px-1 rounded">supabase/schema.sql</code> en el editor SQL de Supabase.</li>
-        <li>Activa el proveedor Google en Supabase Auth con el mismo Client ID.</li>
-        <li>Pega la <em>anon key</em> en <code class="font-mono text-xs bg-bg px-1 rounded">js/config.js</code>.</li>
-        <li>Asígnate el rol con <code class="font-mono text-xs bg-bg px-1 rounded">update profiles set role = 'admin' where email = '…';</code></li>
-      </ol>
+      <p class="text-sm text-ink2">El panel necesita la base de datos en la nube.</p>
     </div>`;
+}
+
+const SELECT_CLS = 'h-8 pl-2 pr-7 rounded-lg border border-line bg-white text-xs font-semibold text-ink outline-none focus:border-accent cursor-pointer';
+
+function levelSelect(row) {
+  return `
+    <select data-action="admin-level" data-user="${esc(row.id)}" class="${SELECT_CLS}" aria-label="Nivel de acceso de ${esc(row.full_name || row.email)}">
+      ${ACCESS_LEVELS.map(l => `<option value="${l.id}" ${row.access_level === l.id ? 'selected' : ''}>${l.label}</option>`).join('')}
+    </select>`;
 }
 
 function toolbarHtml(rows) {
@@ -74,7 +90,7 @@ function toolbarHtml(rows) {
       <span class="text-line" aria-hidden="true">•</span>
       <span class="text-ink2"><strong class="text-ink">${rows.length}</strong> registrados</span>
       <span class="text-line" aria-hidden="true">•</span>
-      <span class="text-ink2"><strong class="text-ink">${rows.filter(r => completedAt(r)).length}</strong> terminaron el curso</span>
+      <span class="text-ink2"><strong class="text-ink">${rows.filter(r => r.access_level === 'full').length}</strong> con acceso total</span>
     </div>
     <div class="flex items-center gap-2">
       <div class="inline-flex p-0.5 rounded-lg bg-bg border border-line/70" role="group" aria-label="Filtrar usuarios por actividad">${tabs}</div>
@@ -85,8 +101,7 @@ function toolbarHtml(rows) {
 }
 
 function statusHtml(r, now) {
-  const status = activityStatus(r, now);
-  const b = STATUS_BADGE[status];
+  const b = STATUS_BADGE[activityStatus(r, now)];
   return `
     <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${b.text}"><span class="w-1.5 h-1.5 rounded-full ${b.dot}" aria-hidden="true"></span>${b.label}</span>
     <span class="block text-[11px] text-muted font-mono">${esc(relativeTime(lastActivity(r), now))}</span>`;
@@ -109,17 +124,16 @@ function tableHtml(allRows) {
           <th scope="col" class="px-4 py-2.5 font-semibold">Usuario</th>
           <th scope="col" class="px-3 py-2.5 font-semibold">Actividad</th>
           <th scope="col" class="px-3 py-2.5 font-semibold hidden sm:table-cell">Progreso</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold text-right">Acceso</th>
+          <th scope="col" class="px-3 py-2.5 font-semibold text-right">Nivel</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/60">
         ${rows.map(r => {
           const p = computeProgress((r.progress && r.progress.steps) || {});
-          const enabled = hasAccess(r, COURSE.id);
           return `
             <tr class="hover:bg-bg/50 transition-colors">
               <td class="pl-4 pr-2 py-2.5">
-                <button type="button" data-action="admin-user" data-user="${esc(r.id)}" class="flex items-center gap-2.5 text-left min-w-0 group" title="Ver detalle">
+                <button type="button" data-action="admin-user" data-user="${esc(r.id)}" class="flex items-center gap-2.5 text-left min-w-0 group" title="Ver detalle y cursos">
                   <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
                   <span class="min-w-0">
                     <span class="flex items-center gap-1.5">
@@ -139,16 +153,30 @@ function tableHtml(allRows) {
                     : `<span class="font-mono text-[11px] text-ink2 tabular-nums w-8 text-right">${p.percent}%</span>`}
                 </div>
               </td>
-              <td class="px-3 py-2.5 text-right">
-                <label class="inline-flex items-center gap-2 cursor-pointer" title="Acceso a ${esc(COURSE.title)}">
-                  <span class="hidden sm:inline font-mono text-[11px] ${enabled ? 'text-accent' : 'text-rose-600'}">${enabled ? 'Habilitado' : 'Bloqueado'}</span>
-                  <input type="checkbox" ${enabled ? 'checked' : ''} data-action="toggle-access" data-user="${esc(r.id)}" data-course="${esc(COURSE.id)}" class="accent-accent w-4 h-4" />
-                </label>
-              </td>
+              <td class="px-3 py-2.5 text-right">${levelSelect(r)}</td>
             </tr>`;
         }).join('')}
       </tbody>
     </table>`;
+}
+
+function coursesHtml(courses) {
+  if (!courses.length) return '<p class="p-6 text-sm text-muted text-center">No hay cursos en el catálogo.</p>';
+  const toggle = (c, field, label) => `
+    <label class="inline-flex items-center gap-1.5 text-xs text-ink2 cursor-pointer">
+      <input type="checkbox" ${c[field] ? 'checked' : ''} data-action="admin-course-flag" data-course="${esc(c.id)}" data-field="${field}" class="accent-accent w-4 h-4" />${label}
+    </label>`;
+  return `
+    <ul class="divide-y divide-line/60">
+      ${courses.map(c => `
+        <li class="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-ink truncate">${esc(c.title)}</p>
+            <p class="text-[11px] font-mono text-muted">${esc(c.id)}${c.id === COURSE.id ? '' : ' · sin contenido todavía'}</p>
+          </div>
+          <div class="flex items-center gap-4">${toggle(c, 'is_free', 'Gratis')}${toggle(c, 'published', 'Publicado')}</div>
+        </li>`).join('')}
+    </ul>`;
 }
 
 export async function renderAdmin(container) {
@@ -171,6 +199,13 @@ export async function renderAdmin(container) {
           <p class="p-8 text-sm text-muted text-center">Cargando alumnos…</p>
         </div>
       </section>
+      <p class="text-[11px] text-muted px-1"><strong class="text-ink2">Gratis</strong>: solo cursos gratuitos · <strong class="text-ink2">Total</strong>: todos los cursos publicados. Pulsa un alumno para conceder o bloquear cursos concretos.</p>
+
+      <h2 class="text-base font-bold text-ink mt-4 px-1">Cursos</h2>
+      <section class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden">
+        <div id="admin-courses"><p class="p-6 text-sm text-muted text-center">Cargando cursos…</p></div>
+      </section>
+      <p class="text-[11px] text-muted px-1">Los cursos nuevos se crean en Supabase (tabla <code class="font-mono">courses</code>) y aparecen aquí para gestionarlos.</p>
     </div>`;
 
   clearInterval(refreshTimer);
@@ -185,15 +220,17 @@ export async function renderAdmin(container) {
 function paint(container) {
   const toolbar = container.querySelector('#admin-toolbar');
   const table = container.querySelector('#admin-table');
+  const courses = container.querySelector('#admin-courses');
   if (toolbar) toolbar.innerHTML = toolbarHtml(lastRows);
   if (table) table.innerHTML = tableHtml(lastRows);
+  if (courses) courses.innerHTML = coursesHtml(lastCourses);
 }
 
 async function loadRows(container, { quiet = false } = {}) {
   try {
-    lastRows = await adminListStudents();
-    // No repintar si el admin está cambiando un acceso en este momento.
-    if (container.querySelector('#admin-table input:disabled')) return;
+    [lastRows, lastCourses] = await Promise.all([adminListStudents(), fetchCourses()]);
+    // No repintar si el admin está cambiando algo en este momento.
+    if (container.querySelector('select:disabled, input:disabled')) return;
     paint(container);
   } catch (err) {
     console.error(err);
@@ -204,11 +241,35 @@ async function loadRows(container, { quiet = false } = {}) {
   }
 }
 
+function repaint() {
+  const container = document.getElementById('app-view');
+  if (container && container.querySelector('#admin-table')) paint(container);
+}
+
 export function setAdminFilter(filter) {
   if (!FILTERS.some(f => f.id === filter)) return;
   currentFilter = filter;
-  const container = document.getElementById('app-view');
-  if (container) paint(container);
+  repaint();
+}
+
+// ---------------------------------------------------------------------------
+// Detalle del alumno
+// ---------------------------------------------------------------------------
+function userCoursesHtml(r) {
+  return lastCourses.map(c => {
+    const a = accessFor(r, c);
+    const mode = overrideMode(r, c.id);
+    return `
+      <li class="flex items-center justify-between gap-3 py-2.5">
+        <div class="min-w-0">
+          <p class="text-[13px] font-semibold text-ink truncate">${esc(c.title)}</p>
+          <p class="text-[11px] font-mono ${a.allowed ? 'text-accent' : 'text-rose-600'}">${a.allowed ? '✓' : '✕'} ${esc(a.label)}${c.is_free ? ' · curso gratis' : ''}</p>
+        </div>
+        <select data-action="admin-override" data-user="${esc(r.id)}" data-course="${esc(c.id)}" class="${SELECT_CLS} shrink-0" aria-label="Acceso a ${esc(c.title)}">
+          ${OVERRIDES.map(o => `<option value="${o.id}" ${mode === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+        </select>
+      </li>`;
+  }).join('');
 }
 
 export function openUserDetails(userId) {
@@ -218,7 +279,6 @@ export function openUserDetails(userId) {
   const p = computeProgress(steps);
   const now = Date.now();
   const status = STATUS_BADGE[activityStatus(r, now)];
-  const enabled = hasAccess(r, COURSE.id);
   const row = (label, value) => `
     <div class="flex items-center justify-between gap-3 py-2">
       <dt class="text-muted">${label}</dt><dd class="text-ink font-semibold text-right">${value}</dd>
@@ -228,19 +288,24 @@ export function openUserDetails(userId) {
     title: r.full_name || r.email,
     kicker: r.role === 'admin' ? 'ADMINISTRADOR' : 'ALUMNO',
     body: `
-      <div class="flex flex-col gap-5">
+      <div class="flex flex-col gap-5" data-user-detail="${esc(r.id)}">
         <div class="flex items-center gap-3">
           <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-12 h-12 rounded-xl object-cover border border-line" />
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <p class="text-xs font-mono text-muted truncate">${esc(r.email)}</p>
             <p class="inline-flex items-center gap-1.5 text-xs font-semibold ${status.text}"><span class="w-1.5 h-1.5 rounded-full ${status.dot}" aria-hidden="true"></span>${status.label} · ${esc(relativeTime(lastActivity(r), now))}</p>
           </div>
+          ${levelSelect(r)}
         </div>
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="p-2.5 rounded-xl bg-bg/70 border border-line/70"><p class="text-lg font-extrabold text-accent">${p.percent}%</p><p class="text-[10px] font-mono text-muted">Progreso</p></div>
           <div class="p-2.5 rounded-xl bg-bg/70 border border-line/70"><p class="text-lg font-extrabold text-ink">${p.lessonsDone.length}/${TOTAL_LESSONS}</p><p class="text-[10px] font-mono text-muted">Lecciones</p></div>
           <div class="p-2.5 rounded-xl bg-bg/70 border border-line/70"><p class="text-lg font-extrabold text-ink">${p.labsDone.length}/${LAB_STEPS.length}</p><p class="text-[10px] font-mono text-muted">Labs</p></div>
         </div>
+        <section>
+          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Cursos</h3>
+          <ul id="user-courses" class="flex flex-col divide-y divide-line/60">${userCoursesHtml(r)}</ul>
+        </section>
         <ul class="flex flex-col gap-1.5">
           ${LAB_STEPS.map(lab => {
             const done = isLabDone(lab, steps);
@@ -248,7 +313,6 @@ export function openUserDetails(userId) {
           }).join('')}
         </ul>
         <dl class="flex flex-col divide-y divide-line/60 text-xs font-mono">
-          ${row('Acceso al curso', enabled ? '<span class="text-accent">Habilitado</span>' : '<span class="text-rose-600">Bloqueado</span>')}
           ${row('Último login', esc(formatDate(r.last_login)))}
           ${row('Última actividad', esc(formatDate(r.last_seen)))}
           ${row('Registrado', esc(formatDate(r.created_at)))}
@@ -258,29 +322,68 @@ export function openUserDetails(userId) {
   });
 }
 
-export async function toggleCourseAccess(input) {
-  const { user, course } = input.dataset;
-  const enabled = input.checked;
-  input.disabled = true;
+// ---------------------------------------------------------------------------
+// Cambios del admin (los valida el servidor con RLS)
+// ---------------------------------------------------------------------------
+async function saving(el, fn, okMsg) {
+  el.disabled = true;
   try {
-    await adminSetCourseAccess(user, course, enabled);
-    const row = lastRows.find(r => r.id === user);
-    if (row) {
-      row.access = row.access.filter(a => a.course_id !== course).concat({ course_id: course, enabled });
-    }
-    const label = input.parentElement.querySelector('span');
-    if (label) {
-      label.textContent = enabled ? 'Habilitado' : 'Bloqueado';
-      label.className = `hidden sm:inline font-mono text-[11px] ${enabled ? 'text-accent' : 'text-rose-600'}`;
-    }
-    showToast(`Acceso ${enabled ? 'habilitado' : 'revocado'}`, 'success');
+    await fn();
+    showToast(okMsg, 'success');
+    return true;
   } catch (err) {
     console.error(err);
-    input.checked = !enabled;
     showToast('No se pudo guardar el cambio', 'error');
+    return false;
   } finally {
-    input.disabled = false;
+    el.disabled = false;
   }
+}
+
+function refreshUserDetail(userId) {
+  const list = document.getElementById('user-courses');
+  const r = lastRows.find(row => row.id === userId);
+  if (list && r) list.innerHTML = userCoursesHtml(r);
+}
+
+export async function setAccessLevel(select) {
+  const { user } = select.dataset;
+  const level = select.value;
+  const r = lastRows.find(row => row.id === user);
+  const prev = r ? r.access_level : 'free';
+  const ok = await saving(select, () => adminSetAccessLevel(user, level), `Nivel de acceso: ${level === 'full' ? 'Total' : 'Gratis'}`);
+  if (!ok) { select.value = prev; return; }
+  if (r) r.access_level = level;
+  // Sincronizar el otro selector del mismo alumno (tabla o ventana) y los cursos del detalle.
+  document.querySelectorAll(`select[data-action="admin-level"][data-user="${user}"]`).forEach(s => { s.value = level; });
+  refreshUserDetail(user);
+  const toolbar = document.getElementById('admin-toolbar');
+  if (toolbar) toolbar.innerHTML = toolbarHtml(lastRows);
+}
+
+export async function setCourseOverride(select) {
+  const { user, course } = select.dataset;
+  const mode = select.value;
+  const r = lastRows.find(row => row.id === user);
+  const prev = r ? overrideMode(r, course) : 'auto';
+  const label = OVERRIDES.find(o => o.id === mode).label.toLowerCase();
+  const ok = await saving(select, () => adminSetCourseOverride(user, course, mode), `Acceso al curso: ${label}`);
+  if (!ok) { select.value = prev; return; }
+  if (r) {
+    r.access = r.access.filter(a => a.course_id !== course);
+    if (mode !== 'auto') r.access.push({ course_id: course, enabled: mode === 'grant' });
+  }
+  refreshUserDetail(user);
+}
+
+export async function setCourseFlag(input) {
+  const { course, field } = input.dataset;
+  const value = input.checked;
+  const ok = await saving(input, () => adminUpdateCourse(course, { [field]: value }),
+    field === 'is_free' ? (value ? 'Curso marcado como gratis' : 'Curso marcado como de pago') : (value ? 'Curso publicado' : 'Curso oculto'));
+  if (!ok) { input.checked = !value; return; }
+  const c = lastCourses.find(x => x.id === course);
+  if (c) c[field] = value;
 }
 
 export function exportCsv() {
@@ -291,10 +394,11 @@ export function exportCsv() {
   const rows = lastRows.map(r => {
     const p = computeProgress((r.progress && r.progress.steps) || {});
     const last = lastActivity(r);
-    return [r.id, r.full_name || '', r.email, r.role, hasAccess(r, COURSE.id) ? 'habilitado' : 'bloqueado', p.percent, p.labsDone.length,
+    const courses = lastCourses.map(c => (accessFor(r, c).allowed ? 'sí' : 'no'));
+    return [r.id, r.full_name || '', r.email, r.role, r.access_level === 'full' ? 'total' : 'gratis', ...courses, p.percent, p.labsDone.length,
       STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || '', completedAt(r) || ''];
   });
-  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', COURSE.id, 'Progreso %', 'Labs', 'Estado', 'Última actividad', 'Último login', 'Curso terminado'], rows);
+  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', 'Nivel', ...lastCourses.map(c => `Acceso ${c.id}`), 'Progreso %', 'Labs', 'Estado', 'Última actividad', 'Último login', 'Curso terminado'], rows);
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;

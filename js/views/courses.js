@@ -6,6 +6,7 @@ import { appState } from '../state.js';
 import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js';
 import { TOTAL_LESSONS } from '../lab.js';
 import { currentProgress, fetchStreak } from '../progress.js';
+import { fetchCourses } from '../cloud.js';
 import { openDialog } from '../ui.js';
 
 const COURSES = [COURSE];
@@ -132,17 +133,28 @@ export function renderExplorar(container) {
                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>Ir al aula</span>
                  </a>
                  <button type="button" data-action="open-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors">Temario</button>`
-              : `<button type="button" data-action="open-course" data-id="${esc(c.id)}" class="flex-1 h-10 rounded-xl bg-white border border-line hover:border-accent/60 text-[13px] font-semibold text-ink transition-colors">Ver temario</button>`}
+              : `<span class="flex-1 h-10 rounded-xl bg-bg border border-line text-[13px] font-semibold text-muted inline-flex items-center justify-center gap-1.5" title="Pide acceso al administrador"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock</span>Requiere acceso</span>
+                 <button type="button" data-action="open-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors">Temario</button>`}
           </div>
         </div>
       </article>`;
   };
 
+  // Cursos del catálogo (Supabase) que aún no tienen contenido en la app.
+  const upcomingTile = c => `
+    <article class="min-w-0 rounded-2xl border border-line bg-surface/70 flex flex-col gap-3 p-4 min-h-[220px]">
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${c.is_free ? 'bg-emerald-50 text-accent border border-emerald-200' : 'bg-amber-50 text-amber-900 border border-amber-200'}">${c.is_free ? 'GRATIS' : 'ACCESO TOTAL'}</span>
+        <span class="material-symbols-outlined text-[20px] text-muted" aria-hidden="true">hourglass_top</span>
+      </div>
+      <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
+      <p class="mt-auto text-xs text-muted">Próximamente</p>
+    </article>`;
+
   const soonTile = `
     <div class="rounded-2xl border-2 border-dashed border-line flex flex-col items-center justify-center gap-2 p-6 min-h-[220px] text-center text-muted">
       <span class="material-symbols-outlined text-3xl" aria-hidden="true">hourglass_top</span>
       <span class="text-sm font-semibold">Más cursos próximamente</span>
-      <span class="text-[11px]">Ciberseguridad e inteligencia artificial</span>
     </div>`;
 
   container.innerHTML = `
@@ -153,17 +165,26 @@ export function renderExplorar(container) {
           <h1 class="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">Explorar cursos</h1>
         </div>
         <div class="flex items-center gap-2 font-mono text-[11px]">
-          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-ink">${COURSES.length}</strong> <span class="text-muted">${COURSES.length === 1 ? 'curso' : 'cursos'}</span></span>
+          <span id="catalog-count" class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-ink">${COURSES.length}</strong> <span class="text-muted">${COURSES.length === 1 ? 'curso' : 'cursos'}</span></span>
           <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong class="text-ink">${TOTAL_LINKS}</strong> <span class="text-muted">recursos</span></span>
         </div>
       </section>
 
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         ${COURSES.map(tile).join('')}
         ${soonTile}
       </section>
     </div>
   `;
+  // El catálogo real está en Supabase: añade los cursos que aún no tienen contenido.
+  fetchCourses().then(dbCourses => {
+    const grid = document.getElementById('catalog-grid');
+    if (!grid) return;
+    const upcoming = dbCourses.filter(c => c.published && !COURSES.some(local => local.id === c.id));
+    grid.innerHTML = COURSES.map(tile).join('') + (upcoming.length ? upcoming.map(upcomingTile).join('') : soonTile);
+    const count = document.getElementById('catalog-count');
+    if (count) count.innerHTML = `<strong class="text-ink">${COURSES.length + upcoming.length}</strong> <span class="text-muted">cursos</span>`;
+  }).catch(() => {});
 }
 
 export function openCourseDetail(courseId) {

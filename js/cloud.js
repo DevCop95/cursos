@@ -163,10 +163,20 @@ export async function touchPresence() {
   if (error) throw error;
 }
 
-export async function fetchOwnCourseAccess(userId) {
+// Cursos a los que el alumno tiene acceso según la regla del servidor (can_access_course).
+export async function fetchAccessibleCourses() {
   const client = await getClient();
   if (!client) return null;
-  const { data, error } = await client.from('course_access').select('course_id, enabled').eq('user_id', userId);
+  const { data, error } = await client.rpc('accessible_courses');
+  if (error) throw error;
+  return data || [];
+}
+
+// Catálogo: los alumnos ven los publicados; los admin, todos.
+export async function fetchCourses() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.from('courses').select('id, title, is_free, published, sort').order('sort').order('id');
   if (error) throw error;
   return data;
 }
@@ -176,7 +186,7 @@ export async function adminListStudents() {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
   const [profiles, progress, access, completions] = await Promise.all([
-    client.from('profiles').select('id, email, full_name, avatar_url, role, last_login, last_seen, created_at').order('created_at', { ascending: false }),
+    client.from('profiles').select('id, email, full_name, avatar_url, role, access_level, last_login, last_seen, created_at').order('created_at', { ascending: false }),
     client.from('student_progress').select('user_id, steps, progress_percentage, completed_at'),
     client.from('course_access').select('user_id, course_id, enabled'),
     client.from('course_completions').select('user_id, course_id, completed_at')
@@ -191,9 +201,31 @@ export async function adminListStudents() {
   }));
 }
 
-export async function adminSetCourseAccess(userId, courseId, enabled) {
+// Excepción por curso: 'grant' (conceder), 'block' (bloquear) o 'auto' (quitar la excepción y aplicar la regla).
+export async function adminSetCourseOverride(userId, courseId, mode) {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
-  const { error } = await client.from('course_access').upsert({ user_id: userId, course_id: courseId, enabled, updated_at: new Date().toISOString() });
+  const q = mode === 'auto'
+    ? client.from('course_access').delete().eq('user_id', userId).eq('course_id', courseId)
+    : client.from('course_access').upsert({ user_id: userId, course_id: courseId, enabled: mode === 'grant', updated_at: new Date().toISOString() });
+  const { error } = await q;
+  if (error) throw error;
+}
+
+// Nivel de acceso del alumno: 'free' o 'full'.
+export async function adminSetAccessLevel(userId, level) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { error } = await client.from('profiles').update({ access_level: level }).eq('id', userId);
+  if (error) throw error;
+}
+
+// Cambia is_free o published de un curso del catálogo.
+export async function adminUpdateCourse(courseId, fields) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const allowed = {};
+  ['is_free', 'published'].forEach(k => { if (typeof fields[k] === 'boolean') allowed[k] = fields[k]; });
+  const { error } = await client.from('courses').update(allowed).eq('id', courseId);
   if (error) throw error;
 }

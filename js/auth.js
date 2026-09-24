@@ -26,10 +26,11 @@ export async function prepareNonce() {
   return sha256Hex(pendingNonce);
 }
 
-async function loadCourseAccess(userId) {
-  const rows = await cloud.fetchOwnCourseAccess(userId).catch(() => null);
-  if (!rows || rows.length === 0) return [CONFIG.defaultCourseId];
-  return rows.filter(r => r.enabled).map(r => r.course_id);
+// Cursos visibles para el alumno según el servidor. Si no responde, se asume solo el curso gratuito
+// (el servidor sigue impidiendo guardar progreso de cursos sin acceso).
+async function loadCourseAccess() {
+  const ids = await cloud.fetchAccessibleCourses().catch(() => null);
+  return Array.isArray(ids) ? ids : [CONFIG.defaultCourseId];
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ async function establishCloudSession(user, info) {
     // La sesión real la mantiene Supabase; esto solo acota la caché local.
     expiresAt: now + CONFIG.localSessionTtlMs
   };
-  appState.enabledCourses = await loadCourseAccess(user.id);
+  appState.enabledCourses = await loadCourseAccess();
   saveState(appState);
   rememberAccount(info);
   await pullProgressFromCloud();
@@ -197,7 +198,7 @@ export async function revalidateSession() {
   const before = JSON.stringify([appState.session.role, appState.enabledCourses]);
   const profile = await cloud.fetchOwnProfile(user.id).catch(() => null);
   appState.session.role = profile && profile.role === 'admin' ? 'admin' : 'student';
-  appState.enabledCourses = await loadCourseAccess(user.id);
+  appState.enabledCourses = await loadCourseAccess();
   saveState(appState);
   await pullProgressFromCloud();
   return before !== JSON.stringify([appState.session.role, appState.enabledCourses]);
