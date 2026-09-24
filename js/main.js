@@ -11,6 +11,7 @@ import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './v
 import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
 import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
+import { createHistory } from './lib/cmd-history.js';
 import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz } from './views/course-aula.js';
 import { COURSE } from './content.js';
 import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag } from './views/admin.js';
@@ -213,6 +214,7 @@ document.addEventListener('submit', e => {
     e.preventDefault();
     const input = $('c-input');
     if (input) {
+      historyFor(input).push(input.value);
       runCourseCmd(input.value);
       input.value = '';
     }
@@ -222,6 +224,7 @@ document.addEventListener('submit', e => {
     e.preventDefault();
     const input = $('terminal-input');
     if (input) {
+      historyFor(input).push(input.value);
       executeCommand(input.value);
       input.value = '';
     }
@@ -233,7 +236,25 @@ document.addEventListener('input', e => {
   if (e.target.matches && e.target.matches('textarea[data-note]')) onNoteInput(e.target);
 });
 
+// Historial de comandos por terminal (↑ / ↓), en memoria durante la sesión.
+const histories = {};
+function historyFor(input) {
+  if (!histories[input.id]) histories[input.id] = createHistory();
+  return histories[input.id];
+}
+
 document.addEventListener('keydown', e => {
+  const t = e.target;
+  if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && t && (t.id === 'terminal-input' || t.id === 'c-input')) {
+    const h = historyFor(t);
+    const next = e.key === 'ArrowUp' ? h.up(t.value) : h.down();
+    if (next !== null) {
+      e.preventDefault();
+      t.value = next;
+      t.setSelectionRange(next.length, next.length);
+    }
+    return;
+  }
   if (e.key === 'Escape') {
     toggleProfile(false);
     document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach(m => closeModal(m.id));

@@ -22,6 +22,9 @@ const LINE_CLASSES = {
 const PROMPT = 'PS C:\\Users\\Student\\Labs> ';
 const TOTAL_LINKS = NMAP_RESOURCES.reduce((n, c) => n + c.items.length, 0);
 
+const SAVED_LINES = 80;
+const SAVE_DELAY = 1500;
+
 const TAB_ACTIVE = 'font-bold bg-accent text-white';
 const TAB_IDLE = 'font-semibold bg-white hover:bg-bg2 text-ink border border-line/70';
 
@@ -66,6 +69,51 @@ function progressLines() {
   return lines;
 }
 
+// ---------------------------------------------------------------------------
+// Estado de la terminal en Supabase (user_course_state): se retoma en cualquier dispositivo.
+// En el navegador sigue la copia local; gana la más reciente.
+// ---------------------------------------------------------------------------
+let cloudTimer = null;
+
+const cloudSyncOn = () => isCloudEnabled() && Boolean(appState.session && appState.session.mode === 'cloud');
+
+function queueCloudSave() {
+  appState.terminalSavedAt = Date.now();
+  if (!cloudSyncOn()) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(flushCloudSave, SAVE_DELAY);
+}
+
+function flushCloudSave() {
+  if (!cloudTimer) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = null;
+  if (!cloudSyncOn()) return;
+  const data = { v: 1, lines: appState.terminalLines.slice(-SAVED_LINES), expl: appState.activeCommandKey, at: appState.terminalSavedAt };
+  cloud.saveCourseState(COURSE.id, data).catch(err => console.warn('No se pudo guardar la terminal:', err.message || err));
+}
+window.addEventListener('pagehide', flushCloudSave);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushCloudSave(); });
+
+// El estado del servidor lo escribió el propio alumno: se valida antes de pintarlo.
+async function pullCloudState() {
+  if (!cloudSyncOn()) return;
+  const saved = await cloud.fetchCourseState(COURSE.id).catch(() => null);
+  if (!saved || typeof saved !== 'object' || !(Number(saved.at) > (Number(appState.terminalSavedAt) || 0))) return;
+  const lines = (Array.isArray(saved.lines) ? saved.lines : [])
+    .filter(l => l && typeof l.text === 'string' && LINE_CLASSES[l.type])
+    .slice(-SAVED_LINES)
+    .map(l => ({ text: l.text.slice(0, 400), type: l.type }));
+  if (lines.length) appState.terminalLines = lines;
+  if (PENTESTING_COMMANDS[saved.expl]) {
+    appState.activeCommandKey = saved.expl;
+    updateExplanationCard(saved.expl);
+  }
+  appState.terminalSavedAt = Number(saved.at);
+  saveState(appState);
+  renderTerminal();
+}
+
 export function executeCommand(raw) {
   const cmd = String(raw || '').trim().slice(0, 300);
   if (!cmd) return;
@@ -74,6 +122,7 @@ export function executeCommand(raw) {
   if (result.clear) {
     appState.terminalLines = [];
     renderTerminal();
+    queueCloudSave();
     saveState(appState);
     return;
   }
@@ -106,12 +155,14 @@ export function executeCommand(raw) {
     appState.activeCommandKey = result.explanationKey;
     updateExplanationCard(result.explanationKey);
   }
+  queueCloudSave();
   saveState(appState);
 }
 
 export function resetTerminal() {
   appState.terminalLines = initialTerminal();
   renderTerminal();
+  queueCloudSave();
   saveState(appState);
 }
 
@@ -827,4 +878,5 @@ export function renderAula(container, courseId) {
   `;
 
   renderTerminal();
+  pullCloudState();
 }
