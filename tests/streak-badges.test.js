@@ -24,12 +24,13 @@ test('todayInBogota devuelve la fecha de Colombia (UTC-5)', () => {
   assert.equal(todayInBogota(new Date('2026-09-25T06:00:00Z')), '2026-09-25');
 });
 
-test('computeBadges: se ganan con progreso y racha', () => {
+test('computeBadges: 4 insignias que se ganan con progreso y racha', () => {
   const none = computeBadges({});
+  assert.equal(none.length, 4);
   assert.ok(none.every(b => !b.earned));
-  const s = { ipconfig: 'x', ping: 'x', 'q-p1-1': 'x', tracert: 'x', netstat: 'x', 'q-p1-2': 'x', whoami: 'x', 'q-p1-3': 'x' };
-  const earned = computeBadges(s, { bestStreak: 3 }).filter(b => b.earned).map(b => b.id);
-  assert.deepEqual(earned, ['first-step', 'lab-2', 'lab-3', 'module-1', 'streak-3']); // lab-3: whoami + netstat
+  const labs = { ipconfig: 'x', ping: 'x', tracert: 'x', netstat: 'x', whoami: 'x', 'nmap-basic': 'x', 'nmap-sv': 'x' };
+  assert.deepEqual(computeBadges(labs, { bestStreak: 7 }).filter(b => b.earned).map(b => b.id), ['first-step', 'labs', 'streak-7']);
+  assert.ok(computeBadges({ 'f-ports': 'x', 'f-web': 'x', 'f-build': 'x' }).find(b => b.id === 'final').earned);
   // Las preguntas por sí solas no cuentan como "primer comando".
   assert.ok(!computeBadges({ 'q-p1-1': 'x' }).find(b => b.id === 'first-step').earned);
 });

@@ -122,6 +122,15 @@ export async function answerQuiz(step, answer) {
   return data;
 }
 
+// Cursos terminados del propio alumno (los registra el servidor al llegar al 100 %).
+export async function fetchOwnCompletions() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.from('course_completions').select('course_id, completed_at');
+  if (error) throw error;
+  return data;
+}
+
 // Días con actividad del propio alumno (para la racha), más recientes primero.
 export async function fetchOwnActivityDays() {
   const client = await getClient();
@@ -166,17 +175,19 @@ export async function fetchOwnCourseAccess(userId) {
 export async function adminListStudents() {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
-  const [profiles, progress, access] = await Promise.all([
+  const [profiles, progress, access, completions] = await Promise.all([
     client.from('profiles').select('id, email, full_name, avatar_url, role, last_login, last_seen, created_at').order('created_at', { ascending: false }),
     client.from('student_progress').select('user_id, steps, progress_percentage, completed_at'),
-    client.from('course_access').select('user_id, course_id, enabled')
+    client.from('course_access').select('user_id, course_id, enabled'),
+    client.from('course_completions').select('user_id, course_id, completed_at')
   ]);
-  const err = profiles.error || progress.error || access.error;
+  const err = profiles.error || progress.error || access.error || completions.error;
   if (err) throw err;
   return profiles.data.map(p => ({
     ...p,
     progress: progress.data.find(r => r.user_id === p.id) || null,
-    access: access.data.filter(r => r.user_id === p.id)
+    access: access.data.filter(r => r.user_id === p.id),
+    completions: completions.data.filter(r => r.user_id === p.id)
   }));
 }
 

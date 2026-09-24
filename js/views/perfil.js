@@ -8,6 +8,7 @@ import { currentProgress, currentSteps, fetchStreak } from '../progress.js';
 import { computeBadges } from '../lib/badges.js';
 import { avatarFor, openDialog } from '../ui.js';
 import { isAdmin } from '../auth.js';
+import { fetchOwnCompletions } from '../cloud.js';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -52,10 +53,11 @@ export function renderPerfil(container) {
           <div class="flex-1 min-w-0">
             <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight truncate">${esc(user.name)}</h1>
             <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">${esc(user.email)}</p>
-            <div class="flex items-center gap-3 mt-2 font-mono text-[11px]">
+            <div class="flex items-center gap-x-3 gap-y-1.5 mt-2 font-mono text-[11px] flex-wrap">
               <span class="px-2 py-0.5 rounded-md font-bold ${admin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">${admin ? 'ADMIN' : 'ESTUDIANTE'}</span>
               <span class="text-slate-400"><strong class="text-white">${p.lessonsDone.length}</strong>/${TOTAL_LESSONS} lecciones</span>
               <span id="profile-streak" class="text-slate-400 hidden" title="Días seguidos con actividad"></span>
+              <span id="profile-completed" class="hidden px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-bold"></span>
             </div>
           </div>
           <div class="relative shrink-0">
@@ -73,7 +75,7 @@ export function renderPerfil(container) {
           <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias</h2>
           <a href="#/aula-interactiva/pentesting-101" class="text-[11px] font-mono font-bold text-accent hover:underline shrink-0">Ir al aula →</a>
         </div>
-        <div id="badges-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
+        <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
       </section>
 
       <div class="grid grid-cols-2 gap-3">
@@ -98,6 +100,15 @@ export function renderPerfil(container) {
     if (grid) grid.innerHTML = badgesHtml(steps, streak.best);
     paintBadgeCount(steps, streak.best);
   });
+  // Curso terminado según el registro del servidor (course_completions).
+  fetchOwnCompletions().then(list => {
+    const done = list.find(c => c.course_id === 'pentesting-101');
+    const el = document.getElementById('profile-completed');
+    if (!done || !el) return;
+    el.textContent = '✓ Curso terminado';
+    el.title = `Terminado el ${formatDate(done.completed_at)}`;
+    el.classList.remove('hidden');
+  }).catch(() => {});
 }
 
 export function openAccountDetails() {

@@ -28,6 +28,12 @@ let lastRows = [];
 let currentFilter = 'active';
 let refreshTimer = null;
 
+// Fecha en que el servidor registró el curso como terminado (o null).
+function completedAt(row, courseId = COURSE.id) {
+  const rec = (row.completions || []).find(c => c.course_id === courseId);
+  return rec ? rec.completed_at : null;
+}
+
 function hasAccess(row, courseId) {
   const rec = row.access.find(a => a.course_id === courseId);
   return rec ? rec.enabled : true; // sin registro = acceso por defecto
@@ -67,6 +73,8 @@ function toolbarHtml(rows) {
       <span class="text-ink2"><strong class="text-ink">${active}</strong> activos (7 días)</span>
       <span class="text-line" aria-hidden="true">•</span>
       <span class="text-ink2"><strong class="text-ink">${rows.length}</strong> registrados</span>
+      <span class="text-line" aria-hidden="true">•</span>
+      <span class="text-ink2"><strong class="text-ink">${rows.filter(r => completedAt(r)).length}</strong> terminaron el curso</span>
     </div>
     <div class="flex items-center gap-2">
       <div class="inline-flex p-0.5 rounded-lg bg-bg border border-line/70" role="group" aria-label="Filtrar usuarios por actividad">${tabs}</div>
@@ -126,7 +134,9 @@ function tableHtml(allRows) {
               <td class="px-3 py-2.5 hidden sm:table-cell">
                 <div class="flex items-center gap-2 w-32">
                   <div class="flex-1 h-1.5 rounded-full bg-bg overflow-hidden"><div class="h-full rounded-full bg-accent" style="width: ${p.percent}%;"></div></div>
-                  <span class="font-mono text-[11px] text-ink2 tabular-nums w-8 text-right">${p.percent}%</span>
+                  ${completedAt(r)
+                    ? '<span class="material-symbols-outlined text-[18px] text-accent w-8 text-right" title="Curso terminado" aria-label="Curso terminado">verified</span>'
+                    : `<span class="font-mono text-[11px] text-ink2 tabular-nums w-8 text-right">${p.percent}%</span>`}
                 </div>
               </td>
               <td class="px-3 py-2.5 text-right">
@@ -242,7 +252,7 @@ export function openUserDetails(userId) {
           ${row('Último login', esc(formatDate(r.last_login)))}
           ${row('Última actividad', esc(formatDate(r.last_seen)))}
           ${row('Registrado', esc(formatDate(r.created_at)))}
-          ${p.complete && r.progress && r.progress.completed_at ? row('Curso completado', esc(formatDate(r.progress.completed_at))) : ''}
+          ${row('Curso terminado', completedAt(r) ? `<span class="text-accent">✓ ${esc(formatDate(completedAt(r)))}</span>` : 'No')}
         </dl>
       </div>`
   });
@@ -282,9 +292,9 @@ export function exportCsv() {
     const p = computeProgress((r.progress && r.progress.steps) || {});
     const last = lastActivity(r);
     return [r.id, r.full_name || '', r.email, r.role, hasAccess(r, COURSE.id) ? 'habilitado' : 'bloqueado', p.percent, p.labsDone.length,
-      STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || ''];
+      STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || '', completedAt(r) || ''];
   });
-  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', COURSE.id, 'Progreso %', 'Labs', 'Estado', 'Última actividad', 'Último login'], rows);
+  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', COURSE.id, 'Progreso %', 'Labs', 'Estado', 'Última actividad', 'Último login', 'Curso terminado'], rows);
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;
