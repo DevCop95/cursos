@@ -5,14 +5,14 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v36';
-import { isCloudEnabled } from '../config.js?v=dev101x-v36';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v36';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v36';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v36';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v36';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v36';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v36';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v37';
+import { isCloudEnabled } from '../config.js?v=dev101x-v37';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v37';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v37';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v37';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v37';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v37';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v37';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [

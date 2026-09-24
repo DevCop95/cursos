@@ -6,3 +6,6 @@ node_modules/
 ANALISIS_Y_MEJORAS.md
 supabase/
 .mcp.json
+
+# Instrucciones locales del asistente
+CLAUDE.local.md

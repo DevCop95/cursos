@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v36';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v37';
 
 let clientPromise = null;
 
@@ -229,7 +229,7 @@ export async function saveCourseState(courseId, data) {
 export async function fetchCourses() {
   const client = await getClient();
   if (!client) return [];
-  const { data, error } = await client.from('courses').select('id, title, is_free, published, has_content, sort').order('sort').order('id');
+  const { data, error } = await client.from('courses').select('id, title, is_free, published, has_content, sort, summary').order('sort').order('id');
   if (error) throw error;
   return data;
 }
