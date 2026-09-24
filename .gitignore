@@ -9,3 +9,6 @@ supabase/
 
 # Instrucciones locales del asistente
 CLAUDE.local.md
+
+# Salida temporal del constructor del laboratorio Linux
+scripts/linux-lab/.build/

@@ -7,7 +7,7 @@
  *  - Fuentes de Google: caché primero (sus URLs son inmutables).
  *  - Google Identity, Supabase y demás orígenes: no se interceptan.
  */
-const VERSION = 'dev101x-v40';
+const VERSION = 'dev101x-v41';
 const STATIC_CACHE = `${VERSION}-static`;
 const FONT_CACHE = 'dev101x-fonts';
 
@@ -15,34 +15,34 @@ const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
-  './css/tailwind.css?v=dev101x-v40',
-  './css/app.css?v=dev101x-v40',
-  './js/main.js?v=dev101x-v40',
-  './js/identicon.js?v=dev101x-v40',
-  './js/water-reveal.js?v=dev101x-v40',
-  './js/config.js?v=dev101x-v40',
-  './js/state.js?v=dev101x-v40',
-  './js/router.js?v=dev101x-v40',
-  './js/auth.js?v=dev101x-v40',
-  './js/cloud.js?v=dev101x-v40',
-  './js/progress.js?v=dev101x-v40',
-  './js/lab.js?v=dev101x-v40',
-  './js/content.js?v=dev101x-v40',
-  './js/search.js?v=dev101x-v40',
-  './js/ui.js?v=dev101x-v40',
-  './js/lib/html.js?v=dev101x-v40',
-  './js/lib/jwt.js?v=dev101x-v40',
-  './js/lib/activity.js?v=dev101x-v40',
-  './js/lib/badges.js?v=dev101x-v40',
-  './js/lib/access.js?v=dev101x-v40',
-  './js/lib/course-engine.js?v=dev101x-v40',
-  './js/views/course-aula.js?v=dev101x-v40',
-  './js/lib/cmd-history.js?v=dev101x-v40',
-  './js/views/login.js?v=dev101x-v40',
-  './js/views/courses.js?v=dev101x-v40',
-  './js/views/aula.js?v=dev101x-v40',
-  './js/views/perfil.js?v=dev101x-v40',
-  './js/views/admin.js?v=dev101x-v40',
+  './css/tailwind.css?v=dev101x-v41',
+  './css/app.css?v=dev101x-v41',
+  './js/main.js?v=dev101x-v41',
+  './js/identicon.js?v=dev101x-v41',
+  './js/water-reveal.js?v=dev101x-v41',
+  './js/config.js?v=dev101x-v41',
+  './js/state.js?v=dev101x-v41',
+  './js/router.js?v=dev101x-v41',
+  './js/auth.js?v=dev101x-v41',
+  './js/cloud.js?v=dev101x-v41',
+  './js/progress.js?v=dev101x-v41',
+  './js/lab.js?v=dev101x-v41',
+  './js/content.js?v=dev101x-v41',
+  './js/search.js?v=dev101x-v41',
+  './js/ui.js?v=dev101x-v41',
+  './js/lib/html.js?v=dev101x-v41',
+  './js/lib/jwt.js?v=dev101x-v41',
+  './js/lib/activity.js?v=dev101x-v41',
+  './js/lib/badges.js?v=dev101x-v41',
+  './js/lib/access.js?v=dev101x-v41',
+  './js/lib/course-engine.js?v=dev101x-v41',
+  './js/views/course-aula.js?v=dev101x-v41',
+  './js/lib/cmd-history.js?v=dev101x-v41',
+  './js/views/login.js?v=dev101x-v41',
+  './js/views/courses.js?v=dev101x-v41',
+  './js/views/aula.js?v=dev101x-v41',
+  './js/views/perfil.js?v=dev101x-v41',
+  './js/views/admin.js?v=dev101x-v41',
   './assets/icon-192.png',
   './assets/favicon.png',
   './assets/dev101x_identicon.svg',
@@ -102,6 +102,8 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+  // Laboratorio Linux (decenas de MB): lo guarda la caché HTTP del navegador, no el service worker.
+  if (url.pathname.startsWith('/lab-linux/')) return;
 
   event.respondWith(networkFirst(request));
 });

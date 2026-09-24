@@ -1,0 +1,3 @@
+*.zst binary
+*.wasm binary
+*.bin binary

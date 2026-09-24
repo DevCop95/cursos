@@ -44,7 +44,7 @@ write('js/main.js', main);
 write('index.html', read('index.html').replace(/dev101x-v\d+/g, next));
 // Páginas estáticas de cada curso (scripts/course-pages.mjs).
 const { courses } = JSON.parse(read('scripts/course-pages.json'));
-for (const { slug } of courses) {
+for (const slug of [...courses.map(c => c.slug), 'lab-linux']) {
   try { write(`${slug}/index.html`, read(`${slug}/index.html`).replace(/dev101x-v\d+/g, next)); } catch (e) { /* aún no generada */ }
 }
 let sw = read('sw.js').replace(/dev101x-v\d+/g, next);
