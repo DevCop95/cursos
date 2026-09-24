@@ -115,23 +115,14 @@ a, button {
   }
 }
 
-/* Print optimizations for Diploma */
+/* Print optimizations */
 @media print {
   body {
     background-color: #ffffff !important;
     color: #000000 !important;
   }
-  header, aside, #nav-bar, #app-footer, .no-print, button, .modal-backdrop {
+  header, aside, #nav-bar, #app-footer, #mobile-nav, .no-print, button, .modal-backdrop {
     display: none !important;
-  }
-  #diploma-printable {
-    box-shadow: none !important;
-    border: 2px solid #005d42 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 2.5rem !important;
-    page-break-inside: avoid;
   }
 }
 
@@ -260,5 +251,83 @@ html:not(.login-active) {
 .resource-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 24px rgba(0, 92, 56, 0.08);
+}
+
+/* ---- Paneles colapsables (columna lateral en móvil) ---- */
+.panel-open {
+  display: flex !important;
+}
+
+/* ---- Mobile: densidad, respiración y áreas táctiles ---- */
+
+/* Nunca desbordar horizontalmente en pantallas estrechas */
+body {
+  overflow-x: hidden;
+}
+
+/* Espacio para la barra de navegación inferior fija */
+body.has-mobile-nav {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  body.has-mobile-nav {
+    padding-bottom: 0;
+  }
+}
+
+#mobile-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mobile-nav-item {
+  min-height: 56px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-nav-item:active {
+  background-color: rgba(0, 92, 56, 0.06);
+}
+
+@media (max-width: 767px) {
+  /* Evitar el zoom automático de iOS al enfocar la consola */
+  input[type="text"],
+  input[type="search"],
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Áreas táctiles mínimas en botones y enlaces de acción */
+  button,
+  a[href^="#/"],
+  .cmd-tab-btn,
+  .nmap-cat-btn {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Texto pequeño más legible en móvil */
+  .text-\[10px\] {
+    font-size: 10.5px;
+  }
+  .text-\[11px\] {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  /* Las tarjetas no se levantan al tocar (evita "saltos" en scroll táctil) */
+  .card-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Tablas anchas (panel admin) con scroll propio en vez de romper el layout */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Chevrons de los paneles colapsables */
+[data-chevron] {
+  transition: transform 0.2s ease;
 }
 

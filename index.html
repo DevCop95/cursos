@@ -6,8 +6,8 @@
   <!-- Primary Meta Tags & SEO Canónico -->
   <title>Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial</title>
   <meta name="title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
-  <meta name="description" content="Plataforma de formación técnica de élite en Ciberseguridad Ofensiva, Pentesting y Modelos de Inteligencia Artificial con laboratorios prácticos en entornos reales aislados. Certificaciones oficiales con validación criptográfica." />
-  <meta name="keywords" content="ciberseguridad, pentesting, ethical hacking, inteligencia artificial, nmap, powershell, laboratorios tecnicos, dev101x, certificacion ciberseguridad, cursos online, red team, seguridad informatica" />
+  <meta name="description" content="Plataforma de formación técnica en Ciberseguridad Ofensiva y Pentesting con laboratorios prácticos guiados: reconocimiento de redes con Nmap, PowerShell y consola de Windows en un entorno de prácticas aislado." />
+  <meta name="keywords" content="ciberseguridad, pentesting, ethical hacking, nmap, powershell, laboratorios tecnicos, dev101x, cursos online, red team, seguridad informatica" />
   <meta name="author" content="Dev101x Academy" />
   <meta name="publisher" content="Dev101x" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -19,7 +19,7 @@
   <meta property="og:site_name" content="Dev101x Academy" />
   <meta property="og:locale" content="es_ES" />
   <meta property="og:title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
-  <meta property="og:description" content="Laboratorios prácticos en entornos Windows ofensivos, escaneos de red con Nmap y modelos de IA avanzados. Certificación oficial con validez criptográfica." />
+  <meta property="og:description" content="Laboratorios prácticos en entornos Windows ofensivos y escaneos de red con Nmap, con consola interactiva y seguimiento de progreso." />
   <meta property="og:image" content="https://cursos.dev101x.online/assets/og-preview.png" />
   <meta property="og:image:secure_url" content="https://cursos.dev101x.online/assets/og-preview.png" />
   <meta property="og:image:type" content="image/png" />
@@ -32,7 +32,7 @@
   <meta name="twitter:domain" content="cursos.dev101x.online" />
   <meta name="twitter:url" content="https://cursos.dev101x.online/" />
   <meta name="twitter:title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
-  <meta name="twitter:description" content="Laboratorios prácticos en entornos Windows ofensivos, Nmap y modelos de IA avanzados. Certificación oficial con validez criptográfica." />
+  <meta name="twitter:description" content="Laboratorios prácticos en entornos Windows ofensivos con Nmap, consola interactiva y seguimiento de progreso." />
   <meta name="twitter:image" content="https://cursos.dev101x.online/assets/og-preview.png" />
   <meta name="twitter:image:alt" content="Dev101x Academy Banner Oficial" />
 
@@ -79,7 +79,6 @@
           "courseMode": "Online",
           "courseWorkload": "PT32H"
         },
-        "educationalCredentialAwarded": "Diploma Oficial Verificado con Firma Criptográfica SHA-256",
         "offers": {
           "@type": "Offer",
           "category": "Free",
@@ -106,13 +105,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
   <!-- App Custom Stylesheet -->
-  <link rel="stylesheet" href="css/app.css?v=dev101x-v19" />
+  <link rel="stylesheet" href="css/app.css?v=dev101x-v20" />
 
   <!-- Google Identity Services (GIS SDK Oficial) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-  <!-- html2pdf.js para exportación directa de certificados a 300 DPI -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <!-- Supabase JS Client para sincronización en la nube -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -257,13 +253,31 @@
             <p class="text-xs text-[#282b29] mt-1">Aprende técnicas ofensivas, escaneo sigiloso con Nmap, Living-off-the-Land y análisis de puertos en estaciones de trabajo y servidores.</p>
           </div>
           <div class="p-4 bg-[#fdfcf9] border border-[#d3cec5] rounded-xl">
-            <h2 class="text-lg font-bold text-[#005c38]">Certificaciones Oficiales con Validación Criptográfica</h2>
-            <p class="text-xs text-[#282b29] mt-1">Obtén tu diploma emitido con hash criptográfico SHA-256 indeleble, descargable en PDF de alta fidelidad a 300 DPI.</p>
+            <h2 class="text-lg font-bold text-[#005c38]">Consola de Laboratorio Interactiva</h2>
+            <p class="text-xs text-[#282b29] mt-1">Practica comandos reales de reconocimiento desde una terminal guiada y sigue tu progreso laboratorio a laboratorio.</p>
           </div>
         </div>
       </div>
     </noscript>
   </main>
+
+  <!-- Navegación Inferior Móvil (Oculta hasta autenticarse) -->
+  <nav id="mobile-nav" class="hidden md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#fdfcf9]/97 backdrop-blur-md border-t border-[#d3cec5] shadow-[0_-2px_12px_rgba(12,13,14,.06)]">
+    <div class="grid grid-cols-3 max-w-lg mx-auto">
+      <a href="#/aula-interactiva/pentesting-101" data-mobile-path="aula-interactiva" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#80857e]">
+        <span class="material-symbols-outlined text-xl">terminal</span>
+        <span class="text-[10px] font-mono font-semibold">Aula</span>
+      </a>
+      <a href="#/mis-cursos" data-mobile-path="mis-cursos" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#80857e]">
+        <span class="material-symbols-outlined text-xl">school</span>
+        <span class="text-[10px] font-mono font-semibold">Cursos</span>
+      </a>
+      <a href="#/perfil" data-mobile-path="perfil" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#80857e]">
+        <span class="material-symbols-outlined text-xl">person</span>
+        <span class="text-[10px] font-mono font-semibold">Perfil</span>
+      </a>
+    </div>
+  </nav>
 
   <!-- Global Footer Conciso (Oculto hasta autenticarse) -->
   <footer id="app-footer" class="hidden w-full bg-[#fdfcf9] border-t border-[#d3cec5] py-6 text-xs text-[#80857e] font-mono">
@@ -414,10 +428,10 @@
     </div>
   </div>
 
-  <script src="js/identicon.js?v=dev101x-v19"></script>
-  <script src="js/data.js?v=dev101x-v19"></script>
-  <script src="js/app.js?v=dev101x-v19"></script>
-  <script src="js/water-reveal.js?v=dev101x-v19"></script>
+  <script src="js/identicon.js?v=dev101x-v20"></script>
+  <script src="js/data.js?v=dev101x-v20"></script>
+  <script src="js/app.js?v=dev101x-v20"></script>
+  <script src="js/water-reveal.js?v=dev101x-v20"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {

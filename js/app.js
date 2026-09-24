@@ -119,22 +119,19 @@
         { text: "(c) Microsoft Corporation. Terminal Activa en C:\\Users\\Student\\Labs", type: "slate" },
         { text: "[INFO] Red de laboratorio conectada: 10.128.44.0/24. Target objetivo: 10.128.44.12", type: "info" },
         { text: "Escribe 'help' o 'nmap -sV 10.128.44.12' para comenzar el reconocimiento.", type: "cmd" }
-      ],
-      verificationTab: 'validador'
+      ]
     };
   }
 
   function getStudentProgress(email) {
     const key = (email || (appState.currentUser && appState.currentUser.email) || '').toLowerCase().trim();
-    if (!key) return { completedLabs: ['lab-1', 'lab-2', 'lab-3'], userProgress: 100, certified: true };
+    if (!key) return { completedLabs: [], userProgress: 0, completedAt: null };
     if (!appState.studentProgress) appState.studentProgress = {};
     if (!appState.studentProgress[key]) {
       appState.studentProgress[key] = {
         completedLabs: [],
         userProgress: 0,
-        certified: false,
-        completedAt: null,
-        diplomaHash: null
+        completedAt: null
       };
     }
     return appState.studentProgress[key];
@@ -147,10 +144,8 @@
     if (!prog.completedLabs.includes(labId)) {
       prog.completedLabs.push(labId);
       prog.userProgress = Math.min(100, Math.round((prog.completedLabs.length / 3) * 100));
-      if (prog.userProgress >= 100 && !prog.certified) {
-        prog.certified = true;
+      if (prog.userProgress >= 100 && !prog.completedAt) {
         prog.completedAt = new Date().toISOString();
-        prog.diplomaHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
         showToast("🎉 ¡Felicidades! Has completado el 100% de los laboratorios.", "success");
       } else {
         showToast(`✓ Progreso actualizado: ${prog.userProgress}% (${prog.completedLabs.length}/3 Labs)`, "success");
@@ -185,8 +180,7 @@
         email: email,
         completed_labs: progressData.completedLabs,
         progress_percentage: progressData.userProgress,
-        certified: progressData.certified,
-        diploma_hash: progressData.diplomaHash,
+        completed_at: progressData.completedAt,
         updated_at: new Date().toISOString()
       }).then(({ error }) => {
         if (error) console.debug("Supabase sync notice:", error.message);
@@ -286,6 +280,7 @@
   function updateNavigationUI(currentRoute) {
     const mainHeader = document.getElementById('main-header');
     const appFooter = document.getElementById('app-footer');
+    const mobileNav = document.getElementById('mobile-nav');
     const waterWrapper = document.getElementById('water-bg-wrapper');
     const isLogin = !isUserAuthenticated() || currentRoute === 'login';
 
@@ -300,12 +295,25 @@
     if (isLogin || currentRoute === 'panel-admin') {
       if (mainHeader) mainHeader.classList.add('hidden');
       if (appFooter) appFooter.classList.add('hidden');
+      if (mobileNav) mobileNav.classList.add('hidden');
+      document.body.classList.remove('has-mobile-nav');
       if (waterWrapper) waterWrapper.classList.toggle('hidden', currentRoute === 'panel-admin');
     } else {
       if (mainHeader) mainHeader.classList.remove('hidden');
       if (appFooter) appFooter.classList.remove('hidden');
+      if (mobileNav) mobileNav.classList.remove('hidden');
+      document.body.classList.add('has-mobile-nav');
       if (waterWrapper) waterWrapper.classList.add('hidden');
     }
+
+    // Estado activo de la barra inferior móvil
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+      const path = item.getAttribute('data-mobile-path');
+      const isMatch = path === currentRoute || (path === 'mis-cursos' && currentRoute === 'explorar-cursos');
+      item.classList.toggle('text-[#005c38]', isMatch);
+      item.classList.toggle('font-bold', isMatch);
+      item.classList.toggle('text-[#80857e]', !isMatch);
+    });
 
     const navLinks = document.querySelectorAll('header nav a');
     navLinks.forEach(link => {
@@ -369,7 +377,7 @@
       return;
     }
 
-    appContainer.className = "w-full pt-20 pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col";
+    appContainer.className = "w-full pt-[76px] pb-6 sm:pt-20 sm:pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col";
 
     switch (route) {
       case 'aula-interactiva':
@@ -393,14 +401,6 @@
         break;
       case 'perfil':
         renderPerfil(appContainer);
-        break;
-      case 'diploma':
-      case 'verificacion-diploma':
-      case 'verificacion':
-      case 'directorio-egresados':
-      case 'validador-hash':
-      case 'alerta-fraude':
-        window.location.hash = '#/mis-cursos';
         break;
       default:
         renderAulaInteractiva(appContainer, 'pentesting-101');
@@ -526,48 +526,48 @@
 
     const prog = getStudentProgress(student.email);
     const userProgress = prog.userProgress !== undefined ? prog.userProgress : 0;
-    const isCertified = Boolean(prog.certified);
+    const isComplete = userProgress >= 100;
     const labsCount = (prog.completedLabs && prog.completedLabs.length) || 0;
 
     const coursesListHtml = enrolled.map(c => `
-      <div class="p-5 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs hover:border-[#005c38] transition-all flex flex-col justify-between gap-4 card-lift">
+      <div class="p-4 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs hover:border-[#005c38] transition-all flex flex-col justify-between gap-4 card-lift">
         <div class="flex flex-col gap-2.5">
-          <div class="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
+          <div class="flex items-center justify-between text-[11px] sm:text-xs font-mono flex-wrap gap-2">
             <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#005c38] font-semibold border border-emerald-200">${c.categoryLabel}</span>
-            <span class="text-[#80857e] font-bold text-[11px]">${isCertified ? '✓ COMPLETADO' : (userProgress > 0 ? `${userProgress}% COMPLETADO` : 'POR INICIAR')}</span>
+            <span class="text-[#80857e] font-bold">${isComplete ? '✓ COMPLETADO' : (userProgress > 0 ? `${userProgress}% COMPLETADO` : 'POR INICIAR')}</span>
           </div>
-          <h3 class="text-base sm:text-lg font-bold text-[#0c0d0e] font-sans">${c.title}</h3>
-          <p class="text-xs sm:text-sm text-[#80857e] font-sans leading-relaxed">${userProgress === 100 ? 'Laboratorios de reconocimiento y análisis completados con éxito' : (userProgress > 0 ? `Laboratorios en curso (${labsCount}/3 completados)` : c.userCurrentLesson)}</p>
+          <h3 class="text-base sm:text-lg font-bold text-[#0c0d0e] font-sans leading-snug">${c.title}</h3>
+          <p class="text-[13px] sm:text-sm text-[#80857e] font-sans leading-relaxed">${isComplete ? 'Laboratorios de reconocimiento y análisis completados con éxito' : (userProgress > 0 ? `Laboratorios en curso (${labsCount}/3 completados)` : c.userCurrentLesson)}</p>
           <div class="w-full bg-[#f3f0ea] h-2.5 rounded-full overflow-hidden border border-[#d3cec5]/40">
             <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${userProgress}%;"></div>
           </div>
         </div>
         <div class="flex items-center gap-3 pt-3 border-t border-[#d3cec5]/60">
-          <a href="#/aula-interactiva/${c.id}" class="flex-1 py-2.5 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all flex items-center justify-center gap-2">
+          <a href="#/aula-interactiva/${c.id}" class="flex-1 min-h-[44px] py-2.5 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-[13px] sm:text-sm font-semibold shadow-xs transition-all flex items-center justify-center gap-2">
             <span class="material-symbols-outlined text-sm">terminal</span>
-            <span>${isCertified ? 'Repasar Material' : (userProgress > 0 ? 'Continuar Clase' : 'Entrar al Aula')}</span>
+            <span>${isComplete ? 'Repasar material' : (userProgress > 0 ? 'Continuar clase' : 'Entrar al aula')}</span>
           </a>
         </div>
       </div>
     `).join('');
 
     container.innerHTML = `
-      <div class="flex flex-col w-full py-6 gap-6">
+      <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-6">
         <!-- Tarjeta de Perfil del Estudiante -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs">
-          <div class="flex items-center gap-3.5">
-            <img class="w-14 h-14 sm:w-12 sm:h-12 rounded-xl object-cover border border-[#d3cec5]" src="${identiconUri}" alt="${student.name}" />
-            <div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs">
+          <div class="flex items-center gap-3 min-w-0">
+            <img class="w-12 h-12 rounded-xl object-cover border border-[#d3cec5] shrink-0" src="${identiconUri}" alt="${student.name}" />
+            <div class="min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
-                <h1 class="text-lg sm:text-xl font-bold text-[#0c0d0e] font-sans">${student.name}</h1>
+                <h1 class="text-base sm:text-xl font-bold text-[#0c0d0e] font-sans leading-tight">${student.name}</h1>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${appState.authRole === 'admin' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
                   ${appState.authRole === 'admin' ? 'ADMIN' : 'ESTUDIANTE'}
                 </span>
               </div>
-              <span class="text-xs text-[#80857e] font-mono">${student.email || 'ID: ' + studentId}</span>
+              <span class="text-[11px] sm:text-xs text-[#80857e] font-mono block truncate">${student.email || 'ID: ' + studentId}</span>
             </div>
           </div>
-          <div class="flex gap-4 sm:gap-6 text-center font-mono text-xs">
+          <div class="grid grid-cols-2 gap-2 sm:flex sm:gap-3 text-center font-mono text-xs shrink-0">
             <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
               <span class="font-bold text-[#0c0d0e] text-sm block">0${enrolled.length}</span>
               <span class="text-[#80857e] text-[11px]">Cursos</span>
@@ -580,12 +580,12 @@
         </div>
 
         <!-- Lista de Cursos -->
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3 sm:gap-4">
           <div class="flex items-center justify-between flex-wrap gap-2">
-            <h2 class="text-sm sm:text-base font-bold text-[#0c0d0e] font-sans tracking-tight">Cursos Disponibles en tu Aula</h2>
-            <span class="text-xs font-mono text-[#80857e]">${enrolled.length} curso(s) matriculado(s)</span>
+            <h2 class="text-sm sm:text-base font-bold text-[#0c0d0e] font-sans tracking-tight">Cursos en tu aula</h2>
+            <span class="text-[11px] sm:text-xs font-mono text-[#80857e]">${enrolled.length} matriculado(s)</span>
           </div>
-          <div class="grid grid-cols-1 gap-4">
+          <div class="grid grid-cols-1 gap-3 sm:gap-4">
             ${coursesListHtml}
           </div>
         </div>
@@ -1153,9 +1153,9 @@
     document.querySelectorAll('.cmd-tab-btn').forEach(btn => {
       const tabKey = btn.getAttribute('data-cmd-key');
       if (tabKey === key) {
-        btn.className = "cmd-tab-btn px-2.5 py-1 rounded font-bold transition-all bg-primary-container text-white shadow-sm";
+        btn.className = "cmd-tab-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition-all font-bold bg-[#005c38] text-white shadow-xs";
       } else {
-        btn.className = "cmd-tab-btn px-2.5 py-1 rounded font-semibold transition-all bg-slate-200/70 hover:bg-slate-300 text-slate-700";
+        btn.className = "cmd-tab-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition-all font-semibold bg-white hover:bg-[#e9e5dd] text-[#0c0d0e] border border-[#d3cec5]/70";
       }
     });
   }
@@ -1172,106 +1172,105 @@
     const activeCatIdx = appState.activeNmapCategory || 0;
 
     container.innerHTML = `
-      <div class="flex flex-col w-full py-6 gap-6">
+      <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-6">
         <!-- Header Exclusivo Pentesting 101 -->
-        <div class="flex items-center justify-between gap-3 bg-[#fdfcf9] p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex-wrap card-lift">
-          <div class="flex items-center gap-2.5">
-            <span class="px-2.5 py-1 rounded-lg bg-[#005c38] text-white font-mono text-xs font-bold shadow-xs">DEV101X LABS</span>
-            <span class="text-xs font-bold text-[#0c0d0e] font-sans">${course.title}</span>
+        <div class="bg-[#fdfcf9] p-4 sm:p-5 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 card-lift">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="px-2.5 py-1 rounded-lg bg-[#005c38] text-white font-mono text-[11px] sm:text-xs font-bold shadow-xs shrink-0">DEV101X LABS</span>
+            <span class="text-[13px] sm:text-xs font-bold text-[#0c0d0e] font-sans leading-snug">${course.title}</span>
           </div>
-          <div class="flex items-center gap-2">
-            <a href="#seccion-recursos-nmap" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#005c38] font-mono text-xs font-bold border border-emerald-300 flex items-center gap-1.5 transition-colors shadow-xs">
+          <div class="flex items-center gap-2 shrink-0">
+            <a href="#seccion-recursos-nmap" class="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#005c38] font-mono text-[11px] sm:text-xs font-bold border border-emerald-300 flex items-center gap-1.5 transition-colors shadow-xs">
               <span class="material-symbols-outlined text-xs">link</span>
               <span>27+ Enlaces Nmap</span>
             </a>
-            <span class="font-mono text-xs text-[#80857e] bg-[#f3f0ea] px-3 py-1.5 rounded-xl border border-[#d3cec5]/70 shrink-0 font-medium">${course.activeStudents || 7} alumnos activos</span>
+            <span class="font-mono text-[11px] sm:text-xs text-[#80857e] bg-[#f3f0ea] px-3 py-2 sm:py-1.5 rounded-xl border border-[#d3cec5]/70 shrink-0 font-medium">${course.activeStudents || 7} activos</span>
           </div>
         </div>
 
         <!-- Banner de Contexto y Sesión Activa -->
-        <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs card-lift">
-          <div>
-            <div class="flex items-center gap-2 font-mono">
+        <div class="bg-[#fdfcf9] p-4 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 text-xs card-lift">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 font-mono text-[11px] flex-wrap">
               <span class="text-[#005c38] font-bold">${course.title}</span>
-              <span class="text-[#d3cec5]">•</span>
-              <span class="text-[#80857e]">${activeModule.module}</span>
+              <span class="text-[#d3cec5] hidden sm:inline">•</span>
+              <span class="text-[#80857e] w-full sm:w-auto">${activeModule.module}</span>
             </div>
-            <h1 class="text-base sm:text-lg font-bold text-[#0c0d0e] font-sans mt-0.5">${activeLesson.title}</h1>
-            <div class="flex items-center gap-2 mt-1.5 font-mono text-[11px] text-[#80857e] flex-wrap">
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>Host Auditor: Windows 11 (10.128.44.5)</span>
-              <span class="text-[#d3cec5]">•</span>
-              <span class="text-[#0c0d0e] font-bold">Target: 10.128.44.12 (srv-target.dev101x.lab)</span>
-              <span class="text-[#d3cec5]">•</span>
-              <span class="text-[#80857e]">Nmap.exe + Npcap + CLI Windows</span>
-            </div>
+            <h1 class="text-[15px] sm:text-lg font-bold text-[#0c0d0e] font-sans mt-1 leading-snug">${activeLesson.title}</h1>
+            <ul class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-x-3 mt-2 font-mono text-[11px] text-[#80857e]">
+              <li class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>Host: Windows 11 (10.128.44.5)</li>
+              <li class="text-[#0c0d0e] font-bold">Target: 10.128.44.12</li>
+              <li class="hidden sm:block">Nmap.exe + Npcap + CLI Windows</li>
+            </ul>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <span class="px-3 py-1 bg-emerald-50 text-[#005c38] rounded-full font-mono text-xs font-bold border border-emerald-300 shadow-xs">${course.badge}</span>
-            <span class="px-3 py-1 bg-[#0c0d0e] text-emerald-400 rounded-full font-mono text-xs font-semibold shadow-xs">LAB OFENSIVO</span>
+            <span class="px-3 py-1 bg-emerald-50 text-[#005c38] rounded-full font-mono text-[11px] font-bold border border-emerald-300 shadow-xs">${course.badge}</span>
+            <span class="px-3 py-1 bg-[#0c0d0e] text-emerald-400 rounded-full font-mono text-[11px] font-semibold shadow-xs">LAB OFENSIVO</span>
           </div>
         </div>
 
         <!-- Grid Principal: Consola + Explicaciones + Recursos | Guía Rápida + Syllabus -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+
           <!-- Columna Izquierda (8 cols): Consola, Explicación Técnica y Directorio Nmap -->
-          <div class="lg:col-span-8 flex flex-col gap-6">
-            
+          <div class="lg:col-span-8 flex flex-col gap-4 sm:gap-6">
+
             <!-- Terminal Windows PowerShell -->
             <div class="bg-[#0e1013] rounded-2xl border border-[#30363d] overflow-hidden font-mono text-xs shadow-md">
-              <div class="p-3 bg-[#161b22] text-slate-300 flex items-center justify-between text-[11px] border-b border-[#30363d]">
-                <div class="flex items-center gap-2.5">
-                  <div class="flex items-center gap-1.5">
+              <div class="p-3 bg-[#161b22] text-slate-300 flex items-center justify-between gap-2 text-[11px] border-b border-[#30363d]">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="hidden sm:flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded-full bg-[#ff5f56]/80 inline-block"></span>
                     <span class="w-3 h-3 rounded-full bg-[#ffbd2e]/80 inline-block"></span>
                     <span class="w-3 h-3 rounded-full bg-[#27c93f]/80 inline-block"></span>
                   </div>
-                  <span class="font-bold text-slate-100 ml-1">PowerShell 7 — Terminal Ofensivo</span>
-                  <span class="text-slate-400">• IP: 10.128.44.5</span>
+                  <span class="font-bold text-slate-100 sm:ml-1 truncate">PowerShell 7 — Terminal</span>
+                  <span class="text-slate-400 hidden md:inline">• IP: 10.128.44.5</span>
                 </div>
-                <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[10px] font-bold border border-emerald-700/50">Target: 10.128.44.12</span>
-                  <button onclick="window.Dev101x.executeTerminalCommand(null, 'cls')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition-colors" title="Limpiar pantalla">cls</button>
-                  <button onclick="window.Dev101x.executeTerminalCommand(null, 'help')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px] transition-colors" title="Ver comandos disponibles">help</button>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="hidden sm:inline px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 text-[10px] font-bold border border-emerald-700/50">Target: 10.128.44.12</span>
+                  <button onclick="window.Dev101x.executeTerminalCommand(null, 'cls')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition-colors" title="Limpiar pantalla">cls</button>
+                  <button onclick="window.Dev101x.executeTerminalCommand(null, 'help')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px] transition-colors" title="Ver comandos disponibles">help</button>
                 </div>
               </div>
 
               <!-- Quick Command Chips -->
-              <div class="bg-[#111418] px-3.5 py-2 border-b border-[#30363d] flex items-center gap-1.5 overflow-x-auto text-[11px]">
+              <div class="bg-[#111418] px-3.5 py-2.5 border-b border-[#30363d] flex items-center gap-1.5 overflow-x-auto cmd-tab-bar text-[11px]">
                 <span class="text-slate-400 text-[10px] uppercase font-bold shrink-0">Ejecutar:</span>
-                <button onclick="window.Dev101x.selectExplanation('nmap', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-emerald-400 whitespace-nowrap transition-colors">nmap -sV</button>
-                <button onclick="window.Dev101x.selectExplanation('ipconfig', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-sky-300 whitespace-nowrap transition-colors">ipconfig /all</button>
-                <button onclick="window.Dev101x.selectExplanation('whoami', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-amber-300 whitespace-nowrap transition-colors">whoami /priv</button>
-                <button onclick="window.Dev101x.selectExplanation('ping', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-indigo-300 whitespace-nowrap transition-colors">ping -n 3</button>
-                <button onclick="window.Dev101x.selectExplanation('tracert', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-purple-300 whitespace-nowrap transition-colors">tracert -d</button>
-                <button onclick="window.Dev101x.selectExplanation('netstat', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-cyan-300 whitespace-nowrap transition-colors">netstat -ano</button>
-                <button onclick="window.Dev101x.selectExplanation('curl', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-emerald-300 whitespace-nowrap transition-colors">curl -I</button>
-                <button onclick="window.Dev101x.selectExplanation('testnet', true)" class="px-2.5 py-0.5 rounded bg-[#1e2329] hover:bg-[#283038] text-teal-300 whitespace-nowrap transition-colors">Test-NetConnection</button>
+                <button onclick="window.Dev101x.selectExplanation('nmap', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-emerald-400 whitespace-nowrap transition-colors">nmap -sV</button>
+                <button onclick="window.Dev101x.selectExplanation('ipconfig', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-sky-300 whitespace-nowrap transition-colors">ipconfig /all</button>
+                <button onclick="window.Dev101x.selectExplanation('whoami', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-amber-300 whitespace-nowrap transition-colors">whoami /priv</button>
+                <button onclick="window.Dev101x.selectExplanation('ping', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-indigo-300 whitespace-nowrap transition-colors">ping -n 3</button>
+                <button onclick="window.Dev101x.selectExplanation('tracert', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-purple-300 whitespace-nowrap transition-colors">tracert -d</button>
+                <button onclick="window.Dev101x.selectExplanation('netstat', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-cyan-300 whitespace-nowrap transition-colors">netstat -ano</button>
+                <button onclick="window.Dev101x.selectExplanation('curl', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-emerald-300 whitespace-nowrap transition-colors">curl -I</button>
+                <button onclick="window.Dev101x.selectExplanation('testnet', true)" class="px-3 py-1 rounded-lg bg-[#1e2329] hover:bg-[#283038] text-teal-300 whitespace-nowrap transition-colors">Test-NetConnection</button>
               </div>
 
               <!-- Terminal Output Screen -->
-              <div id="terminal-screen" class="p-4 h-72 sm:h-80 overflow-y-auto space-y-1 text-slate-200">
+              <div id="terminal-screen" class="p-3.5 sm:p-4 h-56 sm:h-80 overflow-y-auto space-y-1 text-slate-200 text-[11px] sm:text-xs leading-relaxed">
                 ${appState.terminalLines.map(l => `<div class="${l.type === 'error' ? 'text-red-400' : l.type === 'cmd' ? 'text-emerald-400 font-bold' : l.type === 'info' ? 'text-sky-300' : l.type === 'slate' ? 'text-slate-400' : 'text-slate-200'}">${l.text}</div>`).join('')}
               </div>
 
               <!-- Terminal Input Form -->
               <form onsubmit="window.Dev101x.executeTerminalCommand(event)" class="p-3 bg-[#090a0c] border-t border-[#30363d] flex items-center gap-2">
-                <span class="text-emerald-400 text-xs shrink-0 select-none font-bold">PS C:\\Users\\Dev101x\\Labs&gt;</span>
-                <input id="terminal-input" type="text" placeholder="Ej: nmap -sV 10.128.44.12, ipconfig /all, whoami /priv, ping, tracert, netstat, curl, help..." class="flex-1 bg-transparent text-emerald-300 text-xs outline-none font-mono" autofocus />
-                <button type="submit" class="px-4 py-1.5 bg-[#005c38] hover:bg-[#003f27] rounded-xl text-white text-xs font-semibold shrink-0 transition-colors shadow-xs">Ejecutar</button>
+                <span class="hidden md:inline text-emerald-400 text-xs shrink-0 select-none font-bold">PS C:\\Users\\Dev101x\\Labs&gt;</span>
+                <span class="md:hidden text-emerald-400 text-xs shrink-0 select-none font-bold">PS&gt;</span>
+                <input id="terminal-input" type="text" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="nmap -sV 10.128.44.12 · help" class="flex-1 min-w-0 bg-transparent text-emerald-300 text-[13px] sm:text-xs outline-none font-mono py-1.5" />
+                <button type="submit" class="px-3.5 sm:px-4 py-2 bg-[#005c38] hover:bg-[#003f27] rounded-xl text-white text-xs font-semibold shrink-0 transition-colors shadow-xs">Ejecutar</button>
               </form>
             </div>
 
             <!-- Panel de Explicación Técnica en Profundidad -->
             <div class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden">
-              <div class="p-3.5 bg-[#f3f0ea]/70 border-b border-[#d3cec5]/80 flex items-center justify-between gap-2 flex-wrap">
+              <div class="p-3.5 bg-[#f3f0ea]/70 border-b border-[#d3cec5]/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
                 <div class="flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-[#005c38] text-base">psychology</span>
-                  <h2 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono tracking-wider">Explicación Técnica del Comando</h2>
+                  <h2 class="text-[11px] sm:text-xs font-bold text-[#0c0d0e] uppercase font-mono tracking-wider">Explicación del comando</h2>
                 </div>
-                <div class="flex items-center gap-1 overflow-x-auto pb-0.5 max-w-full font-mono text-[11px] cmd-tab-bar">
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1 max-w-full font-mono text-[11px] cmd-tab-bar">
                   ${Object.keys(PENTESTING_COMMANDS).map(k => `
-                    <button onclick="window.Dev101x.selectExplanation('${k}', false)" data-cmd-key="${k}" class="cmd-tab-btn px-2.5 py-1 rounded-lg transition-all ${k === activeCmdKey ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#e9e5dd] text-[#0c0d0e] border border-[#d3cec5]/70'}">
+                    <button onclick="window.Dev101x.selectExplanation('${k}', false)" data-cmd-key="${k}" class="cmd-tab-btn px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${k === activeCmdKey ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#e9e5dd] text-[#0c0d0e] border border-[#d3cec5]/70'}">
                       ${PENTESTING_COMMANDS[k].name}
                     </button>
                   `).join('')}
@@ -1279,311 +1278,175 @@
               </div>
 
               <!-- Contenedor Dinámico de la Explicación -->
-              <div id="command-explanation-card" class="p-5 sm:p-6 flex flex-col gap-5 text-xs">
+              <div id="command-explanation-card" class="p-4 sm:p-6 flex flex-col gap-4 sm:gap-5 text-xs">
                 ${getExplanationCardHtml(activeCmdKey)}
               </div>
             </div>
 
             <!-- Directorio Completo de Recursos & Enlaces Oficiales de Nmap -->
-            <div id="seccion-recursos-nmap" class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden flex flex-col gap-4 p-5 sm:p-6">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#d3cec5]">
-                <div>
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">TODO ENLACES NMAP</span>
-                    <span class="text-[#80857e] font-mono text-[11px]">27+ Fuentes Oficiales & Documentación Canónica</span>
+            <div id="seccion-recursos-nmap" class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden">
+              <button type="button" onclick="window.Dev101x.togglePanel('panel-nmap-dir', this)" class="lg:hidden w-full flex items-center justify-between gap-2 p-4 text-left">
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-[#005c38] text-base shrink-0">menu_book</span>
+                  <span class="text-[13px] font-bold text-[#0c0d0e] font-sans truncate">Recursos oficiales de Nmap</span>
+                </span>
+                <span data-chevron class="material-symbols-outlined text-base text-[#80857e] transition-transform shrink-0">expand_more</span>
+              </button>
+              <div id="panel-nmap-dir" class="hidden lg:flex flex-col gap-4 p-4 sm:p-6 pt-0 lg:pt-6">
+                <div class="hidden lg:flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#d3cec5]">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                      <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">TODO ENLACES NMAP</span>
+                      <span class="text-[#80857e] font-mono text-[11px]">27+ Fuentes Oficiales & Documentación Canónica</span>
+                    </div>
+                    <h3 class="text-base font-bold text-[#0c0d0e] font-sans">Ecosistema Completo y Recursos Oficiales de Nmap</h3>
                   </div>
-                  <h3 class="text-base font-bold text-[#0c0d0e] font-sans">Ecosistema Completo y Recursos Oficiales de Nmap</h3>
+                  <a href="https://nmap.org" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white font-mono text-xs rounded-xl font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs">
+                    <span>Portal nmap.org</span>
+                    <span class="material-symbols-outlined text-xs">open_in_new</span>
+                  </a>
                 </div>
-                <a href="https://nmap.org" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white font-mono text-xs rounded-xl font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs">
-                  <span>Portal nmap.org</span>
-                  <span class="material-symbols-outlined text-xs">open_in_new</span>
-                </a>
-              </div>
 
-              <!-- Selector de Categorías Nmap -->
-              <div class="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full font-mono text-xs">
-                ${NMAP_RESOURCES.map((c, i) => `
-                  <button onclick="window.Dev101x.switchNmapCategory(${i})" class="nmap-cat-btn px-2.5 py-1 rounded-lg text-xs transition-all whitespace-nowrap ${i === activeCatIdx ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#f3f0ea] text-[#0c0d0e] border border-[#d3cec5]/70'}">
-                    ${c.categoryShort}
-                  </button>
-                `).join('')}
-              </div>
+                <!-- Selector de Categorías Nmap -->
+                <div class="flex items-center gap-1.5 overflow-x-auto cmd-tab-bar pb-1 -mx-1 px-1 max-w-full font-mono text-xs">
+                  ${NMAP_RESOURCES.map((c, i) => `
+                    <button onclick="window.Dev101x.switchNmapCategory(${i})" class="nmap-cat-btn px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition-all whitespace-nowrap ${i === activeCatIdx ? 'font-bold bg-[#005c38] text-white shadow-xs' : 'font-semibold bg-white hover:bg-[#f3f0ea] text-[#0c0d0e] border border-[#d3cec5]/70'}">
+                      ${c.categoryShort}
+                    </button>
+                  `).join('')}
+                </div>
 
-              <!-- Grid Dinámico de Enlaces Nmap -->
-              <div id="nmap-resources-container">
-                ${renderNmapResourcesHtml(activeCatIdx)}
+                <!-- Grid Dinámico de Enlaces Nmap -->
+                <div id="nmap-resources-container">
+                  ${renderNmapResourcesHtml(activeCatIdx)}
+                </div>
               </div>
             </div>
 
           </div>
 
           <!-- Columna Lateral (4 cols): Enlaces Rápidos + Guía de Comandos + Temario -->
-          <div class="lg:col-span-4 flex flex-col gap-6">
-            
+          <div class="lg:col-span-4 flex flex-col gap-4 sm:gap-6">
+
             <!-- Accesos Oficiales Nmap Destacados -->
-            <div class="bg-[#0e1013] text-white p-5 sm:p-6 rounded-2xl border border-[#30363d] shadow-xs flex flex-col gap-3 font-mono text-xs card-lift">
-              <div class="flex items-center justify-between pb-2 border-b border-[#30363d]">
-                <span class="font-bold text-emerald-400 text-xs flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">download</span>
-                  <span>Descargas & Manuales</span>
+            <div class="bg-[#0e1013] text-white rounded-2xl border border-[#30363d] shadow-xs font-mono text-xs card-lift overflow-hidden">
+              <button type="button" onclick="window.Dev101x.togglePanel('panel-descargas', this)" class="lg:hidden w-full flex items-center justify-between gap-2 p-4 text-left">
+                <span class="font-bold text-emerald-400 text-[13px] flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-base shrink-0">download</span>
+                  <span class="truncate">Descargas & Manuales</span>
                 </span>
-                <span class="text-[10px] text-slate-400">Oficial</span>
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <a href="https://nmap.org/download.html#windows" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
-                  <span class="truncate">Portal Descargas (nmap.org)</span>
-                  <span class="text-[10px] text-emerald-400 font-bold">Oficial</span>
-                </a>
-                <a href="https://npcap.com/#download" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
-                  <span class="truncate">Npcap Kernel Driver</span>
-                  <span class="text-[10px] text-amber-400 font-bold">Windows</span>
-                </a>
-                <a href="https://nmap.org/book/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
-                  <span class="truncate">Libro Oficial de Gordon</span>
-                  <span class="text-[10px] text-sky-400 font-bold">500+ pág</span>
-                </a>
-                <a href="https://nmap.org/nsedoc/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
-                  <span class="truncate">Catálogo Scripts NSE</span>
-                  <span class="text-[10px] text-purple-400 font-bold">600+</span>
-                </a>
-                <a href="https://www.sans.org/posters/nmap-cheat-sheet/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
-                  <span class="truncate">SANS Nmap Cheat Sheet</span>
-                  <span class="text-[10px] text-rose-400 font-bold">PDF</span>
-                </a>
+                <span data-chevron class="material-symbols-outlined text-base text-slate-400 transition-transform shrink-0">expand_more</span>
+              </button>
+              <div id="panel-descargas" class="hidden lg:flex flex-col gap-3 p-4 sm:p-6 pt-0 lg:pt-6">
+                <div class="hidden lg:flex items-center justify-between pb-2 border-b border-[#30363d]">
+                  <span class="font-bold text-emerald-400 text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">download</span>
+                    <span>Descargas & Manuales</span>
+                  </span>
+                  <span class="text-[10px] text-slate-400">Oficial</span>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <a href="https://nmap.org/download.html#windows" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
+                    <span class="truncate">Portal Descargas (nmap.org)</span>
+                    <span class="text-[10px] text-emerald-400 font-bold">Oficial</span>
+                  </a>
+                  <a href="https://npcap.com/#download" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
+                    <span class="truncate">Npcap Kernel Driver</span>
+                    <span class="text-[10px] text-amber-400 font-bold">Windows</span>
+                  </a>
+                  <a href="https://nmap.org/book/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
+                    <span class="truncate">Libro Oficial de Gordon</span>
+                    <span class="text-[10px] text-sky-400 font-bold">500+ pág</span>
+                  </a>
+                  <a href="https://nmap.org/nsedoc/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
+                    <span class="truncate">Catálogo Scripts NSE</span>
+                    <span class="text-[10px] text-purple-400 font-bold">600+</span>
+                  </a>
+                  <a href="https://www.sans.org/posters/nmap-cheat-sheet/" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-[#161b22] hover:bg-[#1e2329] flex items-center justify-between text-slate-200 hover:text-emerald-300 transition-colors border border-[#30363d]/60">
+                    <span class="truncate">SANS Nmap Cheat Sheet</span>
+                    <span class="text-[10px] text-rose-400 font-bold">PDF</span>
+                  </a>
+                </div>
               </div>
             </div>
 
             <!-- Guía Rápida de Comandos Pentesting -->
-            <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4 card-lift">
-              <div class="flex items-center justify-between pb-2 border-b border-[#d3cec5]">
-                <div class="flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-[#005c38] text-base">terminal</span>
-                  <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Guía Rápida de Comandos</h3>
+            <div class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs card-lift overflow-hidden">
+              <button type="button" onclick="window.Dev101x.togglePanel('panel-guia', this)" class="lg:hidden w-full flex items-center justify-between gap-2 p-4 text-left">
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-[#005c38] text-base shrink-0">terminal</span>
+                  <span class="text-[13px] font-bold text-[#0c0d0e] font-sans truncate">Guía rápida de comandos</span>
+                </span>
+                <span data-chevron class="material-symbols-outlined text-base text-[#80857e] transition-transform shrink-0">expand_more</span>
+              </button>
+              <div id="panel-guia" class="hidden lg:flex flex-col gap-4 p-4 sm:p-6 pt-0 lg:pt-6">
+                <div class="hidden lg:flex items-center justify-between pb-2 border-b border-[#d3cec5]">
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[#005c38] text-base">terminal</span>
+                    <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Guía Rápida de Comandos</h3>
+                  </div>
+                  <span class="text-[10px] font-mono text-[#80857e] bg-[#f3f0ea] px-2 py-0.5 rounded-md border border-[#d3cec5]/70">8 Comandos</span>
                 </div>
-                <span class="text-[10px] font-mono text-[#80857e] bg-[#f3f0ea] px-2 py-0.5 rounded-md border border-[#d3cec5]/70">8 Comandos</span>
-              </div>
 
-              <div class="flex flex-col gap-2 font-mono text-xs">
-                ${Object.keys(PENTESTING_COMMANDS).map(k => {
-                  const item = PENTESTING_COMMANDS[k];
-                  return `
-                    <div class="border border-[#d3cec5] rounded-xl p-3 bg-white/70 hover:bg-[#f3f0ea]/50 transition-colors flex flex-col gap-1.5 shadow-2xs">
-                      <div class="flex items-center justify-between">
-                        <code class="font-bold text-[#005c38] text-[11px] truncate mr-1">${item.name}</code>
-                        <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${item.badgeClass}">${item.badge.split('//')[0].trim()}</span>
-                      </div>
-                      <p class="text-[#282b29] text-[10px] font-sans line-clamp-1">${item.title}</p>
-                      <div class="flex items-center justify-between pt-1.5 border-t border-[#d3cec5]/60 text-[10px]">
-                        <span class="text-[#80857e] truncate max-w-[130px] font-mono">${item.cmd}</span>
-                        <div class="flex items-center gap-1 shrink-0">
-                          <button onclick="window.Dev101x.selectExplanation('${k}', false)" class="px-2 py-0.5 rounded-lg bg-[#f3f0ea] hover:bg-[#e9e5dd] text-[#0c0d0e] font-semibold text-[10px] border border-[#d3cec5]/70 transition-colors">Explicar</button>
-                          <button onclick="window.Dev101x.selectExplanation('${k}', true)" class="px-2 py-0.5 rounded-lg bg-[#005c38] hover:bg-[#003f27] text-white font-semibold text-[10px] transition-colors shadow-2xs">Ejecutar</button>
+                <div class="flex flex-col gap-2 font-mono text-xs">
+                  ${Object.keys(PENTESTING_COMMANDS).map(k => {
+                    const item = PENTESTING_COMMANDS[k];
+                    return `
+                      <div class="border border-[#d3cec5] rounded-xl p-3 bg-white/70 hover:bg-[#f3f0ea]/50 transition-colors flex flex-col gap-1.5 shadow-2xs">
+                        <div class="flex items-center justify-between gap-2">
+                          <code class="font-bold text-[#005c38] text-[11px] truncate">${item.name}</code>
+                          <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0 ${item.badgeClass}">${item.badge.split('//')[0].trim()}</span>
+                        </div>
+                        <p class="text-[#282b29] text-[11px] font-sans leading-snug line-clamp-2">${item.title}</p>
+                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#d3cec5]/60">
+                          <span class="text-[#80857e] truncate font-mono text-[10px] min-w-0">${item.cmd}</span>
+                          <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="window.Dev101x.selectExplanation('${k}', false)" class="px-2.5 py-1 rounded-lg bg-[#f3f0ea] hover:bg-[#e9e5dd] text-[#0c0d0e] font-semibold text-[10px] border border-[#d3cec5]/70 transition-colors">Explicar</button>
+                            <button onclick="window.Dev101x.selectExplanation('${k}', true)" class="px-2.5 py-1 rounded-lg bg-[#005c38] hover:bg-[#003f27] text-white font-semibold text-[10px] transition-colors shadow-2xs">Ejecutar</button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  `;
-                }).join('')}
+                    `;
+                  }).join('')}
+                </div>
               </div>
             </div>
 
             <!-- Temario / Plan de Estudio -->
-            <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4 card-lift">
-              <div class="flex items-center justify-between pb-2 border-b border-[#d3cec5]">
-                <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Plan de Estudio</h3>
-                <span class="text-[11px] text-[#80857e] font-mono">${course.duration}</span>
-              </div>
-              <div class="flex flex-col gap-2 font-mono text-xs">
-                ${course.syllabus.map(m => `
-                  <div class="border border-[#d3cec5] rounded-xl p-3 bg-white/70">
-                    <div class="flex items-center justify-between mb-1.5">
-                      <span class="font-bold text-[#0c0d0e] text-[11px] font-sans">${m.module}</span>
-                      <span class="text-[10px] ${m.completed ? 'text-[#005c38] font-bold' : 'text-[#80857e]'}">${m.completed ? '✓ Completado' : m.current ? 'En progreso' : 'Pendiente'}</span>
+            <div class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs card-lift overflow-hidden">
+              <button type="button" onclick="window.Dev101x.togglePanel('panel-syllabus', this)" class="lg:hidden w-full flex items-center justify-between gap-2 p-4 text-left">
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-[#005c38] text-base shrink-0">list_alt</span>
+                  <span class="text-[13px] font-bold text-[#0c0d0e] font-sans truncate">Plan de estudio</span>
+                </span>
+                <span data-chevron class="material-symbols-outlined text-base text-[#80857e] transition-transform shrink-0">expand_more</span>
+              </button>
+              <div id="panel-syllabus" class="hidden lg:flex flex-col gap-4 p-4 sm:p-6 pt-0 lg:pt-6">
+                <div class="hidden lg:flex items-center justify-between pb-2 border-b border-[#d3cec5]">
+                  <h3 class="text-xs font-bold text-[#0c0d0e] uppercase font-mono">Plan de Estudio</h3>
+                  <span class="text-[11px] text-[#80857e] font-mono">${course.duration}</span>
+                </div>
+                <div class="flex flex-col gap-2 font-mono text-xs">
+                  ${course.syllabus.map(m => `
+                    <div class="border border-[#d3cec5] rounded-xl p-3 bg-white/70">
+                      <div class="flex items-start justify-between gap-2 mb-1.5">
+                        <span class="font-bold text-[#0c0d0e] text-[11px] font-sans leading-snug">${m.module}</span>
+                        <span class="text-[10px] shrink-0 ${m.completed ? 'text-[#005c38] font-bold' : 'text-[#80857e]'}">${m.completed ? '✓' : m.current ? 'En curso' : '—'}</span>
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        ${m.lessons.map(l => `
+                          <div class="flex items-center justify-between gap-2 py-1.5 px-1.5 rounded-lg transition-colors ${l.active ? 'bg-emerald-100/70 text-[#005c38] font-bold' : l.done ? 'text-[#282b29]' : 'text-[#80857e]'}">
+                            <span class="truncate font-sans text-[11px]">${l.title}</span>
+                            <span class="text-[10px] shrink-0 font-mono">${l.time}</span>
+                          </div>
+                        `).join('')}
+                      </div>
                     </div>
-                    <div class="flex flex-col gap-1">
-                      ${m.lessons.map(l => `
-                        <div class="flex items-center justify-between py-1 px-1.5 rounded-lg transition-colors ${l.active ? 'bg-emerald-100/70 text-[#005c38] font-bold' : l.done ? 'text-[#282b29]' : 'text-[#80857e]'}">
-                          <span class="truncate mr-2 font-sans">${l.title}</span>
-                          <span class="text-[10px] shrink-0 font-mono">${l.time}</span>
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-                `).join('')}
+                  `).join('')}
+                </div>
               </div>
             </div>
 
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // ==========================================
-  // VIEW 4: VERIFICACIÓN (UNIFICADA: VALIDAR HASH + DIRECTORIO)
-  // ==========================================
-  function renderVerificacion(container, initialTab = 'validador') {
-    appState.verificationTab = initialTab;
-    const certs = DEV101X_DATA.certificates;
-    const validCert = certs[0];
-
-    container.innerHTML = `
-      <div class="flex flex-col w-full py-6 max-w-4xl mx-auto gap-6">
-        
-        <!-- Header & Segmented Tab Switch -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#d3cec5] pb-4">
-          <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-[#0c0d0e] font-sans">Centro de Verificación</h1>
-            <p class="text-xs text-[#80857e] font-mono mt-0.5">Consulta de validez criptográfica de diplomas y registro público de egresados</p>
-          </div>
-          <!-- 2 Tabs en un solo lugar -->
-          <div class="flex p-1 bg-[#f3f0ea] rounded-xl text-xs font-mono border border-[#d3cec5]/80">
-            <button onclick="window.Dev101x.switchVerifyTab('validador')" id="tab-btn-validador" class="px-3.5 py-1.5 rounded-lg font-semibold ${initialTab === 'validador' ? 'bg-white text-[#0c0d0e] shadow-xs' : 'text-[#80857e]'} transition-all">
-              Validar por Hash
-            </button>
-            <button onclick="window.Dev101x.switchVerifyTab('directorio')" id="tab-btn-directorio" class="px-3.5 py-1.5 rounded-lg font-semibold ${initialTab === 'directorio' ? 'bg-white text-[#0c0d0e] shadow-xs' : 'text-[#80857e]'} transition-all">
-              Directorio de Egresados
-            </button>
-          </div>
-        </div>
-
-        <!-- Section 1: Validador Hash -->
-        <div id="section-validador" class="${initialTab === 'validador' ? '' : 'hidden'} flex flex-col gap-4">
-          <div class="bg-[#fdfcf9] p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4">
-            <div>
-              <h2 class="text-sm font-bold text-[#0c0d0e] font-sans">Comprobar Autenticidad de Certificado</h2>
-              <p class="text-xs text-[#80857e] mt-1 font-sans">Introduce el folio (ej: D101X-LLM-89210) o el hash SHA-256 impreso en el documento.</p>
-            </div>
-            <form onsubmit="window.Dev101x.handleValidateHash(event)" class="flex flex-col gap-3">
-              <input id="hash-eval-input" type="text" value="${validCert.hash}" placeholder="Hash SHA-256 o Folio..." class="h-10 px-3.5 bg-white rounded-xl font-mono text-xs border border-[#d3cec5] outline-none focus:border-[#005c38] transition-colors" />
-              <div class="flex items-center gap-2 flex-wrap">
-                <button type="submit" class="h-9 px-4 bg-[#005c38] hover:bg-[#003f27] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors">
-                  Validar Certificado
-                </button>
-                <button type="button" onclick="document.getElementById('hash-eval-input').value = '${validCert.hash}'; window.Dev101x.handleValidateHash(event);" class="text-xs text-[#005c38] hover:underline font-mono">
-                  Probar Hash Válido
-                </button>
-                <span class="text-[#d3cec5] font-mono">|</span>
-                <button type="button" onclick="document.getElementById('hash-eval-input').value = '0x_hash_alterado'; window.Dev101x.handleValidateHash(event);" class="text-xs text-rose-600 hover:underline font-mono">
-                  Probar Hash Inválido
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Section 2: Directorio de Egresados -->
-        <div id="section-directorio" class="${initialTab === 'directorio' ? '' : 'hidden'} flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <span class="text-xs text-[#80857e] font-mono">Diplomas emitidos registrados</span>
-            <button onclick="window.Dev101x.downloadTransparencyCSV()" class="px-3.5 py-1.5 bg-[#0c0d0e] hover:bg-black text-white rounded-xl text-xs font-semibold transition-colors shadow-xs">
-              Descargar Reporte CSV
-            </button>
-          </div>
-          <div class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden text-xs">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-[#f3f0ea]/70 border-b border-[#d3cec5] font-mono text-[#80857e]">
-                <tr>
-                  <th class="p-3.5">EGRESADO</th>
-                  <th class="p-3.5">CURSO</th>
-                  <th class="p-3.5">FOLIO</th>
-                  <th class="p-3.5">ESTADO</th>
-                  <th class="p-3.5 text-right">DIPLOMA</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-[#d3cec5]/60">
-                ${certs.map(c => {
-                  const avatarUri = window.Identicon ? window.Identicon.dataUri(c.avatarSeed || c.studentName) : (c.avatar || 'assets/dev101x_identicon.svg');
-                  return `
-                  <tr class="hover:bg-[#f3f0ea]/40 transition-colors">
-                    <td class="p-3.5 flex items-center gap-2.5">
-                      <img src="${avatarUri}" class="w-7 h-7 rounded-lg object-cover border border-[#d3cec5]" />
-                      <span class="font-bold text-[#0c0d0e] font-sans">${c.studentName}</span>
-                    </td>
-                    <td class="p-3.5 text-[#282b29] font-sans">${c.courseTitle}</td>
-                    <td class="p-3.5 font-mono font-bold text-[#005c38]">${c.folio}</td>
-                    <td class="p-3.5 font-mono text-emerald-700 font-semibold">${c.status}</td>
-                    <td class="p-3.5 text-right">
-                      <a href="#/diploma" class="px-3 py-1 bg-white hover:bg-[#f3f0ea] border border-[#d3cec5] rounded-xl text-[11px] font-semibold text-[#0c0d0e] transition-colors shadow-2xs">
-                        Ver
-                      </a>
-                    </td>
-                  </tr>
-                `}).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // ==========================================
-  // VIEW 5: DIPLOMA OFICIAL (CONCISO)
-  // ==========================================
-  function renderDiploma(container) {
-    const cert = DEV101X_DATA.certificates[0];
-    const studentName = (appState.currentUser && appState.currentUser.name) || cert.studentName;
-    const studentProg = getStudentProgress(appState.currentUser && appState.currentUser.email);
-    const folio = studentProg.diplomaHash ? ('DEV-' + studentProg.diplomaHash.substring(2, 10).toUpperCase()) : cert.folio;
-
-    container.innerHTML = `
-      <div class="flex flex-col w-full py-4 gap-4 max-w-4xl mx-auto">
-        <!-- Barra de Controles y Descarga -->
-        <div class="bg-[#fdfcf9] p-4 rounded-2xl border border-[#d3cec5] shadow-xs flex items-center justify-between text-xs no-print flex-wrap gap-3">
-          <div class="flex items-center gap-2.5 font-mono">
-            <span class="material-symbols-outlined text-[#005c38] text-base">verified</span>
-            <span class="font-bold text-[#0c0d0e]">Diploma Oficial Dev101x</span>
-            <span class="text-[#d3cec5]">•</span>
-            <span class="text-[#005c38] font-bold">${folio}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="window.Dev101x.downloadDiplomaPDF()" class="px-3.5 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all">
-              <span class="material-symbols-outlined text-sm">download</span>
-              <span>Descargar PDF (300 DPI)</span>
-            </button>
-            <button onclick="window.print()" class="px-3 py-1.5 bg-white text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold border border-[#d3cec5] transition-all flex items-center gap-1">
-              <span class="material-symbols-outlined text-sm">print</span>
-              <span>Imprimir</span>
-            </button>
-            <a href="#/mis-cursos" class="px-3 py-1.5 bg-[#f3f0ea] text-[#0c0d0e] hover:bg-[#e9e5dd] rounded-xl text-xs font-semibold border border-[#d3cec5]/80 transition-all">
-              Mis Cursos
-            </a>
-          </div>
-        </div>
-
-        <div id="diploma-printable" class="bg-[#fdfcf9] rounded-2xl border-2 border-[#005c38] p-8 sm:p-12 shadow-sm flex flex-col gap-6">
-          <div class="flex items-center justify-between border-b border-[#d3cec5] pb-4">
-            <div class="flex items-center gap-2.5">
-              <img src="assets/favicon.png" alt="Dev101x" class="h-9 w-9 rounded-lg" />
-              <span class="font-extrabold text-sm text-[#0c0d0e] tracking-tight">DEV101X ACADEMY</span>
-            </div>
-            <span class="font-mono text-xs text-[#005c38] font-bold">${folio}</span>
-          </div>
-
-          <div class="text-center py-6 flex flex-col items-center gap-2">
-            <span class="text-xs text-[#80857e] uppercase font-mono tracking-widest">Certifica que:</span>
-            <h2 class="text-3xl sm:text-4xl text-[#0c0d0e] font-extrabold tracking-tight font-sans">${studentName}</h2>
-            <p class="text-xs text-[#80857e] max-w-md mt-1 font-sans">Ha completado satisfactoriamente los laboratorios prácticos y requisitos de la especialización técnica:</p>
-            <h3 class="text-xl sm:text-2xl text-[#005c38] font-bold font-sans">${cert.courseTitle}</h3>
-            <span class="px-3 py-1 rounded-full bg-emerald-50 text-[#005c38] font-mono text-xs font-bold border border-emerald-300 mt-1">
-              ${cert.grade} • ${cert.hoursCompleted} • Entorno Ofensivo Windows
-            </span>
-          </div>
-
-          <div class="grid grid-cols-2 gap-8 pt-4 border-t border-slate-200 text-center font-mono text-xs">
-            <div>
-              <div class="w-28 border-b border-slate-300 pb-1 mb-1 mx-auto italic text-slate-700">Dev101x</div>
-              <span class="font-bold text-slate-900">${cert.instructor}</span>
-            </div>
-            <div>
-              <div class="w-28 border-b border-slate-300 pb-1 mb-1 mx-auto italic text-slate-700">Dev101x Academy</div>
-              <span class="font-bold text-slate-900">${cert.director}</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-50 p-2.5 rounded border border-slate-200 flex items-center justify-between font-mono text-[11px] text-slate-500">
-            <span class="truncate">SHA-256: <strong class="text-slate-800">${cert.hash}</strong></span>
-            <span class="text-emerald-700 font-bold ml-2 shrink-0">✓ Sellado Ed25519</span>
           </div>
         </div>
       </div>
@@ -1669,6 +1532,13 @@
   // ==========================================
   // VIEW 7: PERFIL
   // ==========================================
+  // Laboratorios prácticos que componen el progreso real del estudiante
+  const LAB_STEPS = [
+    { id: 'lab-1', icon: 'radar', title: 'Escaneo de puertos y servicios', hint: 'Ejecuta un escaneo con nmap sobre el target del laboratorio' },
+    { id: 'lab-2', icon: 'lan', title: 'Diagnóstico de red y rutas', hint: 'Usa ipconfig, ping o tracert desde la consola de Windows' },
+    { id: 'lab-3', icon: 'shield_person', title: 'Enumeración y privilegios', hint: 'Prueba whoami, netstat, curl o Test-NetConnection' }
+  ];
+
   function renderPerfil(container) {
     const student = appState.currentUser || DEV101X_DATA.currentUser;
     const identiconUri = student.avatar && !student.avatar.includes('identicon.svg')
@@ -1677,86 +1547,96 @@
     const isAdmin = appState.authRole === 'admin';
     const prog = getStudentProgress(student.email);
     const userProgress = prog.userProgress !== undefined ? prog.userProgress : 0;
-    const labsCount = (prog.completedLabs && prog.completedLabs.length) || 0;
+    const completedLabs = prog.completedLabs || [];
+    const labsCount = completedLabs.length;
+    const studentId = student.sub ? ('STU-' + String(student.sub).slice(-8)) : 'STU-LOCAL';
+    const session = appState.googleTokenInfo || {};
+
+    const labsHtml = LAB_STEPS.map(lab => {
+      const done = completedLabs.includes(lab.id);
+      return `
+        <li class="flex items-start gap-3 p-3 rounded-xl border ${done ? 'border-emerald-300 bg-emerald-50/60' : 'border-[#d3cec5] bg-white/70'}">
+          <span class="material-symbols-outlined text-base shrink-0 mt-0.5 ${done ? 'text-[#005c38]' : 'text-[#b6b2a9]'}">${done ? 'check_circle' : lab.icon}</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[13px] font-semibold ${done ? 'text-[#005c38]' : 'text-[#0c0d0e]'} leading-snug">${lab.title}</p>
+            <p class="text-[11px] text-[#80857e] leading-snug mt-0.5">${done ? 'Completado en la consola del aula' : lab.hint}</p>
+          </div>
+          <span class="text-[10px] font-mono font-bold shrink-0 px-2 py-0.5 rounded-full ${done ? 'bg-[#005c38] text-white' : 'bg-[#f3f0ea] text-[#80857e] border border-[#d3cec5]'}">${done ? 'HECHO' : 'PENDIENTE'}</span>
+        </li>`;
+    }).join('');
 
     container.innerHTML = `
-      <div class="flex flex-col w-full py-6 gap-6 max-w-3xl mx-auto">
+      <div class="flex flex-col w-full py-4 sm:py-6 gap-4 sm:gap-5 max-w-3xl mx-auto">
 
-        <!-- Perfil Header Card -->
-        <div class="bg-[#fdfcf9] p-6 sm:p-8 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col items-center text-center gap-4">
-          <div class="relative group">
-            <div class="absolute -inset-2 rounded-2xl bg-gradient-to-tr from-[#005c38]/15 via-[#9ffdd3]/20 to-[#005c38]/10 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500"></div>
-            <img src="${identiconUri}" class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-[#d3cec5] shadow-sm" alt="${student.name}" />
+        <!-- Cabecera de Perfil -->
+        <section class="bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs overflow-hidden">
+          <div class="h-20 sm:h-24 bg-gradient-to-r from-[#003f27] via-[#005c38] to-[#00784a] relative">
+            <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 18% 25%, rgba(159,253,211,.55) 0, transparent 45%), radial-gradient(circle at 82% 75%, rgba(255,255,255,.3) 0, transparent 42%);"></div>
           </div>
-          <div>
-            <h1 class="text-xl sm:text-2xl font-extrabold text-[#0c0d0e] font-sans tracking-tight">${student.name}</h1>
-            <p class="text-xs sm:text-sm text-[#80857e] font-mono mt-1">${student.email}</p>
-            <span class="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold ${isAdmin ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
-              ${isAdmin ? '🔑 ADMINISTRADOR' : '🎓 ESTUDIANTE'}
-            </span>
-          </div>
-          <div class="flex items-center gap-6 text-center font-mono text-xs mt-2">
-            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-lg block">${userProgress}%</span>
-              <span class="text-[#80857e] text-[11px]">Progreso</span>
+          <div class="px-4 sm:px-6 pb-5 -mt-11 sm:-mt-12 flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+            <img src="${identiconUri}" alt="${student.name}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-[#fdfcf9] bg-white shadow-md shrink-0" />
+            <div class="flex-1 min-w-0 sm:pb-1">
+              <h1 class="text-lg sm:text-2xl font-extrabold text-[#0c0d0e] font-sans tracking-tight leading-tight break-words">${student.name}</h1>
+              <p class="text-[11px] sm:text-xs text-[#80857e] font-mono mt-0.5 truncate">${student.email}</p>
             </div>
-            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-lg block">${labsCount}/3</span>
-              <span class="text-[#80857e] text-[11px]">Labs</span>
-            </div>
-            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
-              <span class="font-bold text-[#0c0d0e] text-lg block">01</span>
-              <span class="text-[#80857e] text-[11px]">Curso</span>
+            <div class="flex items-center gap-2 flex-wrap sm:pb-1.5">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold ${isAdmin ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
+                ${isAdmin ? 'ADMINISTRADOR' : 'ESTUDIANTE'}
+              </span>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-[#f3f0ea] text-[#80857e] border border-[#d3cec5]">Google SSO</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Navegación Rápida -->
-        <div class="flex flex-col gap-3">
-          <h2 class="text-sm font-bold text-[#0c0d0e] font-sans tracking-tight px-1">Accesos Rápidos</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <a href="#/mis-cursos" class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex flex-col items-center text-center gap-3 card-lift group">
-              <div class="w-12 h-12 rounded-xl bg-[#005c38]/10 flex items-center justify-center group-hover:bg-[#005c38]/20 transition-colors">
-                <span class="material-symbols-outlined text-[#005c38] text-xl">school</span>
-              </div>
-              <div>
-                <span class="font-bold text-sm text-[#0c0d0e] font-sans block">Mis Cursos</span>
-                <span class="text-[11px] text-[#80857e] font-sans mt-0.5 block">Ver progreso y continuar</span>
-              </div>
-            </a>
-            <a href="#/aula-interactiva/pentesting-101" class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex flex-col items-center text-center gap-3 card-lift group">
-              <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                <span class="material-symbols-outlined text-[#005c38] text-xl">terminal</span>
-              </div>
-              <div>
-                <span class="font-bold text-sm text-[#0c0d0e] font-sans block">Pentesting 101</span>
-                <span class="text-[11px] text-[#80857e] font-sans mt-0.5 block">Terminal y laboratorios</span>
-              </div>
-            </a>
-            <a href="#/explorar-cursos" class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex flex-col items-center text-center gap-3 card-lift group">
-              <div class="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
-                <span class="material-symbols-outlined text-sky-600 text-xl">explore</span>
-              </div>
-              <div>
-                <span class="font-bold text-sm text-[#0c0d0e] font-sans block">Explorar Cursos</span>
-                <span class="text-[11px] text-[#80857e] font-sans mt-0.5 block">Catálogo completo</span>
-              </div>
-            </a>
+        <!-- Progreso Real del Estudiante -->
+        <section class="bg-[#fdfcf9] p-4 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-4">
+          <div class="flex items-end justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="text-sm font-bold text-[#0c0d0e] font-sans">Tu progreso</h2>
+              <p class="text-[11px] text-[#80857e] font-sans mt-0.5 truncate">Pentesting 101 — Fundamentos desde Windows</p>
+            </div>
+            <span class="text-2xl sm:text-3xl font-extrabold text-[#005c38] font-sans leading-none shrink-0">${userProgress}<span class="text-base">%</span></span>
           </div>
-        </div>
+          <div class="w-full bg-[#f3f0ea] h-2.5 rounded-full overflow-hidden border border-[#d3cec5]/50">
+            <div class="bg-[#005c38] h-full rounded-full transition-all duration-700" style="width: ${userProgress}%;"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 sm:gap-3 text-center font-mono">
+            <div class="bg-[#f3f0ea] px-2 py-2.5 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-base sm:text-lg block leading-tight">${labsCount}/3</span>
+              <span class="text-[#80857e] text-[10px] sm:text-[11px]">Labs</span>
+            </div>
+            <div class="bg-[#f3f0ea] px-2 py-2.5 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-base sm:text-lg block leading-tight">01</span>
+              <span class="text-[#80857e] text-[10px] sm:text-[11px]">Curso</span>
+            </div>
+            <div class="bg-[#f3f0ea] px-2 py-2.5 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-base sm:text-lg block leading-tight">08</span>
+              <span class="text-[#80857e] text-[10px] sm:text-[11px]">Comandos</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Laboratorios -->
+        <section class="bg-[#fdfcf9] p-4 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-sm font-bold text-[#0c0d0e] font-sans">Laboratorios prácticos</h2>
+            <a href="#/aula-interactiva/pentesting-101" class="text-[11px] font-mono font-bold text-[#005c38] hover:underline shrink-0">Ir a la consola →</a>
+          </div>
+          <ul class="flex flex-col gap-2">${labsHtml}</ul>
+        </section>
 
         <!-- Habilidades Técnicas -->
-        <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs">
-          <h2 class="font-bold text-sm text-[#0c0d0e] font-sans mb-4">Habilidades Técnicas</h2>
-          <div class="space-y-3">
+        <section class="bg-[#fdfcf9] p-4 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs">
+          <h2 class="font-bold text-sm text-[#0c0d0e] font-sans mb-3.5">Habilidades técnicas</h2>
+          <div class="flex flex-col gap-3">
             ${(student.skills || DEV101X_DATA.currentUser.skills).map(s => {
-              const levelMap = { 'Avanzado': 90, 'Intermedio': 60, 'Básico': 30, 'Experto': 95 };
-              const pct = levelMap[s.level] || 50;
+              const levelMap = { 'Experto': 95, 'Avanzado': 90, 'Intermedio': 60, 'En Curso': 55, 'Básico': 30, 'Inicial': 20 };
+              const pct = levelMap[s.level] || 45;
               return `
               <div class="flex flex-col gap-1.5">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-semibold text-[#0c0d0e] font-sans">${s.name}</span>
-                  <span class="font-mono text-[11px] text-[#005c38] font-bold">${s.level}</span>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[13px] font-semibold text-[#0c0d0e] font-sans leading-snug">${s.name}</span>
+                  <span class="font-mono text-[10px] text-[#005c38] font-bold shrink-0">${s.level}</span>
                 </div>
                 <div class="w-full bg-[#f3f0ea] h-2 rounded-full overflow-hidden border border-[#d3cec5]/40">
                   <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${pct}%;"></div>
@@ -1764,12 +1644,69 @@
               </div>`;
             }).join('')}
           </div>
-        </div>
+        </section>
+
+        <!-- Cuenta y Sesión -->
+        <section class="bg-[#fdfcf9] p-4 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs">
+          <h2 class="font-bold text-sm text-[#0c0d0e] font-sans mb-3.5">Cuenta y sesión</h2>
+          <dl class="flex flex-col divide-y divide-[#d3cec5]/60 text-xs font-mono">
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-[#80857e] shrink-0">Correo</dt>
+              <dd class="text-[#0c0d0e] font-semibold truncate text-right">${student.email}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-[#80857e] shrink-0">Identificador</dt>
+              <dd class="text-[#0c0d0e] font-semibold truncate text-right">${studentId}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-[#80857e] shrink-0">Proveedor</dt>
+              <dd class="text-[#0c0d0e] font-semibold truncate text-right">${session.source || 'Google Identity Services'}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="text-[#80857e] shrink-0">Sesión iniciada</dt>
+              <dd class="text-[#0c0d0e] font-semibold truncate text-right">${session.validatedAt || '—'}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Accesos Rápidos -->
+        <section class="flex flex-col gap-3">
+          <h2 class="text-sm font-bold text-[#0c0d0e] font-sans tracking-tight px-1">Accesos rápidos</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+            <a href="#/mis-cursos" class="p-4 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex sm:flex-col items-center sm:text-center gap-3 card-lift group">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#005c38]/10 flex items-center justify-center shrink-0 group-hover:bg-[#005c38]/20 transition-colors">
+                <span class="material-symbols-outlined text-[#005c38] text-xl">school</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-bold text-[13px] text-[#0c0d0e] font-sans block">Mis Cursos</span>
+                <span class="text-[11px] text-[#80857e] font-sans block leading-snug">Progreso y continuar</span>
+              </div>
+            </a>
+            <a href="#/aula-interactiva/pentesting-101" class="p-4 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex sm:flex-col items-center sm:text-center gap-3 card-lift group">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                <span class="material-symbols-outlined text-[#005c38] text-xl">terminal</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-bold text-[13px] text-[#0c0d0e] font-sans block">Pentesting 101</span>
+                <span class="text-[11px] text-[#80857e] font-sans block leading-snug">Terminal y labs</span>
+              </div>
+            </a>
+            <a href="#/explorar-cursos" class="p-4 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex sm:flex-col items-center sm:text-center gap-3 card-lift group">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-sky-50 flex items-center justify-center shrink-0 group-hover:bg-sky-100 transition-colors">
+                <span class="material-symbols-outlined text-sky-600 text-xl">explore</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-bold text-[13px] text-[#0c0d0e] font-sans block">Explorar</span>
+                <span class="text-[11px] text-[#80857e] font-sans block leading-snug">Catálogo completo</span>
+              </div>
+            </a>
+          </div>
+        </section>
 
         <!-- Cerrar Sesión -->
-        <button onclick="window.Dev101x.logout()" class="w-full py-3 px-4 bg-white hover:bg-rose-50 text-rose-600 rounded-2xl text-sm font-semibold border border-[#d3cec5] hover:border-rose-300 shadow-xs transition-all flex items-center justify-center gap-2">
+        <button onclick="window.Dev101x.logout()" class="w-full min-h-[48px] py-3 px-4 bg-white hover:bg-rose-50 text-rose-600 rounded-2xl text-sm font-semibold border border-[#d3cec5] hover:border-rose-300 shadow-xs transition-all flex items-center justify-center gap-2">
           <span class="material-symbols-outlined text-base">logout</span>
-          <span>Cerrar Sesión</span>
+          <span>Cerrar sesión</span>
         </button>
 
       </div>
@@ -1777,27 +1714,7 @@
   }
 
   // ==========================================
-  // VIEW 8: ALERTA FRAUDE
-  // ==========================================
-  function renderAlertaFraude(container) {
-    container.innerHTML = `
-      <div class="flex flex-col w-full py-10 max-w-md mx-auto text-center">
-        <div class="bg-white p-6 rounded-xl border border-red-300 shadow-sm flex flex-col items-center gap-3">
-          <span class="material-symbols-outlined text-3xl text-red-500">gpp_bad</span>
-          <h1 class="text-base font-bold text-slate-900">Diploma No Encontrado</h1>
-          <p class="text-xs text-slate-500">El hash ingresado no corresponde a ningún registro oficial de Dev101x.</p>
-          <a href="#/mis-cursos" class="mt-2 px-4 py-2 bg-primary-container text-white rounded text-xs font-semibold">
-            Volver a Mis Cursos
-          </a>
-        </div>
-      </div>
-    `;
-  }
-
-  // ==========================================
-  // VIEW 9: LOGIN EXCLUSIVO GOOGLE SSO
-  // ==========================================
-  // VIEW 9: LOGIN EXCLUSIVO GOOGLE SSO CON VERIFICACIÓN INTERACTIVA
+  // VIEW 8: LOGIN EXCLUSIVO GOOGLE SSO
   // ==========================================
   function renderLogin(container) {
     const activeClientId = GOOGLE_AUTH_CONFIG.getClientId();
@@ -1918,23 +1835,14 @@
         dd.classList.toggle('hidden');
       }
     },
-    switchVerifyTab(tab) {
-      appState.verificationTab = tab;
-      const valBtn = document.getElementById('tab-btn-validador');
-      const dirBtn = document.getElementById('tab-btn-directorio');
-      const valSec = document.getElementById('section-validador');
-      const dirSec = document.getElementById('section-directorio');
-
-      if (tab === 'validador') {
-        valBtn.className = "px-3 py-1.5 rounded-md font-semibold bg-white text-slate-900 shadow-xs transition-all";
-        dirBtn.className = "px-3 py-1.5 rounded-md font-semibold text-slate-600 transition-all";
-        valSec.classList.remove('hidden');
-        dirSec.classList.add('hidden');
-      } else {
-        dirBtn.className = "px-3 py-1.5 rounded-md font-semibold bg-white text-slate-900 shadow-xs transition-all";
-        valBtn.className = "px-3 py-1.5 rounded-md font-semibold text-slate-600 transition-all";
-        dirSec.classList.remove('hidden');
-        valSec.classList.add('hidden');
+    // Colapsables de la vista móvil (paneles secundarios del aula)
+    togglePanel(panelId, btn) {
+      const panel = document.getElementById(panelId);
+      if (!panel) return;
+      const isOpen = panel.classList.toggle('panel-open');
+      if (btn) {
+        const icon = btn.querySelector('[data-chevron]');
+        if (icon) icon.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
       }
     },
     openAuthModal() {
@@ -2180,8 +2088,8 @@
       }
       document.querySelectorAll('.nmap-cat-btn').forEach((btn, i) => {
         btn.className = (i === idx)
-          ? "nmap-cat-btn px-2.5 py-1 rounded text-xs transition-all whitespace-nowrap font-bold bg-primary-container text-white shadow-xs"
-          : "nmap-cat-btn px-2.5 py-1 rounded text-xs transition-all whitespace-nowrap font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700";
+          ? "nmap-cat-btn px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition-all whitespace-nowrap font-bold bg-[#005c38] text-white shadow-xs"
+          : "nmap-cat-btn px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition-all whitespace-nowrap font-semibold bg-white hover:bg-[#f3f0ea] text-[#0c0d0e] border border-[#d3cec5]/70";
       });
     },
     copyCommandText(cmdText) {
@@ -2217,59 +2125,23 @@
       }
       showToast(`Permiso para ${courseId}: ${isChecked ? 'Habilitado' : 'Revocado'}`, 'success');
     },
-    handleValidateHash(e) {
-      if (e) e.preventDefault();
-      const input = document.getElementById('hash-eval-input');
-      const val = input ? input.value.trim().toLowerCase() : '';
-      if (val.includes('4f82') || val.includes('d101x-llm') || val.includes('89210')) {
-        window.location.hash = '#/diploma';
-        showToast("Diploma verificado", "success");
-      } else {
-        window.location.hash = '#/alerta-fraude';
-      }
-    },
     downloadTransparencyCSV() {
       if (appState.authRole !== 'admin') {
         showToast("Acción no autorizada: Solo el Administrador puede exportar datos", "error");
         return;
       }
-      const csv = "Folio,Alumno,Curso,Calificacion,Horas\nD101X-LLM-89210,Dev101x,Arquitectura y Fine-Tuning de LLMs,92%,32\n";
+      const rows = DEV101X_DATA.adminStudents.map(s =>
+        [s.id, s.name, s.email, s.statusLabel, (s.enrolledCourses || []).join(' | '), s.labsFinished].join(',')
+      );
+      const csv = "ID,Alumno,Email,Estado,Cursos,Labs\n" + rows.join('\n') + '\n';
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = "dev101x_registro.csv";
+      a.download = "dev101x_alumnos.csv";
       a.click();
+      URL.revokeObjectURL(url);
       showToast("CSV descargado", "success");
-    },
-    downloadDiplomaPDF() {
-      const element = document.getElementById('diploma-printable');
-      if (!element) {
-        showToast("Error: No se encontró el diploma para exportar", "error");
-        return;
-      }
-      showToast("Preparando descarga de Diploma en alta resolución...", "info");
-
-      const student = (appState.currentUser && appState.currentUser.name) || 'Dev101x';
-      const cleanName = student.replace(/[^a-zA-Z0-9]/g, '_');
-
-      if (typeof html2pdf !== 'undefined') {
-        const opt = {
-          margin: [8, 8, 8, 8],
-          filename: `Diploma_Dev101x_${cleanName}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2.5, useCORS: true, letterRendering: true, logging: false },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-        html2pdf().set(opt).from(element).save().then(() => {
-          showToast("Diploma descargado exitosamente (PDF 300 DPI)", "success");
-        }).catch((err) => {
-          console.warn("Fallo html2pdf, recurriendo a impresión:", err);
-          window.print();
-        });
-      } else {
-        window.print();
-      }
     }
   };
 

@@ -4,15 +4,6 @@
  */
 
 const DEV101X_DATA = {
-  telemetry: {
-    status: "Activo",
-    latency: "18ms",
-    consensus: "Ed25519",
-    standard: "ISO/IEC 17024",
-    enclave: "AWS Nitro",
-    rootLedgerHash: "0x81fa99...bc12"
-  },
-
   currentUser: {
     id: "STU-101",
     name: "Estudiante",
@@ -136,63 +127,5 @@ const DEV101X_DATA = {
       labsFinished: 0,
       lastLogin: "Ayer"
     }
-  ],
-
-  certificates: [
-    {
-      folio: "D101X-WIN-10101",
-      hash: "0x4f82a93c72b891e840aef1c9b209d84e201bfa8294cd0182ec83912d32b",
-      studentName: "Alejandro Morales",
-      studentId: "STU-101-ALM",
-      studentEmail: "a.morales@student.dev101x.online",
-      avatarSeed: "Alejandro Morales",
-      courseId: "pentesting-101",
-      courseTitle: "Pentesting 101: Fundamentos desde Windows",
-      specialization: "Ciberseguridad",
-      issueDate: "Agosto",
-      validUntil: "Vigente",
-      grade: "Aprobado (95%)",
-      hoursCompleted: "40 Horas Prácticas",
-      instructor: "Dev101x",
-      director: "Dev101x Academy",
-      status: "VÁLIDO",
-      signatureAlgorithm: "Ed25519 / SHA-256",
-      enclaveId: "AWS Nitro Enclave",
-      merkleRoot: "0x81fa99...bc12",
-      qrVerifyUrl: "https://cursos.dev101x.online/#/diploma/D101X-WIN-10101"
-    },
-    {
-      folio: "D101X-RED-74192",
-      hash: "0x9a83b12f67c4e2098a7190d4567e9128394af18274cb0198ec82319d45e",
-      studentName: "Sofia Chen",
-      studentId: "STU-8812-SCH",
-      studentEmail: "s.chen@student.dev101x.online",
-      avatarSeed: "Sofia Chen",
-      courseId: "red-teaming",
-      courseTitle: "Hacking Ético & Red Teaming",
-      specialization: "Ciberseguridad",
-      issueDate: "Septiembre",
-      validUntil: "Vigente",
-      grade: "Aprobado (90%)",
-      hoursCompleted: "40 Horas Prácticas",
-      instructor: "Dev101x",
-      director: "Dev101x Academy",
-      status: "VÁLIDO",
-      signatureAlgorithm: "Ed25519 / SHA-256",
-      enclaveId: "AWS Nitro Enclave",
-      merkleRoot: "0x81fa99...bc12",
-      qrVerifyUrl: "https://cursos.dev101x.online/#/diploma/D101X-RED-74192"
-    }
-  ],
-
-  fraudCase: {
-    caseId: "REV-8841",
-    testedHash: "0x8a1f79b209e44c21980af81249b012894cd12498fa01824ec98129d4432190bb",
-    status: "HASH NO VÁLIDO",
-    evaluationDate: "Reciente",
-    verdict: "El hash no existe en el registro oficial de diplomas emitidos por Dev101x.",
-    telemetryNotice: "Alerta de seguridad registrada",
-    incidentCode: "ERR_HASH_NOT_FOUND",
-    socAlertStatus: "Rechazado"
-  }
+  ]
 };

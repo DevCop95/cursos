@@ -60,7 +60,7 @@
       var search = window.location.search || '';
       var hash = window.location.hash || '';
       
-      var validRoutes = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'perfil', 'diploma', 'panel-admin', 'login'];
+      var validRoutes = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'perfil', 'panel-admin', 'login'];
       var isRecognized = validRoutes.some(function(r) { return path.indexOf(r) === 0; });
       
       if (path && isRecognized) {
