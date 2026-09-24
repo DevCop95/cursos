@@ -151,7 +151,7 @@
         prog.certified = true;
         prog.completedAt = new Date().toISOString();
         prog.diplomaHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
-        showToast("🎉 ¡Felicidades! Has completado el 100% de los laboratorios. Tu Diploma Oficial Dev101x está listo.", "success");
+        showToast("🎉 ¡Felicidades! Has completado el 100% de los laboratorios.", "success");
       } else {
         showToast(`✓ Progreso actualizado: ${prog.userProgress}% (${prog.completedLabs.length}/3 Labs)`, "success");
       }
@@ -274,7 +274,7 @@
       return { route: 'mis-cursos', param: null };
     }
 
-    const validRoutes = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'inicio', 'perfil', 'diploma', 'verificacion-diploma', 'panel-admin'];
+    const validRoutes = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'inicio', 'perfil', 'panel-admin'];
     if (!validRoutes.includes(route)) {
       window.location.hash = '#/mis-cursos';
       return { route: 'mis-cursos', param: null };
@@ -396,8 +396,6 @@
         break;
       case 'diploma':
       case 'verificacion-diploma':
-        renderDiploma(appContainer);
-        break;
       case 'verificacion':
       case 'directorio-egresados':
       case 'validador-hash':
@@ -532,29 +530,23 @@
     const labsCount = (prog.completedLabs && prog.completedLabs.length) || 0;
 
     const coursesListHtml = enrolled.map(c => `
-      <div class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs hover:border-[#005c38] transition-all flex flex-col justify-between gap-4">
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between text-xs font-mono">
+      <div class="p-5 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs hover:border-[#005c38] transition-all flex flex-col justify-between gap-4 card-lift">
+        <div class="flex flex-col gap-2.5">
+          <div class="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
             <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#005c38] font-semibold border border-emerald-200">${c.categoryLabel}</span>
-            <span class="text-[#80857e] font-bold text-[11px]">${isCertified ? 'DIPLOMA EMITIDO' : (userProgress > 0 ? `${userProgress}% COMPLETADO` : 'POR INICIAR')}</span>
+            <span class="text-[#80857e] font-bold text-[11px]">${isCertified ? '✓ COMPLETADO' : (userProgress > 0 ? `${userProgress}% COMPLETADO` : 'POR INICIAR')}</span>
           </div>
-          <h3 class="text-base font-bold text-[#0c0d0e] mt-1 font-sans">${c.title}</h3>
-          <p class="text-xs text-[#80857e] font-sans">${userProgress === 100 ? 'Laboratorios de reconocimiento y análisis completados con éxito' : (userProgress > 0 ? `Laboratorios en curso (${labsCount}/3 completados)` : c.userCurrentLesson)}</p>
-          <div class="w-full bg-[#f3f0ea] h-2 rounded-full overflow-hidden mt-1 border border-[#d3cec5]/40">
+          <h3 class="text-base sm:text-lg font-bold text-[#0c0d0e] font-sans">${c.title}</h3>
+          <p class="text-xs sm:text-sm text-[#80857e] font-sans leading-relaxed">${userProgress === 100 ? 'Laboratorios de reconocimiento y análisis completados con éxito' : (userProgress > 0 ? `Laboratorios en curso (${labsCount}/3 completados)` : c.userCurrentLesson)}</p>
+          <div class="w-full bg-[#f3f0ea] h-2.5 rounded-full overflow-hidden border border-[#d3cec5]/40">
             <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${userProgress}%;"></div>
           </div>
         </div>
-        <div class="flex items-center gap-2 pt-3 border-t border-[#d3cec5]/60">
-          <a href="#/aula-interactiva/${c.id}" class="flex-1 py-2 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-1.5">
+        <div class="flex items-center gap-3 pt-3 border-t border-[#d3cec5]/60">
+          <a href="#/aula-interactiva/${c.id}" class="flex-1 py-2.5 px-4 bg-[#005c38] hover:bg-[#003f27] text-white text-center rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all flex items-center justify-center gap-2">
             <span class="material-symbols-outlined text-sm">terminal</span>
             <span>${isCertified ? 'Repasar Material' : (userProgress > 0 ? 'Continuar Clase' : 'Entrar al Aula')}</span>
           </a>
-          ${isCertified ? `
-            <a href="#/diploma" class="py-2 px-3.5 bg-white text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold border border-[#d3cec5] shadow-xs transition-all flex items-center gap-1">
-              <span class="material-symbols-outlined text-xs text-[#005c38]">verified</span>
-              <span>Diploma</span>
-            </a>
-          ` : ''}
         </div>
       </div>
     `).join('');
@@ -562,12 +554,12 @@
     container.innerHTML = `
       <div class="flex flex-col w-full py-6 gap-6">
         <!-- Tarjeta de Perfil del Estudiante -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] shadow-xs">
           <div class="flex items-center gap-3.5">
-            <img class="w-12 h-12 rounded-xl object-cover border border-[#d3cec5]" src="${identiconUri}" alt="${student.name}" />
+            <img class="w-14 h-14 sm:w-12 sm:h-12 rounded-xl object-cover border border-[#d3cec5]" src="${identiconUri}" alt="${student.name}" />
             <div>
-              <div class="flex items-center gap-2">
-                <h1 class="text-lg font-bold text-[#0c0d0e] font-sans">${student.name}</h1>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="text-lg sm:text-xl font-bold text-[#0c0d0e] font-sans">${student.name}</h1>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${appState.authRole === 'admin' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
                   ${appState.authRole === 'admin' ? 'ADMIN' : 'ESTUDIANTE'}
                 </span>
@@ -575,12 +567,12 @@
               <span class="text-xs text-[#80857e] font-mono">${student.email || 'ID: ' + studentId}</span>
             </div>
           </div>
-          <div class="flex gap-6 text-center font-mono text-xs">
-            <div class="bg-[#f3f0ea] px-3.5 py-2 rounded-xl border border-[#d3cec5]/60">
+          <div class="flex gap-4 sm:gap-6 text-center font-mono text-xs">
+            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
               <span class="font-bold text-[#0c0d0e] text-sm block">0${enrolled.length}</span>
               <span class="text-[#80857e] text-[11px]">Cursos</span>
             </div>
-            <div class="bg-[#f3f0ea] px-3.5 py-2 rounded-xl border border-[#d3cec5]/60">
+            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
               <span class="font-bold text-[#0c0d0e] text-sm block">0${labsCount}/03</span>
               <span class="text-[#80857e] text-[11px]">Labs</span>
             </div>
@@ -588,12 +580,12 @@
         </div>
 
         <!-- Lista de Cursos -->
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold text-[#0c0d0e] font-sans tracking-tight">Cursos Disponibles en tu Aula</h2>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <h2 class="text-sm sm:text-base font-bold text-[#0c0d0e] font-sans tracking-tight">Cursos Disponibles en tu Aula</h2>
             <span class="text-xs font-mono text-[#80857e]">${enrolled.length} curso(s) matriculado(s)</span>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4">
             ${coursesListHtml}
           </div>
         </div>
@@ -1678,30 +1670,108 @@
   // VIEW 7: PERFIL
   // ==========================================
   function renderPerfil(container) {
-    const student = DEV101X_DATA.currentUser;
-    const cert = DEV101X_DATA.certificates[0];
+    const student = appState.currentUser || DEV101X_DATA.currentUser;
+    const identiconUri = student.avatar && !student.avatar.includes('identicon.svg')
+      ? student.avatar
+      : (window.Identicon ? window.Identicon.dataUri(student.name || student.email) : 'assets/dev101x_identicon.svg');
+    const isAdmin = appState.authRole === 'admin';
+    const prog = getStudentProgress(student.email);
+    const userProgress = prog.userProgress !== undefined ? prog.userProgress : 0;
+    const labsCount = (prog.completedLabs && prog.completedLabs.length) || 0;
 
     container.innerHTML = `
-      <div class="flex flex-col w-full py-6 gap-4 max-w-3xl mx-auto">
-        <div class="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <img src="${window.Identicon ? window.Identicon.dataUri(student.name) : student.avatar}" class="w-12 h-12 rounded-lg object-cover border border-slate-200" />
-            <div>
-              <h1 class="text-base font-bold text-slate-900">${student.name}</h1>
-              <p class="text-xs text-slate-400 font-mono">${student.email} • ID: ${student.id}</p>
+      <div class="flex flex-col w-full py-6 gap-6 max-w-3xl mx-auto">
+
+        <!-- Perfil Header Card -->
+        <div class="bg-[#fdfcf9] p-6 sm:p-8 rounded-2xl border border-[#d3cec5] shadow-xs flex flex-col items-center text-center gap-4">
+          <div class="relative group">
+            <div class="absolute -inset-2 rounded-2xl bg-gradient-to-tr from-[#005c38]/15 via-[#9ffdd3]/20 to-[#005c38]/10 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500"></div>
+            <img src="${identiconUri}" class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-[#d3cec5] shadow-sm" alt="${student.name}" />
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-[#0c0d0e] font-sans tracking-tight">${student.name}</h1>
+            <p class="text-xs sm:text-sm text-[#80857e] font-mono mt-1">${student.email}</p>
+            <span class="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold ${isAdmin ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-[#005c38] border border-emerald-300'}">
+              ${isAdmin ? '🔑 ADMINISTRADOR' : '🎓 ESTUDIANTE'}
+            </span>
+          </div>
+          <div class="flex items-center gap-6 text-center font-mono text-xs mt-2">
+            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-lg block">${userProgress}%</span>
+              <span class="text-[#80857e] text-[11px]">Progreso</span>
+            </div>
+            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-lg block">${labsCount}/3</span>
+              <span class="text-[#80857e] text-[11px]">Labs</span>
+            </div>
+            <div class="bg-[#f3f0ea] px-4 py-2.5 rounded-xl border border-[#d3cec5]/60">
+              <span class="font-bold text-[#0c0d0e] text-lg block">01</span>
+              <span class="text-[#80857e] text-[11px]">Curso</span>
             </div>
           </div>
-          <a href="#/diploma" class="px-3 py-1.5 bg-primary-container text-white rounded text-xs font-semibold">
-            Ver Diploma
-          </a>
         </div>
 
-        <div class="bg-white p-4 rounded-lg border border-[#E2E8F0] shadow-sm text-xs font-mono">
-          <span class="font-bold text-slate-900 block mb-2 font-sans text-sm">Habilidades Técnicas</span>
-          <div class="space-y-1">
-            ${student.skills.map(s => `<div class="flex justify-between p-1.5 bg-slate-50 rounded"><span>${s.name}</span><strong class="text-primary">${s.level}</strong></div>`).join('')}
+        <!-- Navegación Rápida -->
+        <div class="flex flex-col gap-3">
+          <h2 class="text-sm font-bold text-[#0c0d0e] font-sans tracking-tight px-1">Accesos Rápidos</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a href="#/mis-cursos" class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex flex-col items-center text-center gap-3 card-lift group">
+              <div class="w-12 h-12 rounded-xl bg-[#005c38]/10 flex items-center justify-center group-hover:bg-[#005c38]/20 transition-colors">
+                <span class="material-symbols-outlined text-[#005c38] text-xl">school</span>
+              </div>
+              <div>
+                <span class="font-bold text-sm text-[#0c0d0e] font-sans block">Mis Cursos</span>
+                <span class="text-[11px] text-[#80857e] font-sans mt-0.5 block">Ver progreso y continuar</span>
+              </div>
+            </a>
+            <a href="#/aula-interactiva/pentesting-101" class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex flex-col items-center text-center gap-3 card-lift group">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                <span class="material-symbols-outlined text-[#005c38] text-xl">terminal</span>
+              </div>
+              <div>
+                <span class="font-bold text-sm text-[#0c0d0e] font-sans block">Pentesting 101</span>
+                <span class="text-[11px] text-[#80857e] font-sans mt-0.5 block">Terminal y laboratorios</span>
+              </div>
+            </a>
+            <a href="#/explorar-cursos" class="p-5 bg-[#fdfcf9] rounded-2xl border border-[#d3cec5] hover:border-[#005c38] shadow-xs transition-all flex flex-col items-center text-center gap-3 card-lift group">
+              <div class="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+                <span class="material-symbols-outlined text-sky-600 text-xl">explore</span>
+              </div>
+              <div>
+                <span class="font-bold text-sm text-[#0c0d0e] font-sans block">Explorar Cursos</span>
+                <span class="text-[11px] text-[#80857e] font-sans mt-0.5 block">Catálogo completo</span>
+              </div>
+            </a>
           </div>
         </div>
+
+        <!-- Habilidades Técnicas -->
+        <div class="bg-[#fdfcf9] p-5 sm:p-6 rounded-2xl border border-[#d3cec5] shadow-xs">
+          <h2 class="font-bold text-sm text-[#0c0d0e] font-sans mb-4">Habilidades Técnicas</h2>
+          <div class="space-y-3">
+            ${(student.skills || DEV101X_DATA.currentUser.skills).map(s => {
+              const levelMap = { 'Avanzado': 90, 'Intermedio': 60, 'Básico': 30, 'Experto': 95 };
+              const pct = levelMap[s.level] || 50;
+              return `
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-[#0c0d0e] font-sans">${s.name}</span>
+                  <span class="font-mono text-[11px] text-[#005c38] font-bold">${s.level}</span>
+                </div>
+                <div class="w-full bg-[#f3f0ea] h-2 rounded-full overflow-hidden border border-[#d3cec5]/40">
+                  <div class="bg-[#005c38] h-full rounded-full transition-all duration-500" style="width: ${pct}%;"></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Cerrar Sesión -->
+        <button onclick="window.Dev101x.logout()" class="w-full py-3 px-4 bg-white hover:bg-rose-50 text-rose-600 rounded-2xl text-sm font-semibold border border-[#d3cec5] hover:border-rose-300 shadow-xs transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-base">logout</span>
+          <span>Cerrar Sesión</span>
+        </button>
+
       </div>
     `;
   }
