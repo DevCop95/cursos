@@ -302,21 +302,27 @@ function syllabusHtml() {
   }).join('<div class="border-t border-line/60 my-1"></div>');
 }
 
-// Pistas por niveles: 1) concepto, 2) comando exacto. Las preguntas se responden en la ficha de la lección.
-function hintHtml(step, n) {
-  return `
-    <details class="hint-step group">
-      <summary class="list-none cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-semibold select-none">
-        <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lightbulb</span>Pista ${n}
-      </summary>
-      <div class="mt-1.5 p-2.5 rounded-lg bg-white border border-line text-xs text-ink2 flex flex-col gap-2 max-w-md">
-        <span>${esc(STEP_CONCEPTS[step] || '')}</span>
-        <details>
-          <summary class="list-none cursor-pointer text-[11px] font-semibold text-accent hover:underline select-none">Ver el comando</summary>
-          <button type="button" data-action="run-cmd" data-cmd="${esc(STEP_HINTS[step])}" class="mt-1.5 px-2.5 py-1 rounded-lg bg-term text-emerald-300 font-mono text-[11px] hover:bg-term-3 transition-colors" title="Ejecutar en la consola">${esc(STEP_HINTS[step])}</button>
+// Pistas por niveles, en ventana emergente: 1) concepto, 2) comando exacto (se revela al pulsar).
+export function openHint(step) {
+  const p = currentProgress();
+  openDialog({
+    title: 'Pista',
+    kicker: p.nextLesson ? p.nextLesson.title.toUpperCase() : '',
+    body: `
+      <div class="flex flex-col gap-4">
+        <p class="flex items-start gap-3 text-[15px] leading-relaxed text-ink">
+          <span class="material-symbols-outlined text-[22px] text-amber-500 shrink-0" aria-hidden="true">lightbulb</span>
+          <span>${esc(STEP_CONCEPTS[step] || '')}</span>
+        </p>
+        <details class="rounded-xl border border-line bg-bg/60">
+          <summary class="list-none cursor-pointer px-4 py-3 text-xs font-semibold text-accent select-none">¿Sigues sin verlo? Muestra el comando</summary>
+          <div class="px-4 pb-4 flex flex-col gap-2">
+            <code class="block px-3 py-2 rounded-lg bg-term text-emerald-300 font-mono text-xs break-all">${esc(STEP_HINTS[step])}</code>
+            <button type="button" data-action="run-cmd" data-cmd="${esc(STEP_HINTS[step])}" class="self-start h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold">Ejecutar en la consola</button>
+          </div>
         </details>
-      </div>
-    </details>`;
+      </div>`
+  });
 }
 
 function nextStepHtml() {
@@ -328,9 +334,12 @@ function nextStepHtml() {
   const hints = pendingHints(steps);
   const checks = pendingChecks(steps);
   return `
-    <div class="flex flex-wrap items-start gap-1.5">
-      <span class="text-[11px] font-mono text-muted mr-1 pt-1">${hints.length ? 'Practica:' : 'Siguiente:'}</span>
-      ${hints.map((h, i) => hintHtml(h.step, i + 1)).join('')}
+    <div class="flex flex-wrap items-center gap-1.5">
+      <span class="text-[11px] font-mono text-muted mr-1">${hints.length ? 'Practica:' : 'Siguiente:'}</span>
+      ${hints.map((h, i) => `
+        <button type="button" data-action="open-hint" data-step="${esc(h.step)}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-semibold">
+          <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lightbulb</span>Pista ${i + 1}
+        </button>`).join('')}
       ${!hints.length && checks.length ? `
         <button type="button" data-action="open-lesson" data-id="${esc(p.nextLesson.id)}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent hover:bg-accent2 text-white text-[11px] font-semibold">
           <span class="material-symbols-outlined text-[14px]" aria-hidden="true">quiz</span>${p.nextLesson.afterAll ? 'Resolver el reto final' : 'Responder la pregunta de la lección'}

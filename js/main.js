@@ -9,7 +9,7 @@ import { showToast, closeModal, avatarFor } from './ui.js';
 import { initSearch, openSearch, closeSearch } from './search.js';
 import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js';
 import { renderMisCursos, renderExplorar, openCourseDetail } from './views/courses.js';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet } from './views/aula.js';
+import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js';
 import { renderPerfil, openAccountDetails } from './views/perfil.js';
 import { renderAdmin, toggleCourseAccess, exportCsv, setAdminFilter, openUserDetails } from './views/admin.js';
 import { startPresence } from './progress.js';
@@ -132,6 +132,7 @@ const ACTIONS = {
   'video-seek': el => seekVideo(Number(el.dataset.start) || 0),
   'open-resources': () => openResources(),
   'open-cheatsheet': () => openCheatSheet(),
+  'open-hint': el => openHint(el.dataset.step),
   'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),

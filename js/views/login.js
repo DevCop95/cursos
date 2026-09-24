@@ -35,37 +35,30 @@ export function setLoginStatus(status) {
 function googleButtonHtml() {
   return `
     <button type="button" data-action="google-login" data-mode="new"
-      class="login-btn w-full h-12 flex items-center justify-center gap-3 px-5 rounded-xl bg-white border border-line text-sm font-semibold text-ink">
+      class="login-btn self-start inline-flex items-center gap-2.5 h-11 pl-4 pr-5 rounded-full bg-white border border-line text-sm font-semibold text-ink">
       ${GOOGLE_LOGO}<span>Continuar con Google</span>
     </button>`;
 }
 
 function accountHtml(acc) {
+  const first = String(acc.name || acc.email).split(' ')[0];
   return `
-    <button type="button" data-action="google-login" data-mode="continue"
-      class="login-btn login-account group w-full flex items-center gap-3.5 p-3 pr-3.5 rounded-2xl bg-white border border-line text-left">
-      <img src="${esc(avatarFor(acc))}" alt="" referrerpolicy="no-referrer" class="w-11 h-11 rounded-xl object-cover border border-line shrink-0" />
-      <span class="flex-1 min-w-0">
-        <span class="block text-[11px] text-muted font-medium">Continuar como</span>
-        <span class="block text-sm font-bold text-ink truncate">${esc(acc.name || acc.email)}</span>
-        <span class="block text-[11px] text-muted font-mono truncate">${esc(acc.email)}</span>
-      </span>
-      <span class="login-account-arrow w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center shrink-0" aria-hidden="true">
-        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-      </span>
+    <button type="button" data-action="google-login" data-mode="continue" title="${esc(acc.email)}"
+      class="login-btn self-start inline-flex items-center gap-2.5 h-11 pl-1.5 pr-4 rounded-full bg-white border border-line text-sm text-ink">
+      <img src="${esc(avatarFor(acc))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-full object-cover shrink-0" />
+      <span class="whitespace-nowrap">Continuar como <strong class="font-semibold">${esc(first)}</strong></span>
+      <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">arrow_forward</span>
     </button>
-    <div class="flex items-center justify-center gap-3 text-xs">
-      <button type="button" data-action="google-login" data-mode="other" class="inline-flex items-center gap-1 font-semibold text-accent hover:text-accent2 hover:underline underline-offset-2">
-        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">switch_account</span>Usar otra cuenta
-      </button>
-      <span class="text-line" aria-hidden="true">•</span>
-      <button type="button" data-action="forget-account" class="text-muted hover:text-ink hover:underline underline-offset-2">No soy yo</button>
+    <div class="flex items-center gap-2 text-[11px] text-muted pl-1">
+      <button type="button" data-action="google-login" data-mode="other" class="hover:text-accent hover:underline underline-offset-2">Usar otra cuenta</button>
+      <span aria-hidden="true">·</span>
+      <button type="button" data-action="forget-account" class="hover:text-ink hover:underline underline-offset-2">No soy yo</button>
     </div>`;
 }
 
 function pendingHtml() {
   return `
-    <div class="w-full h-[88px] flex items-center justify-center gap-3 rounded-2xl bg-bg/70 border border-line/70">
+    <div class="self-start inline-flex items-center gap-2.5 h-11 px-4 rounded-full bg-white border border-line">
       ${SPINNER}<span class="text-sm font-medium text-ink2">Verificando tu cuenta…</span>
     </div>`;
 }
@@ -97,10 +90,7 @@ export async function loginWithGoogle(button) {
   box.querySelectorAll('button').forEach(b => { b.disabled = true; });
 
   const main = box.querySelector('.login-btn');
-  if (main) {
-    main.innerHTML = `${SPINNER}<span class="text-sm font-semibold text-ink2">Conectando con Google…</span>`;
-    main.classList.add('justify-center');
-  }
+  if (main) main.innerHTML = `${SPINNER}<span class="text-sm font-semibold text-ink2 whitespace-nowrap">Conectando con Google…</span>`;
   loginStatus = null;
   const statusEl = document.getElementById('login-status');
   if (statusEl) statusEl.classList.add('hidden');
@@ -204,7 +194,7 @@ export function renderLogin(container, onSuccess) {
             <p class="text-xs font-mono text-muted">${esc(COURSE.duration.toLowerCase())} · ${lessons} lecciones · en español</p>
           </div>
           <div class="flex flex-col gap-2.5 max-w-[380px]">
-            <div id="login-actions" class="flex flex-col gap-3 min-h-[48px]"></div>
+            <div id="login-actions" class="flex flex-col gap-2 min-h-[44px]"></div>
             <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
             <p class="text-[11px] text-muted">Solo usamos tu nombre, correo y foto de Google.</p>
           </div>

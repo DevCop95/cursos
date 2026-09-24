@@ -6,7 +6,7 @@
  *  - Fuentes de Google: caché primero (sus URLs son inmutables).
  *  - Google Identity, Supabase y demás orígenes: no se interceptan.
  */
-const VERSION = 'dev101x-v27';
+const VERSION = 'dev101x-v28';
 const STATIC_CACHE = `${VERSION}-static`;
 const FONT_CACHE = 'dev101x-fonts';
 
@@ -14,11 +14,11 @@ const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
-  './css/tailwind.css?v=dev101x-v27',
-  './css/app.css?v=dev101x-v27',
-  './js/main.js?v=dev101x-v27',
-  './js/identicon.js?v=dev101x-v27',
-  './js/water-reveal.js?v=dev101x-v27',
+  './css/tailwind.css?v=dev101x-v28',
+  './css/app.css?v=dev101x-v28',
+  './js/main.js?v=dev101x-v28',
+  './js/identicon.js?v=dev101x-v28',
+  './js/water-reveal.js?v=dev101x-v28',
   './js/config.js',
   './js/state.js',
   './js/router.js',

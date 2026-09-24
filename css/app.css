@@ -193,13 +193,6 @@ a, button {
 .login-btn:disabled {
   cursor: progress;
 }
-.login-account-arrow {
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-.login-account:hover:not(:disabled) .login-account-arrow {
-  transform: translateX(2px);
-  background-color: var(--accent2, #003f27);
-}
 #login-actions button:disabled:not(.login-btn) {
   opacity: 0.4;
 }
@@ -433,5 +426,4 @@ input:focus-visible,
 }
 
 /* Pistas por niveles (details/summary sin el triángulo por defecto) */
-.hint-step > summary::-webkit-details-marker,
 #app-dialog details > summary::-webkit-details-marker { display: none; }
