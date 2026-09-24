@@ -3,40 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Primary Meta Tags & SEO Canónico -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://i.ytimg.com; connect-src 'self' https://accounts.google.com/gsi/ https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; frame-src https://accounts.google.com/gsi/ https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
   <title>Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial</title>
-  <meta name="title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
   <meta name="description" content="Plataforma de formación técnica en Ciberseguridad Ofensiva y Pentesting con laboratorios prácticos guiados: reconocimiento de redes con Nmap, PowerShell y consola de Windows en un entorno de prácticas aislado." />
   <meta name="keywords" content="ciberseguridad, pentesting, ethical hacking, nmap, powershell, laboratorios tecnicos, dev101x, cursos online, red team, seguridad informatica" />
   <meta name="author" content="Dev101x Academy" />
-  <meta name="publisher" content="Dev101x" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link rel="canonical" href="https://cursos.dev101x.online/" />
 
-  <!-- Open Graph / Facebook / LinkedIn / WhatsApp (1200x675 Alta Fidelidad) -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://cursos.dev101x.online/" />
   <meta property="og:site_name" content="Dev101x Academy" />
   <meta property="og:locale" content="es_ES" />
   <meta property="og:title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
   <meta property="og:description" content="Laboratorios prácticos en entornos Windows ofensivos y escaneos de red con Nmap, con consola interactiva y seguimiento de progreso." />
-  <meta property="og:image" content="https://cursos.dev101x.online/assets/og-preview.png" />
-  <meta property="og:image:secure_url" content="https://cursos.dev101x.online/assets/og-preview.png" />
-  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image" content="https://cursos.dev101x.online/assets/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="675" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Dev101x Academy — Plataforma de Cursos de Ciberseguridad &amp; Inteligencia Artificial" />
-
-  <!-- Twitter / X Card (Vista Previa Grande) -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:domain" content="cursos.dev101x.online" />
-  <meta name="twitter:url" content="https://cursos.dev101x.online/" />
   <meta name="twitter:title" content="Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial" />
   <meta name="twitter:description" content="Laboratorios prácticos en entornos Windows ofensivos con Nmap, consola interactiva y seguimiento de progreso." />
-  <meta name="twitter:image" content="https://cursos.dev101x.online/assets/og-preview.png" />
-  <meta name="twitter:image:alt" content="Dev101x Academy Banner Oficial" />
+  <meta name="twitter:image" content="https://cursos.dev101x.online/assets/og-image.jpg" />
+  <meta name="twitter:image:alt" content="Dev101x Academy" />
 
-  <!-- Schema.org JSON-LD para Google Search & Rich Results -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -46,191 +40,107 @@
         "@id": "https://cursos.dev101x.online/#organization",
         "name": "Dev101x Academy",
         "url": "https://cursos.dev101x.online/",
-        "logo": "https://cursos.dev101x.online/assets/favicon.png",
-        "image": "https://cursos.dev101x.online/assets/og-preview.png",
+        "logo": "https://cursos.dev101x.online/assets/icon-512.png",
+        "image": "https://cursos.dev101x.online/assets/og-image.jpg",
         "description": "Academia de especialización técnica en Ciberseguridad Ofensiva y Modelos de Inteligencia Artificial.",
-        "sameAs": [
-          "https://dev101x.online/"
-        ]
+        "sameAs": ["https://dev101x.online/"]
       },
       {
         "@type": "WebSite",
         "@id": "https://cursos.dev101x.online/#website",
         "url": "https://cursos.dev101x.online/",
         "name": "Dev101x Cursos",
-        "description": "Plataforma Oficial de Aprendizaje en Ciberseguridad & Inteligencia Artificial",
-        "publisher": {
-          "@id": "https://cursos.dev101x.online/#organization"
-        },
+        "publisher": { "@id": "https://cursos.dev101x.online/#organization" },
         "inLanguage": "es-ES"
       },
       {
         "@type": "Course",
         "@id": "https://cursos.dev101x.online/#course-pentesting",
         "name": "Pentesting 101: Fundamentos desde Windows",
-        "description": "Especialización práctica en reconocimiento de redes corporativas, escaneo sigiloso con Nmap y técnicas ofensivas Living-off-the-Land ejecutadas nativamente en entornos Windows.",
-        "provider": {
-          "@id": "https://cursos.dev101x.online/#organization"
-        },
-        "image": "https://cursos.dev101x.online/assets/og-preview.png",
+        "description": "Especialización práctica en reconocimiento de redes corporativas, escaneo con Nmap y técnicas Living-off-the-Land ejecutadas nativamente en entornos Windows.",
+        "provider": { "@id": "https://cursos.dev101x.online/#organization" },
+        "image": "https://cursos.dev101x.online/assets/og-image.jpg",
         "inLanguage": "es-ES",
-        "hasCourseInstance": {
-          "@type": "CourseInstance",
-          "courseMode": "Online",
-          "courseWorkload": "PT32H"
-        },
-        "offers": {
-          "@type": "Offer",
-          "category": "Free",
-          "price": "0",
-          "priceCurrency": "USD",
-          "availability": "https://schema.org/InStock"
-        }
+        "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT32H" },
+        "offers": { "@type": "Offer", "category": "Free", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" }
       }
     ]
   }
   </script>
-  
-  <!-- Favicon & PWA Manifest Oficial Dev101x -->
-  <link rel="icon" type="image/png" href="assets/favicon.png" />
+
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#005c38" />
 
-  <!-- Fonts & Icons Oficiales de Dev101x -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />
 
-  <!-- App Custom Stylesheet -->
-  <link rel="stylesheet" href="css/app.css?v=dev101x-v22" />
+  <link rel="stylesheet" href="css/tailwind.css?v=dev101x-v24" />
+  <link rel="stylesheet" href="css/app.css?v=dev101x-v24" />
 
-  <!-- Google Identity Services (GIS SDK Oficial) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-  <!-- Supabase JS Client para sincronización en la nube -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Tailwind CSS CDN + Architectural Design System Configuration -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "bg": "#f3f0ea",
-            "bg2": "#e9e5dd",
-            "surface": "#fdfcf9",
-            "ink": "#0c0d0e",
-            "ink2": "#282b29",
-            "muted": "#80857e",
-            "accent": "#005c38",
-            "accent2": "#003f27",
-            "line": "#d3cec5",
-            "background": "#f3f0ea",
-            "surface-container-lowest": "#ffffff",
-            "surface-container-low": "#fdfcf9",
-            "surface-container": "#f3f0ea",
-            "surface-container-high": "#e9e5dd",
-            "surface-container-highest": "#d3cec5",
-            "on-surface": "#0c0d0e",
-            "on-surface-variant": "#80857e",
-            "primary": "#005c38",
-            "primary-container": "#003f27",
-            "primary-fixed": "#9ffdd3"
-          },
-          fontFamily: {
-            sans: ["Bricolage Grotesque", "sans-serif"],
-            heading: ["Bricolage Grotesque", "sans-serif"],
-            mono: ["DM Mono", "monospace"],
-            "headline-lg": ["Bricolage Grotesque", "sans-serif"],
-            "headline-md": ["Bricolage Grotesque", "sans-serif"],
-            "headline-sm": ["Bricolage Grotesque", "sans-serif"],
-            "display-lg": ["Bricolage Grotesque", "sans-serif"],
-            "display-md": ["Bricolage Grotesque", "sans-serif"],
-            "body-lg": ["Bricolage Grotesque", "sans-serif"],
-            "body-md": ["Bricolage Grotesque", "sans-serif"],
-            "body-sm": ["Bricolage Grotesque", "sans-serif"],
-            "label-lg": ["DM Mono", "monospace"],
-            "label-md": ["DM Mono", "monospace"],
-            "label-sm": ["DM Mono", "monospace"]
-          }
-        }
-      }
-    };
-  </script>
+  <script src="js/identicon.js?v=dev101x-v24" defer></script>
+  <script src="js/water-reveal.js?v=dev101x-v24" defer></script>
+  <script type="module" src="js/main.js?v=dev101x-v24"></script>
 </head>
 
-<body class="bg-bg font-sans text-body-md text-ink antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
+<body class="bg-bg font-sans text-ink antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
+  <a href="#app-view" class="skip-link">Saltar al contenido</a>
 
-  <!-- Background Water Canvas Reveal (Estilo MiMo Code) -->
-  <div id="water-bg-wrapper" class="fixed inset-0 pointer-events-none z-0 overflow-hidden w-screen h-screen">
+  <!-- Fondo con efecto de revelado (solo en login) -->
+  <div id="water-bg-wrapper" class="fixed inset-0 pointer-events-none z-0 overflow-hidden w-screen h-screen" aria-hidden="true">
     <div id="water-bg-image" class="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"></div>
     <canvas id="waterMaskCanvas" class="absolute inset-0 block w-full h-full pointer-events-none"></canvas>
   </div>
 
-  <!-- Top Navigation Bar Unificada & Limpia (Oculta hasta autenticarse) -->
-  <header id="main-header" class="hidden fixed top-0 left-0 right-0 w-full z-50 bg-[#fdfcf9]/95 backdrop-blur-md border-b border-[#d3cec5] shadow-[0_1px_8px_rgba(12,13,14,.04)]">
+  <!-- Cabecera (oculta hasta autenticarse) -->
+  <header id="main-header" class="hidden fixed top-0 left-0 right-0 w-full z-50 bg-surface/95 backdrop-blur-md border-b border-line shadow-[0_1px_8px_rgba(12,13,14,.04)]">
     <div class="h-16 max-w-[1280px] mx-auto px-gutter flex items-center justify-between gap-4">
-      
-      <!-- Brand & Main Nav Links -->
       <div class="flex items-center gap-8">
-        <a class="flex items-center gap-2.5 group" href="#/mis-cursos">
-          <img alt="Dev101x" class="h-8 w-auto rounded-lg group-hover:scale-105 transition-transform" src="assets/favicon.png" />
-          <span class="font-extrabold text-xl leading-none tracking-tight text-[#0c0d0e]">Dev<em class="not-italic text-[#005c38]">101x</em></span>
+        <a class="flex items-center gap-2.5 group" href="#/mis-cursos" aria-label="Dev101x, ir a Mis Cursos">
+          <img alt="" class="h-8 w-8 rounded-lg pixelated group-hover:scale-105 transition-transform" src="assets/icon-192.png" />
+          <span class="font-extrabold text-xl leading-none tracking-tight text-ink">Dev<em class="not-italic text-accent">101x</em></span>
         </a>
-
-        <!-- Enlaces limpios para estudiantes autenticados -->
-        <nav class="hidden md:flex items-center gap-1 font-body-sm text-xs font-medium">
-          <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="aula-interactiva" href="#/aula-interactiva/pentesting-101">
-            Pentesting 101
-          </a>
-          <a class="px-3 py-1.5 rounded transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low" data-path="mis-cursos" href="#/mis-cursos">
-            Mis Cursos
-          </a>
+        <nav class="hidden md:flex items-center gap-1 text-xs font-medium" aria-label="Principal">
+          <a class="nav-link px-3 py-1.5 rounded transition-colors" data-nav="aula-interactiva" href="#/aula-interactiva/pentesting-101">Pentesting 101</a>
+          <a class="nav-link px-3 py-1.5 rounded transition-colors" data-nav="mis-cursos" href="#/mis-cursos">Mis Cursos</a>
         </nav>
       </div>
 
-      <!-- Controls Derecha Limpia (Búsqueda + Perfil Dropdown) -->
       <div class="flex items-center gap-2">
-        
-        <!-- Búsqueda rápida -->
-        <button onclick="document.getElementById('quick-search-modal').classList.remove('hidden')" class="p-2 rounded text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors" title="Buscar (Ctrl+K)">
-          <span class="material-symbols-outlined text-lg">search</span>
+        <button type="button" data-action="open-search" class="p-2 rounded text-muted hover:text-ink hover:bg-bg transition-colors flex items-center gap-1.5" aria-label="Buscar (Ctrl+K)" title="Buscar (Ctrl+K)">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">search</span>
+          <kbd class="hidden lg:inline text-[10px] font-mono border border-line rounded px-1">Ctrl K</kbd>
         </button>
 
-        <!-- Dropdown Usuario / Cuenta -->
         <div class="relative">
-          <button onclick="window.Dev101x.toggleProfileDropdown()" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors" type="button" id="user-menu-btn">
-            <img alt="Perfil" id="header-user-avatar" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-[#CBD5E1]" src="assets/dev101x_identicon.svg" />
-            <span class="hidden sm:inline font-body-sm text-xs font-semibold text-slate-800" id="header-user-name"></span>
-            <span class="material-symbols-outlined text-sm text-slate-400">expand_more</span>
+          <button type="button" id="user-menu-btn" data-action="toggle-profile" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-dropdown" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-bg transition-colors">
+            <img alt="" id="header-user-avatar" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line" src="assets/dev101x_identicon.svg" />
+            <span class="hidden sm:inline text-xs font-semibold text-ink" id="header-user-name"></span>
+            <span class="material-symbols-outlined text-sm text-muted" aria-hidden="true">expand_more</span>
           </button>
 
-          <!-- Dropdown Menú Flotante -->
-          <div id="profile-dropdown" class="hidden absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-[#E2E8F0] py-1 text-xs font-mono z-50 modal-enter">
-            <div class="px-3 py-2 border-b border-slate-100 flex items-center gap-2.5">
-              <img id="dropdown-user-avatar" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-slate-200" src="assets/dev101x_identicon.svg" alt="Dev101x" />
+          <div id="profile-dropdown" role="menu" class="hidden absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-line py-1 text-xs font-mono z-50 modal-enter">
+            <div class="px-3 py-2 border-b border-line/60 flex items-center gap-2.5">
+              <img id="dropdown-user-avatar" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line" src="assets/dev101x_identicon.svg" alt="" />
               <div class="overflow-hidden">
-                <span class="font-bold text-slate-900 block truncate" id="dropdown-user-name"></span>
-                <span class="text-slate-400 text-[11px] block truncate font-sans" id="dropdown-user-email"></span>
+                <span class="font-bold text-ink block truncate" id="dropdown-user-name"></span>
+                <span class="text-muted text-[11px] block truncate font-sans" id="dropdown-user-email"></span>
               </div>
             </div>
-            <a href="#/perfil" onclick="window.Dev101x.toggleProfileDropdown(false)" class="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
-              <span class="material-symbols-outlined text-base text-slate-400">person</span>
-              <span>Mi Perfil</span>
+            <a href="#/perfil" role="menuitem" data-action="close-profile" class="flex items-center gap-2 px-3 py-2 text-ink2 hover:bg-bg">
+              <span class="material-symbols-outlined text-base text-muted" aria-hidden="true">person</span><span>Mi Perfil</span>
             </a>
-            <a href="#/panel-admin" id="dropdown-admin-link" onclick="window.Dev101x.toggleProfileDropdown(false)" class="hidden flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50">
-              <span class="material-symbols-outlined text-base text-primary">admin_panel_settings</span>
-              <span>Panel de Administración</span>
+            <a href="#/panel-admin" role="menuitem" data-admin-only data-action="close-profile" class="hidden flex items-center gap-2 px-3 py-2 text-ink2 hover:bg-bg">
+              <span class="material-symbols-outlined text-base text-accent" aria-hidden="true">admin_panel_settings</span><span>Panel de Administración</span>
             </a>
-            <div class="border-t border-slate-100 my-1"></div>
-            <button onclick="window.Dev101x.logout(); window.Dev101x.toggleProfileDropdown(false);" class="w-full text-left flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50">
-              <span class="material-symbols-outlined text-base">logout</span>
-              <span>Cerrar sesión</span>
+            <div class="border-t border-line/60 my-1"></div>
+            <button type="button" role="menuitem" data-action="logout" class="w-full text-left flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50">
+              <span class="material-symbols-outlined text-base" aria-hidden="true">logout</span><span>Cerrar sesión</span>
             </button>
           </div>
         </div>
@@ -238,208 +148,69 @@
     </div>
   </header>
 
-  <!-- Main View Container -->
-  <main id="app-view" class="w-full flex-1 flex flex-col">
-    <!-- Contenido pre-renderizado semántico para indexación SEO y lectores de pantalla -->
+  <main id="app-view" tabindex="-1" class="w-full flex-1 flex flex-col outline-none">
     <noscript>
-      <div class="max-w-4xl mx-auto p-8 font-sans">
-        <h1 class="text-3xl font-bold text-[#0c0d0e]">Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial</h1>
-        <p class="mt-4 text-[#282b29] leading-relaxed">
-          Plataforma de formación técnica de élite con laboratorios prácticos en entornos Windows ofensivos, reconocimiento de redes con Nmap y modelos de Inteligencia Artificial avanzados.
-        </p>
-        <div class="mt-6 space-y-4">
-          <div class="p-4 bg-[#fdfcf9] border border-[#d3cec5] rounded-xl">
-            <h2 class="text-lg font-bold text-[#005c38]">Pentesting 101: Fundamentos desde Windows</h2>
-            <p class="text-xs text-[#282b29] mt-1">Aprende técnicas ofensivas, escaneo sigiloso con Nmap, Living-off-the-Land y análisis de puertos en estaciones de trabajo y servidores.</p>
-          </div>
-          <div class="p-4 bg-[#fdfcf9] border border-[#d3cec5] rounded-xl">
-            <h2 class="text-lg font-bold text-[#005c38]">Consola de Laboratorio Interactiva</h2>
-            <p class="text-xs text-[#282b29] mt-1">Practica comandos reales de reconocimiento desde una terminal guiada y sigue tu progreso laboratorio a laboratorio.</p>
-          </div>
-        </div>
+      <div class="max-w-4xl mx-auto p-8">
+        <h1 class="text-3xl font-bold text-ink">Dev101x — Academia de Ciberseguridad &amp; Inteligencia Artificial</h1>
+        <p class="mt-4 text-ink2 leading-relaxed">Plataforma de formación técnica con laboratorios prácticos en entornos Windows, reconocimiento de redes con Nmap y consola interactiva. Necesitas JavaScript activado para usarla.</p>
       </div>
     </noscript>
   </main>
 
-  <!-- Navegación Inferior Móvil (Oculta hasta autenticarse) -->
-  <nav id="mobile-nav" class="hidden md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#fdfcf9]/97 backdrop-blur-md border-t border-[#d3cec5] shadow-[0_-2px_12px_rgba(12,13,14,.06)]">
+  <!-- Navegación inferior móvil (oculta hasta autenticarse) -->
+  <nav id="mobile-nav" aria-label="Principal móvil" class="hidden md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-line shadow-[0_-2px_12px_rgba(12,13,14,.06)]">
     <div class="grid grid-cols-3 max-w-lg mx-auto">
-      <a href="#/aula-interactiva/pentesting-101" data-mobile-path="aula-interactiva" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#80857e]">
-        <span class="material-symbols-outlined text-xl">terminal</span>
-        <span class="text-[10px] font-mono font-semibold">Aula</span>
+      <a href="#/aula-interactiva/pentesting-101" data-nav="aula-interactiva" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5">
+        <span class="material-symbols-outlined text-xl" aria-hidden="true">terminal</span><span class="text-[10px] font-mono font-semibold">Aula</span>
       </a>
-      <a href="#/mis-cursos" data-mobile-path="mis-cursos" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#80857e]">
-        <span class="material-symbols-outlined text-xl">school</span>
-        <span class="text-[10px] font-mono font-semibold">Cursos</span>
+      <a href="#/mis-cursos" data-nav="mis-cursos" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5">
+        <span class="material-symbols-outlined text-xl" aria-hidden="true">school</span><span class="text-[10px] font-mono font-semibold">Cursos</span>
       </a>
-      <a href="#/perfil" data-mobile-path="perfil" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#80857e]">
-        <span class="material-symbols-outlined text-xl">person</span>
-        <span class="text-[10px] font-mono font-semibold">Perfil</span>
+      <a href="#/perfil" data-nav="perfil" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 py-2.5">
+        <span class="material-symbols-outlined text-xl" aria-hidden="true">person</span><span class="text-[10px] font-mono font-semibold">Perfil</span>
       </a>
     </div>
   </nav>
 
-  <!-- Global Footer Conciso (Oculto hasta autenticarse) -->
-  <footer id="app-footer" class="hidden w-full bg-[#fdfcf9] border-t border-[#d3cec5] py-6 text-xs text-[#80857e] font-mono">
+  <footer id="app-footer" class="hidden w-full bg-surface border-t border-line py-6 text-xs text-muted font-mono">
     <div class="max-w-[1280px] mx-auto px-gutter flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2.5">
-        <img alt="Dev101x" class="h-6 w-auto rounded" src="assets/favicon.png" />
-        <span class="font-medium text-[#282b29]">&copy; Dev<em class="not-italic text-[#005c38] font-bold">101x</em> Academy &bull; Ciberseguridad &amp; Inteligencia Artificial</span>
+        <img alt="" class="h-6 w-6 rounded pixelated" src="assets/icon-192.png" />
+        <span class="font-medium text-ink2">&copy; Dev<em class="not-italic text-accent font-bold">101x</em> Academy &bull; Ciberseguridad &amp; Inteligencia Artificial</span>
       </div>
       <div class="flex items-center gap-4">
-        <a href="#/perfil" class="hover:text-[#005c38] transition-colors">Perfil</a>
-        <a href="#/panel-admin" id="footer-admin-link" class="hidden hover:text-[#005c38] text-[#005c38] font-bold transition-colors">Admin</a>
+        <a href="#/perfil" class="hover:text-accent transition-colors">Perfil</a>
+        <a href="#/panel-admin" data-admin-only class="hidden text-accent font-bold transition-colors">Admin</a>
       </div>
     </div>
   </footer>
 
-  <!-- Modal Búsqueda (Ctrl+K) -->
-  <div id="quick-search-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-sm flex items-start justify-center pt-24 p-4">
-    <div class="w-full max-w-md bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden modal-enter flex flex-col">
-      <div class="p-3 border-b border-[#E2E8F0] flex items-center gap-2">
-        <span class="material-symbols-outlined text-slate-400 text-base">search</span>
-        <input id="quick-search-input" onkeyup="if(event.key==='Escape') document.getElementById('quick-search-modal').classList.add('hidden')" type="text" placeholder="Buscar cursos, temas, perfil..." class="w-full text-xs outline-none text-slate-800 font-body-sm" autofocus />
-        <button onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="text-[10px] text-slate-400 px-1 py-0.5 rounded border border-slate-200 font-mono">ESC</button>
+  <!-- Modal: búsqueda rápida (Ctrl+K) -->
+  <div id="quick-search-modal" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-start justify-center pt-24 p-4">
+    <div role="dialog" aria-modal="true" aria-label="Búsqueda rápida" class="w-full max-w-md bg-white rounded-xl shadow-2xl border border-line overflow-hidden modal-enter flex flex-col">
+      <div class="p-3 border-b border-line flex items-center gap-2">
+        <span class="material-symbols-outlined text-muted text-base" aria-hidden="true">search</span>
+        <input id="quick-search-input" type="search" role="combobox" aria-expanded="true" aria-controls="quick-search-results" aria-autocomplete="list" autocomplete="off" placeholder="Buscar comandos, lecciones, recursos…" class="w-full text-xs outline-none text-ink" />
+        <button type="button" data-action="close-search" class="text-[10px] text-muted px-1 py-0.5 rounded border border-line font-mono">ESC</button>
       </div>
-      <div class="p-2 flex flex-col gap-0.5 text-xs font-mono">
-        <a href="#/explorar-cursos" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
-          <span>Catálogo de Cursos</span>
-          <span class="text-slate-400">#/explorar-cursos</span>
-        </a>
-        <a href="#/mis-cursos" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
-          <span>Mis Cursos</span>
-          <span class="text-slate-400">#/mis-cursos</span>
-        </a>
-        <a href="#/perfil" onclick="document.getElementById('quick-search-modal').classList.add('hidden')" class="p-2 rounded hover:bg-slate-50 flex justify-between text-slate-700">
-          <span>Mi Perfil</span>
-          <span class="text-slate-400">#/perfil</span>
-        </a>
-      </div>
+      <ul id="quick-search-results" role="listbox" class="p-2 flex flex-col gap-0.5 max-h-[60vh] overflow-y-auto"></ul>
     </div>
   </div>
 
-  <!-- Modal Detalle Curso -->
-  <div id="course-detail-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-lg bg-white rounded-xl shadow-2xl border border-[#E2E8F0] overflow-hidden modal-enter flex flex-col">
-      <div class="p-5 border-b border-[#E2E8F0] flex items-center justify-between">
-        <h3 id="modal-course-title" class="font-headline-sm text-base font-bold text-slate-900">Temario</h3>
-        <button onclick="window.Dev101x.closeCourseDetail()" class="text-slate-400 hover:text-slate-700">
-          <span class="material-symbols-outlined text-base">close</span>
+  <!-- Ventana emergente genérica (lecciones, video, recursos, detalles). La rellena ui.openDialog() -->
+  <div id="app-dialog" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="app-dialog-title" id="app-dialog-panel" class="w-full sm:max-w-lg max-h-[92vh] bg-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-line overflow-hidden modal-enter flex flex-col">
+      <div class="px-5 py-4 border-b border-line flex items-start justify-between gap-3 shrink-0">
+        <div class="min-w-0">
+          <p id="app-dialog-kicker" class="hidden text-[11px] font-mono text-accent font-bold mb-0.5"></p>
+          <h2 id="app-dialog-title" class="text-base font-bold text-ink leading-snug"></h2>
+        </div>
+        <button type="button" data-action="close-modal" data-target="app-dialog" class="w-8 h-8 -mr-1.5 rounded-lg text-muted hover:text-ink hover:bg-bg flex items-center justify-center shrink-0" aria-label="Cerrar">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
         </button>
       </div>
-      <div class="p-5 flex flex-col gap-3 font-body-sm text-xs text-slate-600">
-        <p id="modal-course-desc"></p>
-        <div class="flex justify-between bg-slate-50 p-2.5 rounded font-mono text-[11px] border border-slate-200">
-          <div>Instructor: <span id="modal-course-instructor" class="font-bold text-slate-800"></span></div>
-          <div>Duración: <span id="modal-course-duration" class="font-bold text-slate-800"></span></div>
-        </div>
-      </div>
-      <div class="bg-slate-50 p-3 border-t border-[#E2E8F0] flex justify-end gap-2">
-        <button onclick="window.Dev101x.closeCourseDetail()" class="px-3 py-1.5 bg-white border border-[#E2E8F0] rounded text-xs font-semibold">Cerrar</button>
-      </div>
+      <div id="app-dialog-body" class="p-5 overflow-y-auto text-sm text-ink2"></div>
     </div>
   </div>
-
-  <!-- Modal Plan de Estudio / Temario -->
-  <div id="syllabus-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-2xl bg-[#fdfcf9] rounded-2xl shadow-2xl border border-[#d3cec5] overflow-hidden modal-enter flex flex-col max-h-[90vh]">
-      <div class="p-5 border-b border-[#d3cec5] flex items-center justify-between bg-white">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-[#005c38]/10 text-[#005c38] flex items-center justify-center border border-[#005c38]/20">
-            <span class="material-symbols-outlined text-base">list_alt</span>
-          </div>
-          <div>
-            <h3 class="font-sans text-base font-bold text-[#0c0d0e]">Plan de Estudio — Pentesting 101</h3>
-            <p class="font-mono text-xs text-[#80857e]">4 Módulos Oficiales • 10 Lecciones Prácticas desde Windows</p>
-          </div>
-        </div>
-        <button onclick="window.Dev101x.closeSyllabusModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-          <span class="material-symbols-outlined text-base">close</span>
-        </button>
-      </div>
-      <div id="syllabus-modal-content" class="p-5 overflow-y-auto space-y-3 font-sans text-xs">
-        <!-- Renderizado dinámicamente -->
-      </div>
-      <div class="bg-[#f3f0ea]/80 p-3.5 border-t border-[#d3cec5] flex items-center justify-between gap-2">
-        <span class="text-xs font-mono text-[#80857e]">Progreso del estudiante: <strong class="text-[#005c38]">En curso</strong></span>
-        <button onclick="window.Dev101x.closeSyllabusModal()" class="px-4 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors">Volver a la Consola</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Ecosistema & Recursos Oficiales Nmap (27+ Enlaces) -->
-  <div id="nmap-resources-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl bg-[#fdfcf9] rounded-2xl shadow-2xl border border-[#d3cec5] overflow-hidden modal-enter flex flex-col max-h-[92vh]">
-      <div class="p-5 border-b border-[#d3cec5] flex items-center justify-between bg-white">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-[#005c38]/10 text-[#005c38] flex items-center justify-center border border-[#005c38]/20">
-            <span class="material-symbols-outlined text-base">menu_book</span>
-          </div>
-          <div>
-            <h3 class="font-sans text-base font-bold text-[#0c0d0e]">Ecosistema & Recursos Oficiales de Nmap</h3>
-            <p class="font-mono text-xs text-[#80857e]">27+ Fuentes Canónicas: Documentación, Binarios Windows, Scripts NSE & RFCs</p>
-          </div>
-        </div>
-        <button onclick="window.Dev101x.closeNmapModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-          <span class="material-symbols-outlined text-base">close</span>
-        </button>
-      </div>
-      <div class="p-3 bg-[#f3f0ea]/70 border-b border-[#d3cec5] flex items-center gap-2 overflow-x-auto text-xs font-mono" id="modal-nmap-categories">
-        <!-- Renderizado dinámicamente -->
-      </div>
-      <div id="modal-nmap-items" class="p-5 overflow-y-auto max-h-[60vh]">
-        <!-- Items renderizados dinámicamente -->
-      </div>
-      <div class="bg-[#f3f0ea]/80 p-3.5 border-t border-[#d3cec5] flex items-center justify-between gap-2">
-        <a href="https://nmap.org" target="_blank" rel="noopener noreferrer" class="text-xs font-mono text-[#005c38] font-bold hover:underline flex items-center gap-1">
-          <span>Abrir portal general nmap.org</span>
-          <span class="material-symbols-outlined text-xs">open_in_new</span>
-        </a>
-        <button onclick="window.Dev101x.closeNmapModal()" class="px-4 py-1.5 bg-white border border-[#d3cec5] text-[#0c0d0e] hover:bg-[#f3f0ea] rounded-xl text-xs font-semibold shadow-xs transition-colors">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Ficha Técnica del Comando -->
-  <div id="command-detail-modal" class="hidden fixed inset-0 z-50 bg-[#0F172A]/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-2xl bg-[#fdfcf9] rounded-2xl shadow-2xl border border-[#d3cec5] overflow-hidden modal-enter flex flex-col max-h-[90vh]">
-      <div class="p-4 border-b border-[#d3cec5] flex items-center justify-between bg-white">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-[#005c38] text-base">terminal</span>
-          <h3 id="cmd-modal-title" class="font-sans text-sm font-bold text-[#0c0d0e]">Ficha Técnica del Comando</h3>
-        </div>
-        <button onclick="window.Dev101x.closeCommandModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors">
-          <span class="material-symbols-outlined text-base">close</span>
-        </button>
-      </div>
-      <div id="cmd-modal-body" class="p-5 overflow-y-auto space-y-4 text-xs font-sans">
-        <!-- Renderizado dinámicamente -->
-      </div>
-      <div class="bg-[#f3f0ea]/80 p-3.5 border-t border-[#d3cec5] flex items-center justify-between gap-2">
-        <span class="text-[11px] font-mono text-[#80857e]">Laboratorio Práctico Windows 11</span>
-        <div class="flex items-center gap-2">
-          <button id="cmd-modal-run-btn" class="px-4 py-1.5 bg-[#005c38] hover:bg-[#003f27] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-sm">terminal</span>
-            <span>Ejecutar en Consola</span>
-          </button>
-          <button onclick="window.Dev101x.closeCommandModal()" class="px-3.5 py-1.5 bg-white border border-[#d3cec5] text-[#0c0d0e] rounded-xl text-xs font-semibold">Cerrar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/identicon.js?v=dev101x-v22"></script>
-  <script src="js/data.js?v=dev101x-v22"></script>
-  <script src="js/app.js?v=dev101x-v22"></script>
-  <script src="js/water-reveal.js?v=dev101x-v22"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js').catch(function(err) {
-          console.debug('ServiceWorker notice:', err);
-        });
-      });
-    }
-  </script>
 </body>
 </html>

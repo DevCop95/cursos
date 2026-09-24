@@ -1,3 +1,8 @@
 node_modules/
 .DS_Store
 *.log
+
+# Solo local: documentación interna, esquema/pruebas de la base de datos y config del editor
+ANALISIS_Y_MEJORAS.md
+supabase/
+.mcp.json

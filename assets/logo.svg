@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" width="200" height="48" fill="none">
-  <rect width="40" height="40" x="4" y="4" rx="8" fill="#047857"/>
-  <path d="M18 16L24 24L18 32" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M30 16L24 24L30 32" stroke="#6EE7B7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="24" cy="24" r="2.5" fill="#FFFFFF"/>
-  <text x="54" y="28" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800" fill="#0F172A" letter-spacing="-0.5">Dev101<tspan fill="#047857">x</tspan></text>
-  <text x="54" y="40" font-family="Plus Jakarta Sans, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing="1.2">ACADEMY &#8226; SEGURIDAD &amp; IA</text>
-</svg>
