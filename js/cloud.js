@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v50';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v51';
 
 let clientPromise = null;
 
@@ -208,6 +208,30 @@ export async function answerCourseQuiz(courseId, step, answer) {
   if (error) throw error;
   return data;
 }
+
+// Mensajes alumno ↔ administrador. RLS: el alumno solo ve su conversación; el admin, todas.
+// El servidor limita los envíos del alumno (5 por hora, 20 al día, 1000 caracteres).
+export async function fetchMessages() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.from('messages')
+    .select('id, user_id, from_admin, kind, course_id, body, created_at, read_at')
+    .order('created_at', { ascending: false }).limit(500); // los 500 más recientes
+  if (error) throw error;
+  return (data || []).reverse();
+}
+
+async function rpc(name, args) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { error } = await client.rpc(name, args);
+  if (error) throw error;
+}
+
+export const sendMessage = body => rpc('send_message', { p_body: body });
+export const adminSendMessage = (userId, body) => rpc('admin_send_message', { p_user: userId, p_body: body });
+export const markMessagesRead = (userId = null) => rpc('mark_messages_read', { p_user: userId });
+export const adminRevokeCourse = (userId, courseId, reason) => rpc('admin_revoke_course', { p_user: userId, p_course: courseId, p_reason: reason });
 
 // Solicitudes de acceso. El servidor limita: una por alumno y curso, y 24 h de espera tras un rechazo.
 export async function requestCourseAccess(courseId) {

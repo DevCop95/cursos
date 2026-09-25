@@ -2,24 +2,32 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v50';
-import { resolveRoute } from './router.js?v=dev101x-v50';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v50';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v50';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v50';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v50';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v50';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v50';
-import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v50';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v50';
-import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v50';
-import { COURSE } from './content.js?v=dev101x-v50';
-import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress, answerAccessRequest } from './views/admin.js?v=dev101x-v50';
-import { fetchCourses } from './cloud.js?v=dev101x-v50';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v50';
-import { startPresence } from './progress.js?v=dev101x-v50';
+import { appState, isSessionValid } from './state.js?v=dev101x-v51';
+import { resolveRoute } from './router.js?v=dev101x-v51';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v51';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v51';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v51';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v51';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v51';
+import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v51';
+import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v51';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v51';
+import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v51';
+import { COURSE } from './content.js?v=dev101x-v51';
+import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress, answerAccessRequest, openThread, openRevokeDialog, confirmRevoke } from './views/admin.js?v=dev101x-v51';
+import { fetchCourses } from './cloud.js?v=dev101x-v51';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v51';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v51';
+import { startPresence } from './progress.js?v=dev101x-v51';
 
 const $ = id => document.getElementById(id);
+
+// Anti-clickjacking: la app no se muestra dentro de un iframe (GitHub Pages no deja enviar X-Frame-Options
+// y la meta CSP no admite frame-ancestors). Si alguien la incrusta, se intenta salir del marco y, si no, se oculta.
+if (window.top !== window.self) {
+  try { window.top.location = window.self.location.href; } catch (e) { document.documentElement.style.display = 'none'; }
+  throw new Error('Dev101x no se puede mostrar dentro de otro sitio.');
+}
 
 function updateChrome(route) {
   const isLogin = route === 'login';
@@ -38,6 +46,7 @@ function updateChrome(route) {
 
   const admin = isAdmin();
   document.querySelectorAll('[data-admin-only]').forEach(el => el.classList.toggle('hidden', !admin));
+  document.querySelectorAll('[data-student-only]').forEach(el => el.classList.toggle('hidden', admin || !appState.session));
 
   const user = appState.session;
   if (user) {
@@ -100,10 +109,12 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !isSessionValid() || Date.now() - lastAccessCheck < 60000) return;
   lastAccessCheck = Date.now();
   checkNewCourseAccess().then(announceNewAccess).catch(() => {});
+  refreshUnreadMessages();
 });
 
 function onLoggedIn() {
   takeNewCourseAccess(); // anota los cursos actuales (sin avisar de los que ya tenía)
+  refreshUnreadMessages({ notify: true });
   startPresence();
   showToast(`Bienvenido, ${appState.session.name}`, 'success');
   window.location.hash = '#/mis-cursos';
@@ -177,6 +188,9 @@ const ACTIONS = {
   'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),
+  'admin-thread': el => openThread(el.dataset.user),
+  'admin-revoke': el => openRevokeDialog(el),
+  'open-messages': () => { toggleProfile(false); openMessages(); },
   'admin-grant-request': el => answerAccessRequest(el, true),
   'admin-reject-request': el => answerAccessRequest(el, false),
   'admin-reset': el => resetUserProgress(el),
@@ -233,6 +247,12 @@ document.addEventListener('submit', e => {
     submitQuiz(form);
     return;
   }
+  const messageForms = { 'send-message': submitMessage, 'admin-reply': submitAdminReply, 'admin-revoke-confirm': confirmRevoke };
+  if (messageForms[form.dataset.action]) {
+    e.preventDefault();
+    messageForms[form.dataset.action](form);
+    return;
+  }
   if (form.dataset.action === 'c-quiz') {
     e.preventDefault();
     submitCourseQuiz(form);
@@ -262,6 +282,7 @@ document.addEventListener('submit', e => {
 // Notas de lección: guardado automático al escribir.
 document.addEventListener('input', e => {
   if (e.target.matches && e.target.matches('textarea[data-note]')) onNoteInput(e.target);
+  if (e.target.matches && e.target.matches('textarea[data-counter]')) updateCounter(e.target);
 });
 
 // Historial de comandos por terminal (↑ / ↓), en memoria durante la sesión.
@@ -310,12 +331,12 @@ if (oauthRedirect) {
 
 // Revalida la sesión contra el servidor (modo nube) sin bloquear el primer render.
 revalidateSession()
-  .then(changed => { if (changed) render(); announceNewAccess(takeNewCourseAccess()); })
+  .then(changed => { if (changed) render(); announceNewAccess(takeNewCourseAccess()); refreshUnreadMessages({ notify: true }); })
   .catch(err => console.warn('No se pudo revalidar la sesión:', err))
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v50').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v51').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

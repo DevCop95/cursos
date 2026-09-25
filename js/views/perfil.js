@@ -1,15 +1,15 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v50';
-import { appState } from '../state.js?v=dev101x-v50';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v50';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v50';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v50';
-import { isAdmin } from '../auth.js?v=dev101x-v50';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v50';
-import { COURSE } from '../content.js?v=dev101x-v50';
-import { paintResume } from './resume.js?v=dev101x-v50'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v51';
+import { appState } from '../state.js?v=dev101x-v51';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v51';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v51';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v51';
+import { isAdmin } from '../auth.js?v=dev101x-v51';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v51';
+import { COURSE } from '../content.js?v=dev101x-v51';
+import { paintResume } from './resume.js?v=dev101x-v51'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -118,6 +118,16 @@ export function renderPerfil(container) {
         </div>
         <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
       </section>
+
+      ${admin ? '' : `
+      <button type="button" data-action="open-messages" class="bg-surface p-4 rounded-2xl border border-line hover:border-accent/60 transition-colors flex items-center gap-3 text-left">
+        <span class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-accent" aria-hidden="true">mail</span></span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-sm font-bold text-ink">Mensajes con el administrador</span>
+          <span class="block text-xs text-muted">Sugerencias, dudas o problemas con tu acceso.</span>
+        </span>
+        <span class="material-symbols-outlined text-muted" aria-hidden="true">chevron_right</span>
+      </button>`}
 
       <div class="grid grid-cols-2 gap-3">
         <button type="button" data-action="open-account" class="h-12 px-4 bg-surface hover:bg-bg rounded-2xl text-sm font-semibold border border-line hover:border-accent/60 transition-colors flex items-center justify-center gap-2 text-ink">

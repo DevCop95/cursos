@@ -5,14 +5,15 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v50';
-import { isCloudEnabled } from '../config.js?v=dev101x-v50';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v50';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v50';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest } from '../cloud.js?v=dev101x-v50';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v50';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v50';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v50';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v51';
+import { isCloudEnabled } from '../config.js?v=dev101x-v51';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v51';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v51';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse } from '../cloud.js?v=dev101x-v51';
+import { openAdminThread } from './messages.js?v=dev101x-v51';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v51';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v51';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v51';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -35,6 +36,7 @@ const OVERRIDES = [
 let lastRows = [];
 let lastCourses = [];
 let lastRequests = []; // solicitudes de acceso pendientes
+let lastMessages = []; // mensajes de todas las conversaciones
 let currentFilter = 'active';
 let refreshTimer = null;
 
@@ -216,6 +218,7 @@ export async function renderAdmin(container) {
         <span class="text-[11px] text-muted font-mono hidden sm:inline">Se actualiza cada minuto</span>
       </div>
       <div id="admin-requests"></div>
+      <div id="admin-messages"></div>
       <section class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden">
         <div id="admin-toolbar" class="px-4 py-3 border-b border-line flex items-center justify-between gap-3 flex-wrap"></div>
         <div id="admin-table" class="overflow-x-auto">
@@ -248,6 +251,91 @@ function paint(container) {
   if (courses) courses.innerHTML = coursesHtml(lastCourses);
   const requests = container.querySelector('#admin-requests');
   if (requests) requests.innerHTML = requestsHtml();
+  const messages = container.querySelector('#admin-messages');
+  if (messages) messages.innerHTML = messagesHtml();
+}
+
+// Conversaciones con alumnos: primero las que tienen mensajes sin leer, luego la más reciente.
+function messagesHtml() {
+  const byUser = new Map();
+  lastMessages.forEach(m => { if (!byUser.has(m.user_id)) byUser.set(m.user_id, []); byUser.get(m.user_id).push(m); });
+  if (!byUser.size) return '';
+  const now = Date.now();
+  const threads = [...byUser.entries()]
+    .map(([userId, list]) => ({ userId, last: list[list.length - 1], unread: list.filter(m => !m.from_admin && !m.read_at).length }))
+    .sort((a, b) => (b.unread > 0) - (a.unread > 0) || Date.parse(b.last.created_at) - Date.parse(a.last.created_at));
+  const unreadTotal = threads.reduce((n, t) => n + t.unread, 0);
+  return `
+    <details class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden" ${unreadTotal ? 'open' : ''}>
+      <summary class="px-4 py-3 text-sm font-bold text-ink flex items-center gap-2 cursor-pointer select-none">
+        <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">mail</span>Mensajes
+        ${unreadTotal ? `<span class="px-1.5 py-px rounded-md bg-rose-500 text-white text-[10px] font-mono">${unreadTotal} sin leer</span>` : `<span class="text-[11px] font-mono text-muted font-normal">${threads.length} ${threads.length === 1 ? 'conversación' : 'conversaciones'}</span>`}
+      </summary>
+      <ul class="divide-y divide-line/60 border-t border-line">
+        ${threads.map(t => {
+          const r = lastRows.find(x => x.id === t.userId) || { email: 'Alumno', full_name: '' };
+          return `
+            <li>
+              <button type="button" data-action="admin-thread" data-user="${esc(t.userId)}" class="w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-bg/60">
+                <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
+                <span class="min-w-0 flex-1">
+                  <span class="block text-[13px] ${t.unread ? 'font-bold text-ink' : 'font-semibold text-ink2'} truncate">${esc(r.full_name || r.email)}</span>
+                  <span class="block text-[11px] text-muted truncate">${t.last.from_admin ? 'Tú: ' : ''}${esc(t.last.body)}</span>
+                </span>
+                <span class="text-[10px] font-mono text-muted shrink-0">${esc(relativeTime(Date.parse(t.last.created_at), now))}</span>
+                ${t.unread ? `<span class="px-1.5 py-px rounded-md bg-rose-500 text-white text-[10px] font-mono shrink-0">${t.unread}</span>` : ''}
+              </button>
+            </li>`;
+        }).join('')}
+      </ul>
+    </details>`;
+}
+
+export async function openThread(userId) {
+  const r = lastRows.find(x => x.id === userId) || {};
+  await openAdminThread(userId, r.full_name || r.email);
+  lastMessages = lastMessages.map(m => (m.user_id === userId && !m.from_admin && !m.read_at ? { ...m, read_at: new Date().toISOString() } : m));
+  repaint();
+}
+
+// Revocar un curso con motivo: ventana con el motivo → bloquea el curso y se lo explica al alumno.
+export function openRevokeDialog(btn) {
+  const { user, course } = btn.dataset;
+  const r = lastRows.find(x => x.id === user);
+  const c = lastCourses.find(x => x.id === course);
+  if (!r || !c) return;
+  openDialog({
+    title: 'Revocar acceso',
+    kicker: String(c.title).toUpperCase(),
+    body: `
+      <form data-action="admin-revoke-confirm" data-user="${esc(user)}" data-course="${esc(course)}" class="flex flex-col gap-3">
+        <p class="text-[13px] text-ink2">${esc(r.full_name || r.email)} dejará de tener acceso a <strong class="text-ink">${esc(c.title)}</strong>. Su progreso se conserva. Le llegará este motivo como mensaje:</p>
+        <textarea name="reason" required maxlength="900" rows="3" placeholder="Ej.: el pago fue rechazado por el banco." class="w-full p-3 rounded-xl border border-line bg-white text-[13px] outline-none focus:border-accent resize-y"></textarea>
+        <div class="flex items-center justify-end gap-2">
+          <button type="button" data-action="admin-user" data-user="${esc(user)}" class="h-9 px-4 rounded-xl bg-white border border-line text-xs font-semibold text-ink">Cancelar</button>
+          <button type="submit" class="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">block</span>Revocar y avisar</button>
+        </div>
+      </form>`
+  });
+}
+
+export async function confirmRevoke(form) {
+  const { user, course } = form.dataset;
+  const area = form.querySelector('textarea[name="reason"]');
+  const reason = area ? area.value.trim() : '';
+  const btn = form.querySelector('button[type="submit"]');
+  if (!reason || !btn) return;
+  const ok = await saving(btn, () => adminRevokeCourse(user, course, reason), 'Acceso revocado y alumno avisado');
+  if (!ok) return;
+  const r = lastRows.find(x => x.id === user);
+  if (r) {
+    r.access = r.access.filter(a => a.course_id !== course);
+    r.access.push({ course_id: course, enabled: false });
+  }
+  lastRequests = lastRequests.filter(q => !(q.user_id === user && q.course_id === course));
+  lastMessages = await fetchMessages().catch(() => lastMessages);
+  repaint();
+  openUserDetails(user);
 }
 
 // Solicitudes de acceso pendientes (el alumno pulsó "Solicitar acceso" en el catálogo).
@@ -298,7 +386,7 @@ export async function answerAccessRequest(btn, grant) {
 async function loadRows(container, { quiet = false } = {}) {
   try {
     let requests;
-    [lastRows, lastCourses, requests] = await Promise.all([adminListStudents(), fetchCourses(), fetchAccessRequests().catch(() => [])]);
+    [lastRows, lastCourses, requests, lastMessages] = await Promise.all([adminListStudents(), fetchCourses(), fetchAccessRequests().catch(() => []), fetchMessages().catch(() => [])]);
     lastRequests = requests.filter(q => !q.rejected_at);
     // No repintar si el admin está cambiando algo en este momento.
     if (container.querySelector('select:disabled, input:disabled')) return;
@@ -337,9 +425,12 @@ function userCoursesHtml(r) {
           <p class="text-[11px] font-mono ${a.allowed ? 'text-accent' : 'text-rose-600'}">${a.allowed ? '✓' : '✕'} ${esc(a.label)}${c.is_free ? ' · curso gratis' : ''}</p>
         </div>
         ${r.role === 'admin' ? '' : `
+        <div class="flex items-center gap-2 shrink-0">
+        ${!c.is_free && a.allowed ? `<button type="button" data-action="admin-revoke" data-user="${esc(r.id)}" data-course="${esc(c.id)}" class="h-8 px-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-semibold" title="Retira el acceso y le explica el motivo">Revocar</button>` : ''}
         <select data-action="admin-override" data-user="${esc(r.id)}" data-course="${esc(c.id)}" class="${SELECT_CLS} shrink-0" aria-label="Acceso a ${esc(c.title)}">
           ${OVERRIDES.map(o => `<option value="${o.id}" ${mode === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
-        </select>`}
+        </select>
+        </div>`}
       </li>`;
   }).join('');
 }
@@ -367,6 +458,7 @@ export function openUserDetails(userId) {
             <p class="text-xs font-mono text-muted truncate">${esc(r.email)}</p>
             <p class="inline-flex items-center gap-1.5 text-xs font-semibold ${status.text}"><span class="w-1.5 h-1.5 rounded-full ${status.dot}" aria-hidden="true"></span>${status.label} · ${esc(relativeTime(lastActivity(r), now))}</p>
           </div>
+          <button type="button" data-action="admin-thread" data-user="${esc(r.id)}" class="h-8 w-8 rounded-lg border border-line bg-white hover:border-accent/60 text-ink2 inline-flex items-center justify-center shrink-0" title="Mensajes con este alumno" aria-label="Mensajes con este alumno"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">mail</span></button>
           ${levelSelect(r)}
         </div>
         <section class="flex flex-col gap-2">
