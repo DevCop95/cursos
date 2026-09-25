@@ -3,12 +3,12 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v54';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v54';
-import { isCloudEnabled } from '../config.js?v=dev101x-v54';
-import * as cloud from '../cloud.js?v=dev101x-v54';
-import { appState } from '../state.js?v=dev101x-v54';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v54';
+import { esc } from '../lib/html.js?v=dev101x-v55';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v55';
+import { isCloudEnabled } from '../config.js?v=dev101x-v55';
+import * as cloud from '../cloud.js?v=dev101x-v55';
+import { appState } from '../state.js?v=dev101x-v55';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v55';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -434,23 +434,35 @@ function pushLines(lines) {
   scheduleSave();
 }
 
-async function runReconCommand(arg, rule) {
-  if (!arg) { pushLines([{ text: 'Uso: recons101x <dominio>  (por ejemplo: recons101x dev101x.online)', type: 'hint' }]); return; }
-  pushLines([{ text: `[*] Consultando Certificate Transparency para ${arg}…`, type: 'slate' }]);
+// El argumento puede traer opciones: "dev101x.online --live". Se separa el dominio de las banderas.
+async function runReconCommand(argStr, rule) {
+  const tokens = String(argStr || '').split(/\s+/).filter(Boolean);
+  const domain = tokens.find(t => !t.startsWith('-')) || '';
+  const live = tokens.includes('--live');
+  if (!domain) { pushLines([{ text: 'Uso: recons101x <dominio> [--live]  (por ejemplo: recons101x dev101x.online)', type: 'hint' }]); return; }
+  pushLines([{ text: live ? `[*] Comprobando hosts vivos de ${domain}…` : `[*] Consultando Certificate Transparency para ${domain}…`, type: 'slate' }]);
   try {
-    const res = await cloud.recon(arg);
+    const res = await cloud.recon(domain, live);
     if (!res || res.error) { pushLines([{ text: `[!] ${res && res.error ? res.error : 'No se pudo hacer el reconocimiento.'}`, type: 'error' }]); return; }
-    const hosts = Array.isArray(res.hostnames) ? res.hostnames : [];
-    if (!hosts.length) {
-      pushLines([{ text: `[i] Sin hostnames para ${res.domain} en Certificate Transparency.`, type: 'hint' }]);
-    } else {
+    if (res.live) {
+      const rows = Array.isArray(res.results) ? res.results : [];
+      const label = { HTTPS_OK: '● vivo (HTTPS)', HTTP_OK: '● vivo (HTTP)', STALE: '○ sin respuesta' };
       pushLines([
+        { text: `[+] ${rows.length} host(s) comprobados de ${res.domain}:`, type: 'system' },
+        ...rows.map(r => ({ text: `    ${(label[r.state] || r.state).padEnd(18)} ${r.host}`, type: r.state === 'STALE' ? 'slate' : 'info' })),
+        { text: '[LAB] Comprobación activa (autorizada) del dominio de demostración: se conecta a los hosts.', type: 'hint' }
+      ]);
+      recordFreshSteps(['sh-recon', 'sh-live']);
+    } else {
+      const hosts = Array.isArray(res.hostnames) ? res.hostnames : [];
+      if (!hosts.length) pushLines([{ text: `[i] Sin hostnames para ${res.domain} en Certificate Transparency.`, type: 'hint' }]);
+      else pushLines([
         { text: `[+] ${hosts.length} hostname(s) de ${res.domain}:`, type: 'system' },
         ...hosts.map(h => ({ text: `    ${h}`, type: 'info' })),
         { text: '[LAB] Datos públicos de CT. Reconocimiento pasivo: no se ha tocado el objetivo.', type: 'hint' }
       ]);
+      if (rule && rule.steps) recordFreshSteps(rule.steps);
     }
-    if (rule && rule.steps) recordFreshSteps(rule.steps);
   } catch (err) {
     pushLines([{ text: `[!] ${err.message || 'No se pudo hacer el reconocimiento.'}`, type: 'error' }]);
   }

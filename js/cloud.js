@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v54';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v55';
 
 let clientPromise = null;
 
@@ -211,7 +211,7 @@ export async function answerCourseQuiz(courseId, step, answer) {
 
 // Reconocimiento pasivo real de un dominio (hostnames en Certificate Transparency), vía la Edge Function
 // 'recon'. Solo para alumnos con acceso al curso de Shodan. Devuelve { domain, hostnames, total } o { error }.
-export async function recon(domain) {
+export async function recon(domain, live = false) {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está disponible.');
   const { data: sess } = await client.auth.getSession();
@@ -222,7 +222,7 @@ export async function recon(domain) {
   const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/recon`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, apikey: CONFIG.supabaseAnonKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domain })
+    body: JSON.stringify({ domain, live })
   });
   let body = null;
   try { body = await res.json(); } catch (e) { /* respuesta sin JSON */ }
