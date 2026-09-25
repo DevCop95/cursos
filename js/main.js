@@ -2,20 +2,20 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v41';
-import { resolveRoute } from './router.js?v=dev101x-v41';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect } from './auth.js?v=dev101x-v41';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v41';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v41';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v41';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail } from './views/courses.js?v=dev101x-v41';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v41';
-import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v41';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v41';
-import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz } from './views/course-aula.js?v=dev101x-v41';
-import { COURSE } from './content.js?v=dev101x-v41';
-import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag } from './views/admin.js?v=dev101x-v41';
-import { startPresence } from './progress.js?v=dev101x-v41';
+import { appState, isSessionValid } from './state.js?v=dev101x-v42';
+import { resolveRoute } from './router.js?v=dev101x-v42';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect } from './auth.js?v=dev101x-v42';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v42';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v42';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v42';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail } from './views/courses.js?v=dev101x-v42';
+import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v42';
+import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v42';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v42';
+import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode } from './views/course-aula.js?v=dev101x-v42';
+import { COURSE } from './content.js?v=dev101x-v42';
+import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag } from './views/admin.js?v=dev101x-v42';
+import { startPresence } from './progress.js?v=dev101x-v42';
 
 const $ = id => document.getElementById(id);
 
@@ -150,6 +150,7 @@ const ACTIONS = {
   'c-resources': () => openCourseResources(),
   'c-expl': el => selectCourseExplanation(el.dataset.key),
   'c-reset': () => resetCourseLab(),
+  'c-mode': el => setCourseTerminalMode(el.dataset.mode),
   'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),
@@ -288,7 +289,7 @@ revalidateSession()
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v41').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v42').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

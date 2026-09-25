@@ -2,6 +2,8 @@
  * Laboratorio Linux real (prototipo): Alpine Linux emulado con v86 dentro del navegador.
  * La máquina arranca desde un estado ya iniciado (state.bin.zst) y lee los archivos del disco
  * bajo demanda (img-vN/flat). Todo se ejecuta en el equipo del alumno.
+ * Sirve a la página del prototipo (index.html) y a la terminal del aula (embed.html, en un iframe):
+ * el aula manda comandos con postMessage { type: 'dev101x-lab', run } y recibe { type, event: 'ready' }.
  */
 (function () {
   'use strict';
@@ -11,8 +13,14 @@
   let term = null;
   let fit = null;
   let ready = false;
+  let queued = null;
+  const embedded = window.parent !== window;
 
   function status(text) { $('lab-status').textContent = text; }
+
+  function notifyParent(event) {
+    if (embedded) window.parent.postMessage({ type: 'dev101x-lab', event }, location.origin);
+  }
 
   function setProgress(pct) {
     $('lab-progress').classList.remove('hidden');
@@ -91,12 +99,14 @@
       status('Listo · Linux real');
       syncSize();
       emulator.serial0_send('clear; cat /etc/motd\n');
+      if (queued) { emulator.serial0_send(queued + '\n'); queued = null; }
+      notifyParent('ready');
       term.focus();
     });
   }
 
   function typeCommand(cmd) {
-    if (!ready) { boot(); return; }
+    if (!ready) { queued = cmd; boot(); return; }
     emulator.serial0_send(cmd + '\n');
     term.focus();
   }
@@ -104,9 +114,16 @@
   document.addEventListener('DOMContentLoaded', () => {
     $('lab-boot').addEventListener('click', boot);
     if (/[?&]autostart=1/.test(location.search)) boot();
-    $('lab-cmds').addEventListener('click', e => {
+    const cmds = $('lab-cmds');
+    if (cmds) cmds.addEventListener('click', e => {
       const btn = e.target.closest('button[data-cmd]');
       if (btn) typeCommand(btn.dataset.cmd);
+    });
+    // Comandos que llegan del aula (solo desde este mismo sitio).
+    window.addEventListener('message', e => {
+      if (e.origin !== location.origin || e.source !== window.parent) return;
+      const d = e.data;
+      if (d && d.type === 'dev101x-lab' && typeof d.run === 'string' && d.run.length <= 300) typeCommand(d.run.replace(/\s+/g, ' '));
     });
     let t = null;
     window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(syncSize, 200); });

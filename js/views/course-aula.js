@@ -3,11 +3,11 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v41';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v41';
-import { isCloudEnabled } from '../config.js?v=dev101x-v41';
-import * as cloud from '../cloud.js?v=dev101x-v41';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor } from '../lib/course-engine.js?v=dev101x-v41';
+import { esc } from '../lib/html.js?v=dev101x-v42';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v42';
+import { isCloudEnabled } from '../config.js?v=dev101x-v42';
+import * as cloud from '../cloud.js?v=dev101x-v42';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor } from '../lib/course-engine.js?v=dev101x-v42';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -19,11 +19,17 @@ const SAVE_DELAY = 1500;
 const TAB_ACTIVE = 'font-bold bg-accent text-white';
 const TAB_IDLE = 'font-semibold bg-white hover:bg-bg2 text-ink border border-line/70';
 const TAB_BTN = 'h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors';
+// Cursos que también se pueden practicar en Linux real (v86 en /lab-linux/embed.html, dentro de un iframe
+// para no relajar el CSP del sitio). Al salir del aula el iframe desaparece y la máquina con él.
+const LINUX_LAB_COURSES = new Set(['git-github-101']);
+const LINUX_LAB_URL = '/lab-linux/embed.html';
+const MODE_ON = 'bg-accent text-white font-bold';
+const MODE_OFF = 'text-slate-300 hover:text-white';
 
 // Estado del curso abierto (en memoria: el contenido de pago no se guarda en el navegador).
 // El estado de la terminal (variables, últimas líneas y ficha abierta) se guarda en Supabase
 // (user_course_state), así el alumno retoma el laboratorio en cualquier dispositivo.
-let S = null; // { id, content, steps, lines, state, expl }
+let S = null; // { id, content, steps, lines, state, expl, mode }
 let saveTimer = null;
 let pendingSave = null;
 
@@ -78,7 +84,7 @@ const introLines = content => (content.terminal.intro || []).map(([text, type]) 
 // conocidas, textos cortos y tipos de línea permitidos).
 function restoreState(id, content, steps, saved) {
   const explKeys = (content.explanations || []).map(e => e.key);
-  const S0 = { id, content, steps, lines: introLines(content), state: initialCourseState(content.terminal), expl: explKeys[0] || null };
+  const S0 = { id, content, steps, lines: introLines(content), state: initialCourseState(content.terminal), expl: explKeys[0] || null, mode: 'sim' };
   if (!saved || typeof saved !== 'object') return S0;
   if (saved.vars && typeof saved.vars === 'object') {
     Object.keys(S0.state).forEach(k => {
@@ -166,17 +172,28 @@ function paintAula(container) {
               <span class="font-bold text-slate-100 truncate">${esc(content.terminal.title || 'Terminal')}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
+              ${LINUX_LAB_COURSES.has(S.id) ? `
+              <div class="hidden sm:flex items-center gap-0.5 p-0.5 rounded bg-slate-800" role="group" aria-label="Tipo de terminal">
+                ${[['sim', 'Simulada'], ['linux', 'Linux real']].map(([mode, label]) => `
+                <button type="button" data-action="c-mode" data-mode="${mode}" aria-pressed="${S.mode === mode}" class="px-2 py-0.5 rounded text-[10px] transition-colors ${S.mode === mode ? MODE_ON : MODE_OFF}">${label}</button>`).join('')}
+              </div>` : ''}
+              <span id="c-linux-note" class="hidden text-[10px] text-slate-400" title="Aquí practicas libremente; el progreso del curso se cuenta en la terminal simulada">práctica libre</span>
+              <span id="c-sim-tools" class="flex items-center gap-2">
               <button type="button" data-action="c-reset" title="Vuelve a empezar el laboratorio (no borra tu progreso)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
               <button type="button" data-action="c-run" data-cmd="clear" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">clear</button>
               <button type="button" data-action="c-run" data-cmd="help" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
+              </span>
             </div>
           </div>
+          <div id="c-sim">
           <div id="c-screen" role="log" aria-live="polite" class="p-3.5 sm:p-4 h-64 sm:h-96 overflow-y-auto space-y-1 text-slate-200 text-[11px] sm:text-xs leading-relaxed whitespace-pre-wrap break-words"></div>
           <form data-action="c-terminal" class="p-3 bg-term-deep border-t border-term-line flex items-center gap-2">
             <label for="c-input" class="text-emerald-400 text-xs shrink-0 select-none font-bold max-w-[55%] truncate"><span id="c-prompt" class="hidden md:inline">${esc(promptFor(content.terminal, S.state).trim())}</span><span class="md:hidden">${esc(content.terminal.promptShort || '$')}</span></label>
             <input id="c-input" type="text" maxlength="300" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${esc(content.terminal.placeholder || 'help')}" class="flex-1 min-w-0 bg-transparent text-emerald-300 text-[13px] sm:text-xs outline-none font-mono py-1.5" />
             <button type="submit" class="px-3.5 sm:px-4 py-2 bg-accent hover:bg-accent2 rounded-xl text-white text-xs font-semibold shrink-0 transition-colors">Ejecutar</button>
           </form>
+          </div>
+          <div id="c-linux" class="hidden"></div>
         </section>
         ${explanationsPanelHtml()}
         </div>
@@ -420,12 +437,56 @@ export function runCourseCmd(raw) {
 }
 
 export function runCourseCmdFromUi(el) {
+  const linux = S && S.mode === 'linux';
   if (el.closest('#app-dialog')) {
     closeModal('app-dialog');
-    const screen = document.getElementById('c-screen');
+    const screen = document.getElementById(linux ? 'c-linux' : 'c-screen');
     if (screen) screen.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  runCourseCmd(el.dataset.cmd);
+  if (linux) sendToLinux(el.dataset.cmd);
+  else runCourseCmd(el.dataset.cmd);
+}
+
+// ---------------------------------------------------------------------------
+// Terminal Linux real (iframe). Se crea la primera vez que el alumno la elige y se conserva al
+// volver a la simulada, para no perder lo que haya hecho en la máquina.
+// ---------------------------------------------------------------------------
+function linuxFrame() {
+  return document.querySelector('#c-linux iframe');
+}
+
+export function setCourseTerminalMode(mode) {
+  if (!S || !LINUX_LAB_COURSES.has(S.id) || !['sim', 'linux'].includes(mode)) return;
+  S.mode = mode;
+  const linux = mode === 'linux';
+  const box = document.getElementById('c-linux');
+  if (linux && box && !linuxFrame()) {
+    const frame = document.createElement('iframe');
+    frame.src = LINUX_LAB_URL;
+    frame.title = 'Terminal Linux real';
+    frame.className = 'block w-full h-[440px] border-0';
+    box.appendChild(frame);
+  }
+  const toggle = (id, hidden) => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', hidden); };
+  toggle('c-sim', linux);
+  toggle('c-sim-tools', linux);
+  toggle('c-linux', !linux);
+  toggle('c-linux-note', !linux);
+  document.querySelectorAll('[data-action="c-mode"]').forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.setAttribute('aria-pressed', String(on));
+    b.className = b.className.replace(on ? MODE_OFF : MODE_ON, on ? MODE_ON : MODE_OFF);
+  });
+  if (linux) { const f = linuxFrame(); if (f) f.focus(); }
+  else { const input = document.getElementById('c-input'); if (input) input.focus(); }
+}
+
+function sendToLinux(cmd) {
+  const frame = linuxFrame();
+  const text = String(cmd || '').trim();
+  if (!frame || !frame.contentWindow || !text) return;
+  frame.contentWindow.postMessage({ type: 'dev101x-lab', run: text }, location.origin);
+  frame.focus();
 }
 
 // ---------------------------------------------------------------------------

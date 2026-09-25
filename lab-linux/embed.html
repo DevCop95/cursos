@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Terminal Linux real para el aula (se abre dentro de un iframe). Mismo CSP que index.html. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="robots" content="noindex" />
+  <title>Terminal Linux | Dev101x</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v42" />
+  <link rel="stylesheet" href="lab.css?v=dev101x-v42" />
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js" defer></script>
+  <script src="v86/libv86.js" defer></script>
+  <script src="lab.js?v=dev101x-v42" defer></script>
+</head>
+<body class="bg-term font-sans h-screen overflow-hidden">
+  <div id="lab-start" class="h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
+    <span class="material-symbols-outlined text-emerald-400 text-5xl" aria-hidden="true">terminal</span>
+    <p class="text-slate-200 text-sm max-w-md">Un Linux de verdad con git, dentro de tu navegador. La primera vez se descargan unos 30 MB.</p>
+    <button id="lab-boot" type="button" class="h-11 px-5 rounded-xl bg-accent hover:bg-accent2 text-white text-sm font-semibold inline-flex items-center gap-2 transition-colors"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">power_settings_new</span>Iniciar Linux</button>
+    <div id="lab-progress" class="hidden w-64 bg-term-3 h-1.5 rounded-full overflow-hidden"><div id="lab-bar" class="bg-emerald-400 h-full rounded-full transition-all" style="width:0%"></div></div>
+    <p id="lab-status" class="text-slate-400 text-[11px] font-mono" role="status"></p>
+  </div>
+  <div id="lab-term" class="hidden h-full p-2"></div>
+</body>
+</html>
