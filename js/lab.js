@@ -3,7 +3,7 @@
  *  - runCommand(): simula la salida de la consola y detecta qué pasos del laboratorio se completan.
  *  - computeProgress(): deriva lecciones, labs, porcentaje y habilidades a partir de los pasos.
  */
-import { COURSE, LAB_STEPS, LAB_TARGET, LAB_HOST_IP, SKILLS, STEP_HINTS } from './content.js?v=dev101x-v55';
+import { COURSE, LAB_STEPS, LAB_TARGET, LAB_HOST_IP, SKILLS, STEP_HINTS } from './content.js?v=dev101x-v56';
 
 const TARGET_ALIASES = [LAB_TARGET, 'srv-target', 'srv-target.lab', 'srv-target.dev101x.internal', 'srv-target.dev101x.lab'];
 const OPEN_PORTS = [

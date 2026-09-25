@@ -1,16 +1,16 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v55';
-import { appState } from '../state.js?v=dev101x-v55';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v55';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v55';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v55';
-import { isAdmin } from '../auth.js?v=dev101x-v55';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v55';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v55';
-import { COURSE } from '../content.js?v=dev101x-v55';
-import { paintResume } from './resume.js?v=dev101x-v55'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v56';
+import { appState } from '../state.js?v=dev101x-v56';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v56';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v56';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v56';
+import { isAdmin } from '../auth.js?v=dev101x-v56';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v56';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v56';
+import { COURSE } from '../content.js?v=dev101x-v56';
+import { paintResume } from './resume.js?v=dev101x-v56'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -67,8 +67,8 @@ function paintRank(stats) {
   chip.innerHTML = `<span class="material-symbols-outlined text-[14px]" aria-hidden="true">${esc(v.icon)}</span>${esc(v.name)}`;
   bar.innerHTML = `
     <div class="flex items-center justify-between gap-2 text-[11px] font-mono mb-1.5">
-      <span class="text-slate-300"><strong class="text-white">${v.points}</strong> puntos</span>
-      <span class="text-slate-400">${v.next ? `${v.remaining} para <strong class="text-slate-200">${esc(v.next)}</strong>` : 'Rango máximo'}</span>
+      <span class="text-slate-300"><strong class="text-white">${v.ownership}%</strong> completado · ${v.points} pts</span>
+      <span class="text-slate-400">${v.next ? `${v.remaining}% para <strong class="text-slate-200">${esc(v.next)}</strong>` : 'Rango máximo'}</span>
     </div>
     <div class="h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full bg-emerald-400 transition-all" style="width: ${v.pct}%"></div></div>`;
   bar.classList.remove('hidden');
@@ -137,7 +137,7 @@ export function renderPerfil(container) {
             <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${average(initial)}%</span>
           </div>
         </div>
-        <div id="profile-rank-bar" class="hidden relative px-5 pb-4" title="Puntos: 1 por cada % de avance en tus cursos y 150 por curso terminado"></div>
+        <div id="profile-rank-bar" class="hidden relative px-5 pb-4" title="Porcentaje de todo el contenido de la plataforma que has completado. Cada curso cuenta por igual; terminarlos todos es el rango máximo."></div>
       </section>
 
       <div id="resume-card" class="hidden"></div>
