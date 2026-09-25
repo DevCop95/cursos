@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v46';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v47';
 
 let clientPromise = null;
 
@@ -207,6 +207,14 @@ export async function answerCourseQuiz(courseId, step, answer) {
   const { data, error } = await client.rpc('answer_course_quiz', { p_course: courseId, p_step: step, p_answer: String(answer || '').slice(0, 200) });
   if (error) throw error;
   return data;
+}
+
+// Valor propio del laboratorio real del alumno (p. ej. el hash de su primer commit) para el reto final.
+export async function recordCourseValue(courseId, key, value) {
+  const client = await getClient();
+  if (!client) return;
+  const { error } = await client.rpc('record_course_value', { p_course: courseId, p_key: key, p_value: value });
+  if (error) throw error;
 }
 
 // Estado del alumno en un curso (terminal, historial, última lección). Solo lo lee y escribe su dueño.

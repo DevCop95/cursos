@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const IMG = 'img-v1/';
-  const HOOK_URL = 'lab-hook.sh?v=dev101x-v46';
+  const HOOK_URL = 'lab-hook.sh?v=dev101x-v47';
   const HOOK_PATH = '/tmp/.dev101x-lab.sh';
   const $ = id => document.getElementById(id);
   let emulator = null;
@@ -25,29 +25,71 @@
     if (embedded) window.parent.postMessage({ type: 'dev101x-lab', event, ...extra }, location.origin);
   }
 
-  // Estado que imprime lab-hook.sh tras cada comando: 1|codigo|comando(b64)|carpeta(b64)|repo|rama|commits|upstream|conflictos
+  // Estado que imprime lab-hook.sh tras cada comando:
+  // 1|codigo|comando(b64)|carpeta(b64)|repo|rama|commits|upstream|conflictos|primer-commit
   const b64 = v => { try { return new TextDecoder().decode(Uint8Array.from(atob(v || ''), c => c.charCodeAt(0))); } catch (e) { return ''; } };
   function parseState(data) {
     const f = String(data).split('|');
     if (f[0] !== '1' || f.length < 9) return null;
     return {
       rc: Number(f[1]), cmd: b64(f[2]).slice(0, 300), dir: b64(f[3]).slice(0, 120), repo: f[4] === '1',
-      branch: f[5].slice(0, 120), commits: Number(f[6]) || 0, upstream: f[7].slice(0, 120), conflict: Number(f[8]) || 0
+      branch: f[5].slice(0, 120), commits: Number(f[6]) || 0, upstream: f[7].slice(0, 120), conflict: Number(f[8]) || 0,
+      root: /^[0-9a-f]{40}$/.test(f[9] || '') ? f[9] : ''
     };
   }
 
-  // Copia lab-hook.sh dentro de la máquina (sistema de archivos 9p) y lo carga en la terminal.
-  async function installHook() {
+  // Configuración que manda el aula al arrancar: { scenario: { prNumber }, restore: Uint8Array (copia .tgz) }.
+  // Fuera del aula (página del prototipo) no hay configuración.
+  const SAVE_PATH = '/tmp/.dev101x-save.tgz';
+  const RESTORE_PATH = '/tmp/.dev101x-restore.tgz';
+  const SCENARIO_PATH = '/tmp/.dev101x-scenario';
+  const MAX_SNAPSHOT = 1024 * 1024;
+  let setupResolve = null;
+  function waitForSetup() {
+    if (!embedded) return Promise.resolve({});
+    return new Promise(resolve => {
+      setupResolve = resolve;
+      notifyParent('booted');
+      setTimeout(() => { if (setupResolve) { setupResolve = null; resolve({}); } }, 4000);
+    });
+  }
+
+  // Solo datos sencillos del escenario pasan a la máquina (se escriben como variables de bash).
+  function scenarioText(sc) {
+    const lines = [];
+    if (sc && /^\d{1,6}$/.test(String(sc.prNumber ?? ''))) lines.push('DEV101X_PR=' + sc.prNumber);
+    return lines.join('\n') + '\n';
+  }
+
+  // Copia lab-hook.sh (y el escenario y la copia guardada) dentro de la máquina (9p) y lo carga en la terminal.
+  async function installHook(setup) {
     try {
       const res = await fetch(HOOK_URL, { cache: 'no-cache' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = (await res.text()).replace(/\r/g, '');
       await emulator.create_file(HOOK_PATH, new TextEncoder().encode(text));
-      emulator.serial0_send(' . ' + HOOK_PATH + '; clear; cat /etc/motd\n');
+      await emulator.create_file(SCENARIO_PATH, new TextEncoder().encode(scenarioText(setup.scenario)));
+      let restore = '';
+      if (setup.restore instanceof Uint8Array && setup.restore.length && setup.restore.length <= MAX_SNAPSHOT) {
+        await emulator.create_file(RESTORE_PATH, setup.restore);
+        // Devuelve el trabajo guardado y vuelve a la carpeta donde estaba el alumno.
+        restore = 'tar xzf ' + RESTORE_PATH + ' -C / 2>/dev/null; cd "$(cat ~/.dev101x-pwd 2>/dev/null || echo ~)" 2>/dev/null; ';
+      }
+      emulator.serial0_send(' ' + restore + '. ' + HOOK_PATH + '; clear; cat /etc/motd\n');
+      return Boolean(restore);
     } catch (e) {
       console.warn('No se pudo preparar el laboratorio:', e);
       emulator.serial0_send('clear; cat /etc/motd\n');
+      return false;
     }
+  }
+
+  // lab-hook.sh avisa (OSC 7778) cuando hay una copia nueva del trabajo: se lee y se pasa al aula.
+  async function sendSnapshot() {
+    try {
+      const data = await emulator.read_file(SAVE_PATH);
+      if (data && data.length && data.length <= MAX_SNAPSHOT) notifyParent('save', { data });
+    } catch (e) { /* aún no hay copia */ }
   }
 
   function setProgress(pct) {
@@ -123,6 +165,7 @@
         if (state) notifyParent('state', { state });
         return true;
       });
+      term.parser.registerOscHandler(7778, () => { if (embedded) sendSnapshot(); return true; });
       term.onData(data => emulator.serial0_send(data));
       emulator.add_listener('serial0-output-byte', byte => {
         pending.push(byte);
@@ -131,9 +174,9 @@
       ready = true;
       status('Listo · Linux real');
       syncSize();
-      installHook().then(() => {
+      waitForSetup().then(installHook).then(restored => {
         if (queued) { emulator.serial0_send(queued + '\n'); queued = null; }
-        notifyParent('ready');
+        notifyParent('ready', { restored });
       });
       term.focus();
     });
@@ -157,7 +200,9 @@
     window.addEventListener('message', e => {
       if (e.origin !== location.origin || e.source !== window.parent) return;
       const d = e.data;
-      if (d && d.type === 'dev101x-lab' && typeof d.run === 'string' && d.run.length <= 300) typeCommand(d.run.replace(/\s+/g, ' '));
+      if (!d || d.type !== 'dev101x-lab') return;
+      if (d.setup && setupResolve) { const r = setupResolve; setupResolve = null; r(d.setup); return; }
+      if (typeof d.run === 'string' && d.run.length <= 300) typeCommand(d.run.replace(/\s+/g, ' '));
     });
     let t = null;
     window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(syncSize, 200); });

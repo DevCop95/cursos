@@ -132,6 +132,17 @@ export function realCourseSteps(rules, state, steps = {}) {
   return found;
 }
 
+// Valores propios del alumno que salen de su laboratorio real (terminal.realValues: { key, field, when? }),
+// p. ej. el hash de su primer commit, que el servidor acepta luego como respuesta del reto.
+export function realCourseValues(defs, state) {
+  if (!Array.isArray(defs) || !state) return [];
+  return defs
+    .filter(d => d && typeof d.key === 'string' && typeof d.field === 'string')
+    .filter(d => /^[0-9a-f]{7,40}$/.test(String(state[d.field] || '')))
+    .filter(d => Object.entries(d.when || {}).every(([k, v]) => compare(state[k], v)))
+    .map(d => ({ key: d.key, value: String(state[d.field]) }));
+}
+
 export function allLessons(content) {
   return (content.syllabus || []).flatMap(m => m.lessons.map(l => ({ ...l, module: m.module })));
 }

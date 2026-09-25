@@ -3,11 +3,12 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v46';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v46';
-import { isCloudEnabled } from '../config.js?v=dev101x-v46';
-import * as cloud from '../cloud.js?v=dev101x-v46';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps } from '../lib/course-engine.js?v=dev101x-v46';
+import { esc } from '../lib/html.js?v=dev101x-v47';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v47';
+import { isCloudEnabled } from '../config.js?v=dev101x-v47';
+import * as cloud from '../cloud.js?v=dev101x-v47';
+import { appState } from '../state.js?v=dev101x-v47';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v47';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -178,6 +179,7 @@ function paintAula(container) {
                 <button type="button" data-action="c-mode" data-mode="${mode}" aria-pressed="${S.mode === mode}" class="px-2 py-0.5 rounded text-[10px] transition-colors ${S.mode === mode ? MODE_ON : MODE_OFF}">${label}</button>`).join('')}
               </div>` : ''}
               <span id="c-linux-note" class="hidden text-[10px] text-slate-400" title="Aquí practicas libremente; el progreso del curso se cuenta en la terminal simulada">práctica libre</span>
+              <button type="button" id="c-linux-reset" data-action="c-linux-reset" title="Vuelve a empezar la máquina Linux desde cero (no borra tu progreso)" class="hidden px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
               <span id="c-sim-tools" class="flex items-center gap-2">
               <button type="button" data-action="c-reset" title="Vuelve a empezar el laboratorio (no borra tu progreso)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
               <button type="button" data-action="c-run" data-cmd="clear" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">clear</button>
@@ -439,24 +441,80 @@ function recordFreshSteps(steps) {
     .catch(err => { console.warn('No se pudo guardar el progreso:', err.message || err); showToast('No se pudo guardar el progreso', 'error'); });
 }
 
-// Estado que manda la terminal Linux real tras cada comando (lab-hook.sh → lab.js → aquí). Solo se acepta
-// del iframe del laboratorio y los pasos se deciden con las reglas del curso (terminal.real).
-function onLinuxState(e) {
+// Copia del trabajo del alumno en la máquina Linux (.tgz de unos KB) guardada en este navegador, por alumno
+// y curso, para devolverla al recargar la página. Si el navegador no deja guardar, se sigue sin copia.
+const MAX_SNAPSHOT = 1024 * 1024;
+function snapshotKey() {
+  const s = appState.session || {};
+  return `dev101x-lab:${s.userId || s.email || 'anon'}:${S.id}`;
+}
+function loadSnapshot() {
+  try {
+    const b64 = localStorage.getItem(snapshotKey());
+    return b64 ? Uint8Array.from(atob(b64), c => c.charCodeAt(0)) : null;
+  } catch (e) { return null; }
+}
+function saveSnapshot(data) {
+  if (!(data instanceof Uint8Array) || !data.length || data.length > MAX_SNAPSHOT) return;
+  try {
+    let bin = '';
+    for (let i = 0; i < data.length; i += 0x8000) bin += String.fromCharCode.apply(null, data.subarray(i, i + 0x8000));
+    localStorage.setItem(snapshotKey(), btoa(bin));
+  } catch (e) { /* sin espacio o almacenamiento bloqueado */ }
+}
+function clearSnapshot() {
+  try { localStorage.removeItem(snapshotKey()); } catch (e) { /* nada */ }
+}
+
+// Datos del escenario del curso que necesita la máquina (vienen del contenido, solo con acceso al curso).
+function linuxScenario() {
+  const sc = S.content.terminal.scenario || {};
+  return /^\d{1,6}$/.test(String(sc.prNumber ?? '')) ? { prNumber: Number(sc.prNumber) } : {};
+}
+
+// Mensajes de la terminal Linux real (lab-hook.sh → lab.js → aquí). Solo se aceptan del iframe del
+// laboratorio. 'booted': pide escenario y copia guardada · 'save': copia nueva · 'state': tras cada comando,
+// los pasos se deciden con las reglas del curso (terminal.real).
+const sentValues = new Map();
+function onLinuxMessage(e) {
   const frame = linuxFrame();
-  if (!S || S.mode !== 'linux' || !frame || e.source !== frame.contentWindow || e.origin !== location.origin) return;
+  if (!S || !frame || e.source !== frame.contentWindow || e.origin !== location.origin) return;
   const d = e.data;
-  if (!d || d.type !== 'dev101x-lab' || d.event !== 'state' || !d.state || typeof d.state.cmd !== 'string') return;
+  if (!d || d.type !== 'dev101x-lab') return;
+  if (d.event === 'booted') {
+    frame.contentWindow.postMessage({ type: 'dev101x-lab', setup: { scenario: linuxScenario(), restore: loadSnapshot() } }, location.origin);
+    return;
+  }
+  if (d.event === 'ready' && d.restored) { showToast('Se recuperó tu trabajo en Linux', 'success'); return; }
+  if (d.event === 'save') { saveSnapshot(d.data); return; }
+  if (d.event !== 'state' || !d.state || typeof d.state.cmd !== 'string') return;
   const st = d.state;
   const state = {
     cmd: st.cmd.slice(0, 300), rc: Number(st.rc), dir: String(st.dir || '').slice(0, 120), repo: Boolean(st.repo),
     branch: String(st.branch || '').slice(0, 120), commits: Number(st.commits) || 0,
-    upstream: String(st.upstream || '').slice(0, 120), conflict: Number(st.conflict) || 0
+    upstream: String(st.upstream || '').slice(0, 120), conflict: Number(st.conflict) || 0,
+    root: /^[0-9a-f]{40}$/.test(String(st.root || '')) ? st.root : ''
   };
   const key = explanationFor(state.cmd.replace(/\s+/g, ' '));
   if (key && key !== S.expl) selectCourseExplanation(key);
   recordFreshSteps(realCourseSteps(S.content.terminal.real, state, S.steps));
+  realCourseValues(S.content.terminal.realValues, state).forEach(({ key: k, value }) => {
+    const id = `${S.id}:${k}`;
+    if (sentValues.get(id) === value) return;
+    sentValues.set(id, value);
+    cloud.recordCourseValue(S.id, k, value).catch(err => { sentValues.delete(id); console.warn('No se pudo guardar el dato del laboratorio:', err.message || err); });
+  });
 }
-window.addEventListener('message', onLinuxState);
+window.addEventListener('message', onLinuxMessage);
+
+// Vuelve a empezar la máquina Linux desde cero (borra la copia guardada). El progreso del curso se conserva.
+export function resetLinuxLab() {
+  if (!S || !window.confirm('¿Reiniciar Linux? Se borra lo que hayas hecho en la máquina; tu progreso del curso se conserva.')) return;
+  clearSnapshot();
+  const frame = linuxFrame();
+  if (frame) frame.remove();
+  setCourseTerminalMode('linux');
+}
 
 export function runCourseCmdFromUi(el) {
   const linux = S && S.mode === 'linux';
@@ -493,6 +551,7 @@ export function setCourseTerminalMode(mode) {
   toggle('c-sim', linux);
   toggle('c-sim-tools', linux);
   toggle('c-linux', !linux);
+  toggle('c-linux-reset', !linux);
   // Sin reglas para la terminal real, lo que se hace ahí es práctica libre (no cuenta para el progreso).
   toggle('c-linux-note', !linux || Array.isArray(S.content.terminal.real));
   document.querySelectorAll('[data-action="c-mode"]').forEach(b => {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, realCourseSteps } from '../js/lib/course-engine.js';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, realCourseSteps, realCourseValues } from '../js/lib/course-engine.js';
 
 // Curso mínimo de ejemplo (el contenido real vive en Supabase, no en el repositorio).
 const COURSE = {
@@ -87,4 +87,14 @@ test('Linux real: comandos encadenados y condiciones con patrón', () => {
   assert.deepEqual(realCourseSteps(RULES, st('tool send', { upstream: '' })), []);
   assert.deepEqual(realCourseSteps(null, st('tool --version')), []);
   assert.deepEqual(realCourseSteps([{ step: 'bad', cmd: '(' }], st('(')), []);
+});
+
+test('Linux real: valores propios del alumno (p. ej. un hash) solo si el estado cumple las condiciones', () => {
+  const defs = [{ key: 'first', field: 'root', when: { dir: 'demo' } }];
+  const hash = 'a'.repeat(40);
+  assert.deepEqual(realCourseValues(defs, st('tool save', { root: hash })), [{ key: 'first', value: hash }]);
+  assert.deepEqual(realCourseValues(defs, st('tool save', { root: hash, dir: 'otra' })), []);
+  assert.deepEqual(realCourseValues(defs, st('tool save', { root: 'no-es-hash' })), []);
+  assert.deepEqual(realCourseValues(defs, st('tool save', { root: '' })), []);
+  assert.deepEqual(realCourseValues(null, st('x')), []);
 });
