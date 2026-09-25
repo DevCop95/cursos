@@ -21,6 +21,18 @@ export const courseIcon = id => COURSE_ICONS[id] || 'school';
  * vale 150 puntos y cada rango son 3 cursos: 450 puntos). rank_from y next_at son puntos.
  * { name, icon, tone, points, next, remaining (puntos), pct (avance hacia el siguiente rango) }.
  */
+/**
+ * ¿Ha subido de rango desde el último nivel visto? Devuelve el nombre del rango nuevo o null.
+ * Sin nivel previo (primera vez en este navegador) no hay aviso: solo se anota.
+ */
+export function rankUpFrom(prevLevel, stats) {
+  if (!stats || typeof stats.rank !== 'string') return null;
+  const level = Number(stats.rank_level);
+  const prev = prevLevel === null || prevLevel === undefined || prevLevel === '' ? NaN : Number(prevLevel);
+  if (!Number.isFinite(level) || !Number.isFinite(prev)) return null;
+  return level > prev ? stats.rank : null;
+}
+
 export function rankView(stats) {
   if (!stats || typeof stats.rank !== 'string') return null;
   const def = RANKS.find(r => r.name === stats.rank) || RANKS[0];

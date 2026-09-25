@@ -2,20 +2,21 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v64';
-import { resolveRoute } from './router.js?v=dev101x-v64';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v64';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v64';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v64';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v64';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v64';
-import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v64';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v64';
-import { COURSE } from './content.js?v=dev101x-v64';
-import { fetchCourses } from './cloud.js?v=dev101x-v64';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v64';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v64';
-import { startPresence } from './progress.js?v=dev101x-v64';
+import { appState, isSessionValid } from './state.js?v=dev101x-v65';
+import { resolveRoute } from './router.js?v=dev101x-v65';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v65';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v65';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v65';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v65';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v65';
+import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v65';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v65';
+import { COURSE } from './content.js?v=dev101x-v65';
+import { fetchCourses } from './cloud.js?v=dev101x-v65';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v65';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v65';
+import { startPresence } from './progress.js?v=dev101x-v65';
+import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v65';
 
 const $ = id => document.getElementById(id);
 
@@ -25,9 +26,9 @@ function lazy(load) {
   let p = null;
   return () => (p = p || load().catch(err => { p = null; throw err; }));
 }
-const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v64'));
-const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v64'));
-const adminView = lazy(() => import('./views/admin.js?v=dev101x-v64'));
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v65'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v65'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v65'));
 // Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
 const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
 function prefetchViews() {
@@ -132,12 +133,14 @@ document.addEventListener('visibilitychange', () => {
   lastAccessCheck = Date.now();
   checkNewCourseAccess().then(announceNewAccess).catch(() => {});
   refreshUnreadMessages();
+  scheduleRankCheck(500);
 });
 
 function onLoggedIn() {
   takeNewCourseAccess(); // anota los cursos actuales (sin avisar de los que ya tenía)
   refreshUnreadMessages({ notify: true });
   startPresence();
+  scheduleRankCheck(2500); // la primera vez solo anota el rango actual
   showToast(`Bienvenido, ${appState.session.name}`, 'success');
   window.location.hash = '#/mis-cursos';
   render();
@@ -209,6 +212,7 @@ const ACTIONS = {
   'c-linux-reset': () => withView(courseView, m => m.resetLinuxLab()),
   'print-cheatsheet': () => withView(aulaView, m => m.printCheatSheet()),
   'open-account': () => openAccountDetails(),
+  'edit-name': () => openNameDialog(),
   'admin-user': el => withView(adminView, m => m.openUserDetails(el.dataset.user)),
   'admin-thread': el => withView(adminView, m => m.openThread(el.dataset.user)),
   'admin-revoke': el => withView(adminView, m => m.openRevokeDialog(el)),
@@ -264,6 +268,11 @@ document.addEventListener('change', e => {
 
 document.addEventListener('submit', e => {
   const form = e.target;
+  if (form.dataset.action === 'set-name') {
+    e.preventDefault();
+    submitName(form, e.submitter);
+    return;
+  }
   if (form.dataset.action === 'quiz') {
     e.preventDefault();
     withView(aulaView, m => m.submitQuiz(form));
@@ -355,12 +364,12 @@ if (oauthRedirect) {
 
 // Revalida la sesión contra el servidor (modo nube) sin bloquear el primer render.
 revalidateSession()
-  .then(changed => { if (changed) render(); announceNewAccess(takeNewCourseAccess()); refreshUnreadMessages({ notify: true }); })
+  .then(changed => { if (changed) render(); announceNewAccess(takeNewCourseAccess()); refreshUnreadMessages({ notify: true }); scheduleRankCheck(1500); })
   .catch(err => console.warn('No se pudo revalidar la sesión:', err))
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v64').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v65').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

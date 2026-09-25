@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v64';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v64';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v64';
-import { esc } from '../lib/html.js?v=dev101x-v64';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v64';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v65';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v65';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v65';
+import { esc } from '../lib/html.js?v=dev101x-v65';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v65';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -299,9 +299,9 @@ function openLoginModal() {
 // mientras se ve la sección, hasta que el usuario toca algo (y nunca con "reducir movimiento").
 // ---------------------------------------------------------------------------
 const PHONE_SCREENS = [
-  { icon: 'terminal', title: 'La consola', text: 'Escribe comandos de Nmap y ve el resultado al momento.', img: 'assets/landing/movil-consola.webp', alt: 'Consola del laboratorio en el móvil con un escaneo de Nmap' },
-  { icon: 'menu_book', title: 'Las lecciones', text: 'Cada lección con su objetivo, práctica y pregunta.', img: 'assets/landing/movil-leccion-2.webp', alt: 'Ficha de una lección en el móvil' },
-  { icon: 'school', title: 'Tu avance', text: 'Continúa donde lo dejaste, en cualquier dispositivo.', img: 'assets/landing/movil-cursos.webp', alt: 'Pantalla Mis cursos en el móvil con el avance del curso' }
+  { icon: 'terminal', title: 'La consola', text: 'Escribe comandos de Nmap y ve el resultado al momento.', img: 'assets/landing/movil-consola-cd45d631.webp', alt: 'Consola del laboratorio en el móvil con un escaneo de Nmap' },
+  { icon: 'menu_book', title: 'Las lecciones', text: 'Cada lección con su objetivo, práctica y pregunta.', img: 'assets/landing/movil-leccion-fcfb8006.webp', alt: 'Ficha de una lección en el móvil' },
+  { icon: 'school', title: 'Tu avance', text: 'Continúa donde lo dejaste, en cualquier dispositivo.', img: 'assets/landing/movil-cursos-8ee15f7d.webp', alt: 'Pantalla Mis cursos en el móvil con el avance del curso' }
 ];
 
 function initPhoneShowcase(container) {

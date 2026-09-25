@@ -5,16 +5,16 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v64';
-import { isCloudEnabled } from '../config.js?v=dev101x-v64';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v64';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v64';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v64';
-import { rankView } from '../lib/ranks.js?v=dev101x-v64';
-import { openAdminThread } from './messages.js?v=dev101x-v64';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v64';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v64';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v64';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v65';
+import { isCloudEnabled } from '../config.js?v=dev101x-v65';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v65';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v65';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v65';
+import { rankView } from '../lib/ranks.js?v=dev101x-v65';
+import { openAdminThread } from './messages.js?v=dev101x-v65';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v65';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v65';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v65';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -457,6 +457,7 @@ export function openUserDetails(userId) {
           <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-12 h-12 rounded-xl object-cover border border-line" />
           <div class="min-w-0 flex-1">
             <p class="text-xs font-mono text-muted truncate">${esc(r.email)}</p>
+            ${r.google_name && r.google_name !== r.full_name ? `<p class="text-[11px] text-muted truncate">En Google: ${esc(r.google_name)}</p>` : ''}
             <p class="inline-flex items-center gap-1.5 text-xs font-semibold ${status.text}"><span class="w-1.5 h-1.5 rounded-full ${status.dot}" aria-hidden="true"></span>${status.label} · ${esc(relativeTime(lastActivity(r), now))}</p>
             <p id="user-rank" data-user="${esc(r.id)}" class="text-[11px] font-mono text-muted mt-0.5">&nbsp;</p>
           </div>

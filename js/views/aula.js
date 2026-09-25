@@ -1,14 +1,15 @@
 /**
  * Vista: Aula interactiva (terminal simulada, ficha técnica del comando, recursos de Nmap y temario).
  */
-import { esc } from '../lib/html.js?v=dev101x-v64';
-import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v64';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v64';
-import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v64';
-import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v64';
-import { showToast, openDialog } from '../ui.js?v=dev101x-v64';
-import { isCloudEnabled } from '../config.js?v=dev101x-v64';
-import * as cloud from '../cloud.js?v=dev101x-v64';
+import { esc } from '../lib/html.js?v=dev101x-v65';
+import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v65';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v65';
+import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v65';
+import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v65';
+import { showToast, openDialog } from '../ui.js?v=dev101x-v65';
+import { isCloudEnabled } from '../config.js?v=dev101x-v65';
+import * as cloud from '../cloud.js?v=dev101x-v65';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v65';
 
 const LINE_CLASSES = {
   error: 'text-red-400',
@@ -145,6 +146,8 @@ export function executeCommand(raw) {
       if (rec.progress.complete && rec.newLessons.length) {
         showToast('¡Felicidades! Has completado el 100% del curso.', 'success');
       }
+      // El avance se sube al servidor con un pequeño retraso; después se comprueba si subió de rango.
+      if (rec.newLessons.length) scheduleRankCheck(4000);
       refreshSyllabus();
       refreshNextStep();
     }
@@ -609,6 +612,7 @@ export async function submitQuiz(form) {
     });
     if (rec.progress.complete && rec.newLessons.length) showToast('¡Felicidades! Has completado el 100% del curso.', 'success');
     else if (!rec.newLessons.length) showToast('¡Correcto!', 'success');
+    if (rec.newLessons.length) scheduleRankCheck(2500);
     const lessonId = form.closest('[data-lesson]') && form.closest('[data-lesson]').dataset.lesson;
     if (lessonId) openLesson(lessonId);
   } catch (err) {

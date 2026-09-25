@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v64';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v65';
 
 let clientPromise = null;
 
@@ -84,9 +84,18 @@ export async function signOut() {
 export async function fetchOwnProfile(userId) {
   const client = await getClient();
   if (!client) return null;
-  const { data, error } = await client.from('profiles').select('id, email, full_name, role').eq('id', userId).maybeSingle();
+  const { data, error } = await client.from('profiles').select('id, email, full_name, display_name, role').eq('id', userId).maybeSingle();
   if (error) throw error;
   return data;
+}
+
+// Nombre visible elegido por el alumno. Vacío = volver al de Google. El servidor valida y limita (1 por minuto).
+export async function setDisplayName(name) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { data, error } = await client.rpc('set_display_name', { p_name: String(name || '') });
+  if (error) throw new Error(error.message || 'No se pudo cambiar el nombre.');
+  return data; // nombre guardado o null
 }
 
 export async function touchLastLogin(userId, fullName, avatarUrl) {
@@ -325,7 +334,7 @@ export async function adminListStudents() {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
   const [profiles, progress, access, completions, courseProgress] = await Promise.all([
-    client.from('profiles').select('id, email, full_name, avatar_url, role, access_level, last_login, last_seen, created_at').order('created_at', { ascending: false }),
+    client.from('profiles').select('id, email, full_name, display_name, avatar_url, role, access_level, last_login, last_seen, created_at').order('created_at', { ascending: false }),
     client.from('student_progress').select('user_id, steps, progress_percentage, completed_at'),
     client.from('course_access').select('user_id, course_id, enabled'),
     client.from('course_completions').select('user_id, course_id, completed_at'),
@@ -333,8 +342,11 @@ export async function adminListStudents() {
   ]);
   const err = profiles.error || progress.error || access.error || completions.error || courseProgress.error;
   if (err) throw err;
+  // full_name pasa a ser el nombre visible (el elegido por el alumno o el de Google); google_name, el de Google.
   return profiles.data.map(p => ({
     ...p,
+    full_name: p.display_name || p.full_name,
+    google_name: p.full_name,
     progress: progress.data.find(r => r.user_id === p.id) || null,
     access: access.data.filter(r => r.user_id === p.id),
     completions: completions.data.filter(r => r.user_id === p.id),

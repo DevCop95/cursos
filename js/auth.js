@@ -5,11 +5,11 @@
  *  - Modo local: solo se comprueban los claims para mostrar el perfil; el rol es siempre
  *    'student' y no existe acceso de administración.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v64';
-import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v64';
-import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v64';
-import * as cloud from './cloud.js?v=dev101x-v64';
-import { pullProgressFromCloud } from './progress.js?v=dev101x-v64';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v65';
+import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v65';
+import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v65';
+import * as cloud from './cloud.js?v=dev101x-v65';
+import { pullProgressFromCloud } from './progress.js?v=dev101x-v65';
 
 let pendingNonce = null;
 
@@ -89,7 +89,8 @@ async function establishCloudSession(user, info) {
     userId: user.id,
     sub: info.sub,
     email: info.email,
-    name: info.name,
+    name: (profile && profile.display_name) || info.name,
+    googleName: info.name,
     avatar: info.avatar,
     role: profile && profile.role === 'admin' ? 'admin' : 'student',
     loginAt: new Date(now).toISOString(),
@@ -218,13 +219,15 @@ export async function revalidateSession() {
     await logout();
     return true;
   }
-  const before = JSON.stringify([appState.session.role, appState.enabledCourses]);
+  const before = JSON.stringify([appState.session.role, appState.enabledCourses, appState.session.name]);
   const profile = await cloud.fetchOwnProfile(user.id).catch(() => null);
   appState.session.role = profile && profile.role === 'admin' ? 'admin' : 'student';
+  // Nombre elegido (puede haberse cambiado desde otro dispositivo); sin él, el de Google.
+  if (profile) appState.session.name = profile.display_name || appState.session.googleName || appState.session.name;
   appState.enabledCourses = await loadCourseAccess();
   saveState(appState);
   await pullProgressFromCloud();
-  return before !== JSON.stringify([appState.session.role, appState.enabledCourses]);
+  return before !== JSON.stringify([appState.session.role, appState.enabledCourses, appState.session.name]);
 }
 
 export async function logout() {

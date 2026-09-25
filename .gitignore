@@ -12,3 +12,6 @@ CLAUDE.local.md
 
 # Salida temporal del constructor del laboratorio Linux
 scripts/linux-lab/.build/
+
+# Pruebas de navegador y capturas de la portada (solo local)
+e2e/

@@ -1,16 +1,17 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v64';
-import { appState } from '../state.js?v=dev101x-v64';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v64';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v64';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v64';
-import { isAdmin } from '../auth.js?v=dev101x-v64';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v64';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v64';
-import { COURSE } from '../content.js?v=dev101x-v64';
-import { paintResume } from './resume.js?v=dev101x-v64'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v65';
+import { appState, saveState } from '../state.js?v=dev101x-v65';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v65';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v65';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v65';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v65';
+import { isAdmin } from '../auth.js?v=dev101x-v65';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v65';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v65';
+import { COURSE } from '../content.js?v=dev101x-v65';
+import { paintResume } from './resume.js?v=dev101x-v65'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -120,7 +121,12 @@ export function renderPerfil(container) {
         <div class="relative p-5 flex items-center gap-4">
           <img src="${esc(avatarFor(user))}" alt="" referrerpolicy="no-referrer" class="w-16 h-16 rounded-2xl object-cover bg-term-2 ring-2 ring-emerald-500/30 shrink-0" />
           <div class="flex-1 min-w-0">
-            <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight truncate">${esc(user.name)}</h1>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight truncate">${esc(user.name)}</h1>
+              ${user.mode === 'cloud' ? `<button type="button" data-action="edit-name" class="w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center shrink-0 transition-colors" aria-label="Cambiar tu nombre" title="Cambiar tu nombre">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span>
+              </button>` : ''}
+            </div>
             <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">${esc(user.email)}</p>
             <div class="flex items-center gap-x-3 gap-y-1.5 mt-2 font-mono text-[11px] flex-wrap">
               <span class="px-2 py-0.5 rounded-md font-bold ${admin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">${admin ? 'ADMIN' : 'ESTUDIANTE'}</span>
@@ -211,6 +217,57 @@ export function renderPerfil(container) {
     if (title) title.textContent = `Insignias · ${earned.length}`;
     paintRank(stats);
   }).catch(() => {});
+}
+
+// ---------------------------------------------------------------------------
+// Cambiar el nombre visible (el de la cuenta de Google no cambia). Lo valida y limita el servidor.
+// ---------------------------------------------------------------------------
+export function openNameDialog() {
+  const user = appState.session;
+  if (!user || user.mode !== 'cloud') return;
+  const google = user.googleName || '';
+  openDialog({
+    title: 'Tu nombre',
+    body: `
+      <form data-action="set-name" class="flex flex-col gap-3" novalidate>
+        <label for="name-input" class="text-[13px] text-ink2">Es el nombre que ves en la app y el que ve el administrador. Tu cuenta de Google no cambia.</label>
+        <input id="name-input" name="name" type="text" maxlength="40" autocomplete="nickname" value="${esc(user.name || '')}"
+          class="h-11 px-3 rounded-xl bg-white border border-line focus:border-accent outline-none text-sm text-ink" />
+        <p class="text-[11px] text-muted">Entre 2 y 40 caracteres: letras, números, espacios y . ' - _</p>
+        <p id="name-error" role="alert" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+        <div class="flex flex-wrap items-center gap-2 pt-1">
+          <button type="submit" class="h-10 px-5 rounded-xl bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">Guardar</button>
+          ${google && google !== user.name ? `<button type="submit" name="reset" value="1" class="h-10 px-4 rounded-xl bg-white border border-line hover:border-accent/60 text-sm font-semibold text-ink transition-colors">Usar el de Google (${esc(google)})</button>` : ''}
+        </div>
+      </form>`
+  });
+  const input = document.getElementById('name-input');
+  if (input) { input.focus(); input.select(); }
+}
+
+export async function submitName(form, submitter) {
+  const user = appState.session;
+  const errorEl = form.querySelector('#name-error');
+  const showError = msg => { if (errorEl) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); } };
+  const reset = submitter && submitter.name === 'reset';
+  const check = reset ? { value: null } : checkDisplayName(form.elements.name.value);
+  if (check.error) return showError(check.error);
+  if (!reset && check.value === user.name) { closeModal('app-dialog'); return; }
+  const buttons = [...form.querySelectorAll('button')];
+  buttons.forEach(b => { b.disabled = true; });
+  try {
+    const saved = await setDisplayName(check.value || '');
+    user.name = saved || user.googleName || user.name;
+    saveState(appState);
+    ['header-user-name', 'dropdown-user-name'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = user.name; });
+    closeModal('app-dialog');
+    const view = document.getElementById('app-view');
+    if (view && location.hash.startsWith('#/perfil')) renderPerfil(view);
+    showToast('Nombre actualizado', 'success');
+  } catch (e) {
+    showError(e.message || 'No se pudo cambiar el nombre.');
+    buttons.forEach(b => { b.disabled = false; });
+  }
 }
 
 export function openAccountDetails() {

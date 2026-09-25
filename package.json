@@ -10,7 +10,9 @@
     "watch:css": "tailwindcss -c tailwind.config.js -i css/tailwind.src.css -o css/tailwind.css --watch",
     "test": "node --test \"tests/*.test.js\"",
     "release": "node scripts/icons.mjs && node scripts/release.mjs",
-    "pages": "node scripts/course-pages.mjs"
+    "pages": "node scripts/course-pages.mjs",
+    "smoke": "npm --prefix e2e run smoke",
+    "capturas": "npm --prefix e2e run capturas"
   },
   "keywords": [
     "dev101x",
