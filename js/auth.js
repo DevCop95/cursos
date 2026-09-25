@@ -5,11 +5,11 @@
  *  - Modo local: solo se comprueban los claims para mostrar el perfil; el rol es siempre
  *    'student' y no existe acceso de administración.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v63';
-import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v63';
-import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v63';
-import * as cloud from './cloud.js?v=dev101x-v63';
-import { pullProgressFromCloud } from './progress.js?v=dev101x-v63';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v64';
+import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v64';
+import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v64';
+import * as cloud from './cloud.js?v=dev101x-v64';
+import { pullProgressFromCloud } from './progress.js?v=dev101x-v64';
 
 let pendingNonce = null;
 

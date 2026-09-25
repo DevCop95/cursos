@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v63';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v63';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v63';
-import { esc } from '../lib/html.js?v=dev101x-v63';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v63';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v64';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v64';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v64';
+import { esc } from '../lib/html.js?v=dev101x-v64';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v64';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -261,8 +261,8 @@ export function renderLogin(container, onSuccess) {
       <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a></p>
     </div>
 
-    <div id="login-modal" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="login-modal-title" class="relative w-full sm:max-w-sm bg-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-line modal-enter p-6 sm:p-7 flex flex-col gap-5">
+    <div id="login-modal" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="login-modal-title" class="relative w-full max-w-sm max-h-[85dvh] overflow-y-auto bg-surface rounded-2xl shadow-2xl border border-line modal-enter p-6 sm:p-7 flex flex-col gap-5">
         <button type="button" data-action="close-modal" data-target="login-modal" class="absolute top-3 right-3 w-8 h-8 rounded-lg text-muted hover:text-ink hover:bg-bg flex items-center justify-center" aria-label="Cerrar">
           <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
         </button>
@@ -300,7 +300,7 @@ function openLoginModal() {
 // ---------------------------------------------------------------------------
 const PHONE_SCREENS = [
   { icon: 'terminal', title: 'La consola', text: 'Escribe comandos de Nmap y ve el resultado al momento.', img: 'assets/landing/movil-consola.webp', alt: 'Consola del laboratorio en el móvil con un escaneo de Nmap' },
-  { icon: 'menu_book', title: 'Las lecciones', text: 'Cada lección con su objetivo, práctica y pregunta.', img: 'assets/landing/movil-leccion.webp', alt: 'Ficha de una lección en el móvil' },
+  { icon: 'menu_book', title: 'Las lecciones', text: 'Cada lección con su objetivo, práctica y pregunta.', img: 'assets/landing/movil-leccion-2.webp', alt: 'Ficha de una lección en el móvil' },
   { icon: 'school', title: 'Tu avance', text: 'Continúa donde lo dejaste, en cualquier dispositivo.', img: 'assets/landing/movil-cursos.webp', alt: 'Pantalla Mis cursos en el móvil con el avance del curso' }
 ];
 
