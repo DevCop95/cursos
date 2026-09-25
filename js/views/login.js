@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v58';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v58';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v58';
-import { esc } from '../lib/html.js?v=dev101x-v58';
-import { avatarFor, showToast } from '../ui.js?v=dev101x-v58';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v59';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v59';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v59';
+import { esc } from '../lib/html.js?v=dev101x-v59';
+import { avatarFor, showToast } from '../ui.js?v=dev101x-v59';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -205,7 +205,7 @@ export function renderLogin(container, onSuccess) {
           </div>
         </div>
         <button type="button" data-action="open-video" data-start="0" class="group relative w-full aspect-video rounded-2xl overflow-hidden bg-term text-left" aria-label="Ver el video de la clase">
-          <img src="https://i.ytimg.com/vi/${COURSE_VIDEO.id}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <img src="https://i.ytimg.com/vi/${COURSE_VIDEO.id}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" decoding="async" />
           <span class="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors"></span>
           <span class="absolute inset-0 flex items-center justify-center">
             <span class="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-accent text-4xl" aria-hidden="true">play_arrow</span></span>

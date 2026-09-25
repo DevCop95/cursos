@@ -9,7 +9,7 @@ export default {
         surface: '#fdfcf9',
         ink: '#0c0d0e',
         ink2: '#282b29',
-        muted: '#80857e',
+        muted: '#686d66',
         accent: '#005c38',
         accent2: '#003f27',
         line: '#d3cec5',
