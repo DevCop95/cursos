@@ -1,15 +1,15 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v48';
-import { appState } from '../state.js?v=dev101x-v48';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v48';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v48';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v48';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js?v=dev101x-v48';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v48';
-import { openDialog } from '../ui.js?v=dev101x-v48';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v48';
+import { esc } from '../lib/html.js?v=dev101x-v49';
+import { appState } from '../state.js?v=dev101x-v49';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v49';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v49';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v49';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v49';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v49';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v49';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v49';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
@@ -193,6 +193,37 @@ export function renderMisCursos(container) {
   });
 }
 
+// Solicitudes de acceso del alumno (course_id → 'pending' | 'rejected'). El botón se desactiva al pulsarlo
+// y el servidor solo guarda una por curso, así que repetir clics no genera más solicitudes.
+let myRequests = new Map();
+const ACCESS_BTN = 'flex-1 h-10 rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors';
+
+function accessButton(courseId) {
+  const st = myRequests.get(courseId);
+  if (st === 'pending') return `<span class="${ACCESS_BTN} bg-emerald-50 border border-emerald-200 text-emerald-900" data-access="${esc(courseId)}"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">schedule_send</span>Solicitud enviada</span>`;
+  if (st === 'rejected') return `<span class="${ACCESS_BTN} bg-bg border border-line text-muted" title="Podrás pedirlo de nuevo pasadas 24 horas"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">block</span>Solicitud rechazada</span>`;
+  return `<button type="button" data-action="request-access" data-id="${esc(courseId)}" class="${ACCESS_BTN} bg-ink hover:bg-accent text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">key</span>Solicitar acceso</button>`;
+}
+
+export async function requestAccess(btn) {
+  const id = btn.dataset.id;
+  if (!id || btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('opacity-60');
+  try {
+    await requestCourseAccess(id);
+    myRequests.set(id, 'pending');
+    btn.outerHTML = accessButton(id);
+    showToast('Solicitud enviada. El administrador la revisará.', 'success');
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.classList.remove('opacity-60');
+    const msg = String((err && err.message) || '');
+    showToast(/rechazada|Ya tienes/.test(msg) ? msg : 'No se pudo enviar la solicitud. Inténtalo de nuevo.', 'error');
+  }
+}
+
 export function renderExplorar(container) {
   const tile = c => {
     const enrolled = appState.enabledCourses.includes(c.id);
@@ -223,7 +254,7 @@ export function renderExplorar(container) {
                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>Ir al aula</span>
                  </a>
                  <button type="button" data-action="open-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors">Temario</button>`
-              : `<span class="flex-1 h-10 rounded-xl bg-bg border border-line text-[13px] font-semibold text-muted inline-flex items-center justify-center gap-1.5" title="Pide acceso al administrador"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock</span>Requiere acceso</span>
+              : `${accessButton(c.id)}
                  <button type="button" data-action="open-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors">Temario</button>`}
           </div>
         </div>
@@ -261,7 +292,7 @@ export function renderExplorar(container) {
           <div class="mt-auto flex items-center gap-2">
             ${ok
               ? `<a href="#/aula-interactiva/${esc(c.id)}" class="flex-1 h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>Ir al aula</span></a>`
-              : `<span class="flex-1 h-10 rounded-xl bg-bg border border-line text-[13px] font-semibold text-muted inline-flex items-center justify-center gap-1.5" title="Pide acceso al administrador"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock</span>Requiere acceso</span>`}
+              : `${accessButton(c.id)}`}
             ${info.modules.length ? `<button type="button" data-action="open-db-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors">Temario</button>` : ''}
           </div>
         </div>
@@ -316,7 +347,8 @@ export function renderExplorar(container) {
     </div>
   `;
   // El catálogo real está en Supabase: añade los cursos que aún no tienen contenido.
-  fetchCourses().then(list => {
+  Promise.all([fetchCourses(), fetchAccessRequests().catch(() => [])]).then(([list, requests]) => {
+    myRequests = new Map(requests.map(r => [r.course_id, r.rejected_at ? 'rejected' : 'pending']));
     rememberCourses(list);
     const grid = document.getElementById('catalog-grid');
     if (!grid) return;

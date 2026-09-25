@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v48';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v49';
 
 let clientPromise = null;
 
@@ -207,6 +207,30 @@ export async function answerCourseQuiz(courseId, step, answer) {
   const { data, error } = await client.rpc('answer_course_quiz', { p_course: courseId, p_step: step, p_answer: String(answer || '').slice(0, 200) });
   if (error) throw error;
   return data;
+}
+
+// Solicitudes de acceso. El servidor limita: una por alumno y curso, y 24 h de espera tras un rechazo.
+export async function requestCourseAccess(courseId) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { error } = await client.rpc('request_course_access', { p_course: courseId });
+  if (error) throw error;
+}
+
+// Las del alumno (RLS: solo las suyas) o todas si es admin: [{ user_id, course_id, created_at, rejected_at }].
+export async function fetchAccessRequests() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.from('course_access_requests').select('user_id, course_id, created_at, rejected_at').order('created_at');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function adminRejectAccessRequest(userId, courseId) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { error } = await client.rpc('admin_reject_access_request', { p_user: userId, p_course: courseId });
+  if (error) throw error;
 }
 
 // Valor propio del laboratorio real del alumno (p. ej. el hash de su primer commit) para el reto final.

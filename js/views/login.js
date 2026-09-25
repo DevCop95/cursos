@@ -4,12 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v48';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v48';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v48';
-import { esc } from '../lib/html.js?v=dev101x-v48';
-import { avatarFor, showToast } from '../ui.js?v=dev101x-v48';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v48';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v49';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v49';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v49';
+import { esc } from '../lib/html.js?v=dev101x-v49';
+import { avatarFor, showToast } from '../ui.js?v=dev101x-v49';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -225,32 +224,6 @@ export function renderLogin(container, onSuccess) {
         </ol>
       </section>
 
-      <section class="w-full" aria-labelledby="landing-courses">
-        <h2 id="landing-courses" class="text-base font-bold text-ink mb-3 px-1">Cursos</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <a href="/pentesting-nmap/" class="landing-card group rounded-2xl p-4 flex items-center gap-3 hover:border-accent/60 transition-colors">
-            <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">terminal</span></span>
-            <span class="min-w-0 flex flex-col gap-1">
-              <span class="text-[13px] font-bold text-ink leading-snug group-hover:text-accent">Pentesting 101 con Nmap</span>
-              <span class="self-start px-1.5 py-px rounded-md bg-emerald-50 text-accent border border-emerald-200 font-mono text-[10px] font-bold">GRATIS</span>
-            </span>
-          </a>
-          <a href="/git-github/" class="landing-card group rounded-2xl p-4 flex items-center gap-3 hover:border-accent/60 transition-colors">
-            <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">account_tree</span></span>
-            <span class="min-w-0 flex flex-col gap-1">
-              <span class="text-[13px] font-bold text-ink leading-snug group-hover:text-accent">Git y GitHub desde cero</span>
-              <span class="self-start px-1.5 py-px rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-mono text-[10px] font-bold">PREMIUM</span>
-            </span>
-          </a>
-          <div class="landing-card rounded-2xl p-4 flex items-center gap-3">
-            <img src="${UPCOMING.icon}" alt="" width="44" height="44" class="w-11 h-11 rounded-xl shrink-0" loading="lazy" />
-            <span class="min-w-0 flex flex-col gap-1">
-              <span class="text-[13px] font-bold text-ink leading-snug">${esc(UPCOMING.short)}</span>
-              <span class="self-start px-1.5 py-px rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-mono text-[10px] font-bold">PRÓXIMO LANZAMIENTO</span>
-            </span>
-          </div>
-        </div>
-      </section>
       <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a></p>
     </div>
   `;

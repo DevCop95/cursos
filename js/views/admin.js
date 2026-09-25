@@ -5,14 +5,14 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v48';
-import { isCloudEnabled } from '../config.js?v=dev101x-v48';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v48';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v48';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress } from '../cloud.js?v=dev101x-v48';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v48';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v48';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v48';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v49';
+import { isCloudEnabled } from '../config.js?v=dev101x-v49';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v49';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v49';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest } from '../cloud.js?v=dev101x-v49';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v49';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v49';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v49';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -34,6 +34,7 @@ const OVERRIDES = [
 
 let lastRows = [];
 let lastCourses = [];
+let lastRequests = []; // solicitudes de acceso pendientes
 let currentFilter = 'active';
 let refreshTimer = null;
 
@@ -214,6 +215,7 @@ export async function renderAdmin(container) {
         </div>
         <span class="text-[11px] text-muted font-mono hidden sm:inline">Se actualiza cada minuto</span>
       </div>
+      <div id="admin-requests"></div>
       <section class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden">
         <div id="admin-toolbar" class="px-4 py-3 border-b border-line flex items-center justify-between gap-3 flex-wrap"></div>
         <div id="admin-table" class="overflow-x-auto">
@@ -244,11 +246,60 @@ function paint(container) {
   if (toolbar) toolbar.innerHTML = toolbarHtml(lastRows);
   if (table) table.innerHTML = tableHtml(lastRows);
   if (courses) courses.innerHTML = coursesHtml(lastCourses);
+  const requests = container.querySelector('#admin-requests');
+  if (requests) requests.innerHTML = requestsHtml();
+}
+
+// Solicitudes de acceso pendientes (el alumno pulsó "Solicitar acceso" en el catálogo).
+function requestsHtml() {
+  if (!lastRequests.length) return '';
+  const now = Date.now();
+  return `
+    <section class="min-w-0 bg-amber-50/70 rounded-2xl border border-amber-200 overflow-hidden">
+      <h2 class="px-4 py-3 border-b border-amber-200 text-sm font-bold text-amber-950 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-amber-600" aria-hidden="true">key</span>Solicitudes de acceso
+        <span class="px-1.5 py-px rounded-md bg-amber-500 text-white text-[10px] font-mono">${lastRequests.length}</span>
+      </h2>
+      <ul class="divide-y divide-amber-200/70">
+        ${lastRequests.map(q => {
+          const r = lastRows.find(x => x.id === q.user_id) || { email: 'Alumno', full_name: '' };
+          const c = lastCourses.find(x => x.id === q.course_id) || { title: q.course_id };
+          return `
+            <li class="px-4 py-2.5 flex items-center gap-3 flex-wrap">
+              <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
+              <div class="min-w-0 flex-1">
+                <p class="text-[13px] font-semibold text-ink truncate">${esc(r.full_name || r.email)} <span class="font-normal text-ink2">pide</span> ${esc(c.title)}</p>
+                <p class="text-[11px] font-mono text-muted truncate">${esc(r.email)} · ${esc(relativeTime(Date.parse(q.created_at), now))}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button type="button" data-action="admin-grant-request" data-user="${esc(q.user_id)}" data-course="${esc(q.course_id)}" class="h-8 px-3 rounded-lg bg-accent hover:bg-accent2 text-white text-xs font-semibold">Conceder</button>
+                <button type="button" data-action="admin-reject-request" data-user="${esc(q.user_id)}" data-course="${esc(q.course_id)}" class="h-8 px-3 rounded-lg bg-white border border-line hover:border-rose-300 text-rose-600 text-xs font-semibold">Rechazar</button>
+              </div>
+            </li>`;
+        }).join('')}
+      </ul>
+    </section>`;
+}
+
+export async function answerAccessRequest(btn, grant) {
+  const { user, course } = btn.dataset;
+  const ok = await saving(btn, () => (grant ? adminSetCourseOverride(user, course, 'grant') : adminRejectAccessRequest(user, course)),
+    grant ? 'Acceso concedido' : 'Solicitud rechazada');
+  if (!ok) return;
+  lastRequests = lastRequests.filter(q => !(q.user_id === user && q.course_id === course));
+  const r = lastRows.find(x => x.id === user);
+  if (grant && r) {
+    r.access = r.access.filter(a => a.course_id !== course);
+    r.access.push({ course_id: course, enabled: true });
+  }
+  repaint();
 }
 
 async function loadRows(container, { quiet = false } = {}) {
   try {
-    [lastRows, lastCourses] = await Promise.all([adminListStudents(), fetchCourses()]);
+    let requests;
+    [lastRows, lastCourses, requests] = await Promise.all([adminListStudents(), fetchCourses(), fetchAccessRequests().catch(() => [])]);
+    lastRequests = requests.filter(q => !q.rejected_at);
     // No repintar si el admin está cambiando algo en este momento.
     if (container.querySelector('select:disabled, input:disabled')) return;
     paint(container);

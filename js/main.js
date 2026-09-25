@@ -2,20 +2,20 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v48';
-import { resolveRoute } from './router.js?v=dev101x-v48';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect } from './auth.js?v=dev101x-v48';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v48';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v48';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v48';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail } from './views/courses.js?v=dev101x-v48';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v48';
-import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v48';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v48';
-import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v48';
-import { COURSE } from './content.js?v=dev101x-v48';
-import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress } from './views/admin.js?v=dev101x-v48';
-import { startPresence } from './progress.js?v=dev101x-v48';
+import { appState, isSessionValid } from './state.js?v=dev101x-v49';
+import { resolveRoute } from './router.js?v=dev101x-v49';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect } from './auth.js?v=dev101x-v49';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v49';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v49';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v49';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v49';
+import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v49';
+import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v49';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v49';
+import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v49';
+import { COURSE } from './content.js?v=dev101x-v49';
+import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress, answerAccessRequest } from './views/admin.js?v=dev101x-v49';
+import { startPresence } from './progress.js?v=dev101x-v49';
 
 const $ = id => document.getElementById(id);
 
@@ -134,6 +134,7 @@ const ACTIONS = {
   'close-search': () => closeSearch(),
   'logout': () => { toggleProfile(false); doLogout(); },
   'open-course': el => openCourseDetail(el.dataset.id),
+  'request-access': el => requestAccess(el),
   'open-lesson': el => openLesson(el.dataset.id),
   'open-video': el => openVideo(Number(el.dataset.start) || 0),
   'video-seek': el => seekVideo(Number(el.dataset.start) || 0),
@@ -155,6 +156,8 @@ const ACTIONS = {
   'print-cheatsheet': () => printCheatSheet(),
   'open-account': () => openAccountDetails(),
   'admin-user': el => openUserDetails(el.dataset.user),
+  'admin-grant-request': el => answerAccessRequest(el, true),
+  'admin-reject-request': el => answerAccessRequest(el, false),
   'admin-reset': el => resetUserProgress(el),
   'close-modal': el => closeModal(el.dataset.target),
   'toggle-panel': el => {
@@ -291,7 +294,7 @@ revalidateSession()
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v48').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v49').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {
