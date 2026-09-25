@@ -23,3 +23,10 @@ test('las excepciones del admin mandan sobre la regla general', () => {
   // Una excepción de otro curso no afecta.
   assert.equal(courseAccess(PAID, { access_level: 'free' }, [{ course_id: 'nmap', enabled: true }]).reason, 'none');
 });
+
+test('el administrador tiene acceso a todo, incluso borradores y cursos bloqueados', () => {
+  const admin = { role: 'admin', access_level: 'free' };
+  assert.equal(courseAccess(PAID, admin).reason, 'admin');
+  assert.equal(courseAccess(DRAFT, admin).allowed, true);
+  assert.equal(courseAccess(FREE, admin, [{ course_id: 'nmap', enabled: false }]).allowed, true);
+});

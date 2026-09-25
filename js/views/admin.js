@@ -5,14 +5,14 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v42';
-import { isCloudEnabled } from '../config.js?v=dev101x-v42';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v42';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v42';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v42';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v42';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v42';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v42';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v43';
+import { isCloudEnabled } from '../config.js?v=dev101x-v43';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v43';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v43';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v43';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v43';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v43';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v43';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -68,6 +68,7 @@ function notConfiguredHtml() {
 const SELECT_CLS = 'h-8 pl-2 pr-7 rounded-lg border border-line bg-white text-xs font-semibold text-ink outline-none focus:border-accent cursor-pointer';
 
 function levelSelect(row) {
+  if (row.role === 'admin') return '<span class="inline-block px-2 py-1 rounded-lg bg-amber-100 text-amber-900 text-[11px] font-mono font-bold shrink-0" title="Los administradores tienen acceso a todos los cursos">Total</span>';
   return `
     <select data-action="admin-level" data-user="${esc(row.id)}" class="${SELECT_CLS}" aria-label="Nivel de acceso de ${esc(row.full_name || row.email)}">
       ${ACCESS_LEVELS.map(l => `<option value="${l.id}" ${row.access_level === l.id ? 'selected' : ''}>${l.label}</option>`).join('')}
@@ -90,7 +91,7 @@ function toolbarHtml(rows) {
       <span class="text-line" aria-hidden="true">•</span>
       <span class="text-ink2"><strong class="text-ink">${rows.length}</strong> registrados</span>
       <span class="text-line" aria-hidden="true">•</span>
-      <span class="text-ink2"><strong class="text-ink">${rows.filter(r => r.access_level === 'full').length}</strong> con acceso total</span>
+      <span class="text-ink2"><strong class="text-ink">${rows.filter(r => r.access_level === 'full' || r.role === 'admin').length}</strong> con acceso total</span>
     </div>
     <div class="flex items-center gap-2">
       <div class="inline-flex p-0.5 rounded-lg bg-bg border border-line/70" role="group" aria-label="Filtrar usuarios por actividad">${tabs}</div>
@@ -265,9 +266,10 @@ function userCoursesHtml(r) {
           <p class="text-[13px] font-semibold text-ink truncate">${esc(c.title)}</p>
           <p class="text-[11px] font-mono ${a.allowed ? 'text-accent' : 'text-rose-600'}">${a.allowed ? '✓' : '✕'} ${esc(a.label)}${c.is_free ? ' · curso gratis' : ''}</p>
         </div>
+        ${r.role === 'admin' ? '' : `
         <select data-action="admin-override" data-user="${esc(r.id)}" data-course="${esc(c.id)}" class="${SELECT_CLS} shrink-0" aria-label="Acceso a ${esc(c.title)}">
           ${OVERRIDES.map(o => `<option value="${o.id}" ${mode === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
-        </select>
+        </select>`}
       </li>`;
   }).join('');
 }
@@ -407,7 +409,7 @@ export function exportCsv() {
     const p = computeProgress((r.progress && r.progress.steps) || {});
     const last = lastActivity(r);
     const courses = lastCourses.map(c => (accessFor(r, c).allowed ? 'sí' : 'no'));
-    return [r.id, r.full_name || '', r.email, r.role, r.access_level === 'full' ? 'total' : 'gratis', ...courses, p.percent, p.labsDone.length,
+    return [r.id, r.full_name || '', r.email, r.role, r.role === 'admin' || r.access_level === 'full' ? 'total' : 'gratis', ...courses, p.percent, p.labsDone.length,
       STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || '', completedAt(r) || ''];
   });
   const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', 'Nivel', ...lastCourses.map(c => `Acceso ${c.id}`), 'Progreso %', 'Labs', 'Estado', 'Última actividad', 'Último login', 'Curso terminado'], rows);

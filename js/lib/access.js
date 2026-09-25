@@ -3,7 +3,7 @@
  * en Supabase, que es quien de verdad la aplica; aquí solo sirve para explicar en el panel de admin
  * por qué un alumno tiene o no acceso.
  *
- * Orden: bloqueo explícito → no · concesión explícita → sí · curso gratis y publicado → sí ·
+ * Orden: administrador → sí (todos, también los no publicados) · bloqueo explícito → no · concesión explícita → sí · curso gratis y publicado → sí ·
  * nivel 'full' y curso publicado → sí · si no → no.
  */
 export const ACCESS_LEVELS = [
@@ -12,6 +12,7 @@ export const ACCESS_LEVELS = [
 ];
 
 export const ACCESS_REASONS = {
+  admin: { label: 'Administrador', allowed: true },
   blocked: { label: 'Bloqueado', allowed: false },
   granted: { label: 'Concedido', allowed: true },
   free: { label: 'Gratis', allowed: true },
@@ -20,11 +21,12 @@ export const ACCESS_REASONS = {
   none: { label: 'Sin acceso', allowed: false }
 };
 
-// course: { id, is_free, published } · profile: { access_level } · overrides: [{ course_id, enabled }]
+// course: { id, is_free, published } · profile: { role, access_level } · overrides: [{ course_id, enabled }]
 export function courseAccess(course, profile = {}, overrides = []) {
   const override = overrides.find(o => o.course_id === course.id);
   let reason;
-  if (override && !override.enabled) reason = 'blocked';
+  if (profile.role === 'admin') reason = 'admin';
+  else if (override && !override.enabled) reason = 'blocked';
   else if (override && override.enabled) reason = 'granted';
   else if (!course.published) reason = 'unpublished';
   else if (course.is_free) reason = 'free';

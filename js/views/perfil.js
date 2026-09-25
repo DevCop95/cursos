@@ -1,14 +1,15 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v42';
-import { appState } from '../state.js?v=dev101x-v42';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v42';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v42';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v42';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v42';
-import { isAdmin } from '../auth.js?v=dev101x-v42';
-import { fetchOwnCompletions, fetchCourseProgress, fetchCourses } from '../cloud.js?v=dev101x-v42';
+import { esc } from '../lib/html.js?v=dev101x-v43';
+import { appState } from '../state.js?v=dev101x-v43';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v43';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v43';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v43';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v43';
+import { isAdmin } from '../auth.js?v=dev101x-v43';
+import { fetchOwnCompletions, fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v43';
+import { COURSE } from '../content.js?v=dev101x-v43'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -34,6 +35,20 @@ function paintBadgeCount(steps, bestStreak) {
   if (!title) return;
   const all = computeBadges(steps, { bestStreak });
   title.textContent = `Insignias · ${all.filter(b => b.earned).length}/${all.length}`;
+}
+
+// Cursos del alumno: [{ id, title, percent, done, draft }]
+function myCoursesHtml(items) {
+  if (!items.length) return '<p class="text-xs text-muted">Aún no tienes cursos. Mira el catálogo.</p>';
+  return items.map(c => `
+    <a href="#/aula-interactiva/${encodeURIComponent(c.id)}" class="flex items-center gap-3 p-2.5 -mx-1 rounded-xl hover:bg-bg transition-colors">
+      <span class="flex-1 min-w-0 flex items-center gap-2">
+        <span class="truncate text-[13px] font-semibold text-ink">${esc(c.title)}</span>
+        ${c.draft ? '<span class="px-1.5 py-px rounded bg-amber-100 text-amber-900 text-[9px] font-mono font-bold shrink-0">BORRADOR</span>' : ''}
+      </span>
+      <span class="w-20 sm:w-28 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${c.percent}%"></span></span>
+      <span class="w-14 text-right text-[11px] font-mono font-bold shrink-0 ${c.done ? 'text-accent' : c.percent ? 'text-ink2' : 'text-muted'}">${c.done ? '✓' : c.percent ? `${c.percent}%` : 'Empezar'}</span>
+    </a>`).join('');
 }
 
 export function renderPerfil(container) {
@@ -71,16 +86,19 @@ export function renderPerfil(container) {
       </section>
 
       <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
-        <div class="flex items-center justify-between gap-2 mb-3">
-          <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias</h2>
-          <a href="#/aula-interactiva/pentesting-101" class="text-[11px] font-mono font-bold text-accent hover:underline shrink-0">Ir al aula →</a>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <h2 class="text-sm font-bold text-ink">Mis cursos</h2>
+          <a href="#/explorar-cursos" class="text-[11px] font-mono font-bold text-accent hover:underline shrink-0">Catálogo →</a>
         </div>
-        <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
+        <div id="profile-courses-list" class="flex flex-col gap-0.5">${myCoursesHtml([{ id: COURSE.id, title: COURSE.title, percent: p.percent, done: p.complete }])}</div>
       </section>
 
-      <section id="profile-courses" class="hidden bg-surface p-4 sm:p-5 rounded-2xl border border-line">
-        <h2 class="text-sm font-bold text-ink mb-3">Otros cursos</h2>
-        <div id="profile-courses-list" class="flex flex-col gap-2.5"></div>
+      <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias</h2>
+          <span class="text-[11px] font-mono text-muted shrink-0 truncate max-w-[50%]">${esc(COURSE.title)}</span>
+        </div>
+        <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
       </section>
 
       <div class="grid grid-cols-2 gap-3">
@@ -107,29 +125,22 @@ export function renderPerfil(container) {
   });
   // Curso terminado según el registro del servidor (course_completions).
   fetchOwnCompletions().then(list => {
-    const done = list.find(c => c.course_id === 'pentesting-101');
+    const done = list.find(c => c.course_id === COURSE.id);
     const el = document.getElementById('profile-completed');
     if (!done || !el) return;
     el.textContent = '✓ Curso terminado';
     el.title = `Terminado el ${formatDate(done.completed_at)}`;
     el.classList.remove('hidden');
   }).catch(() => {});
-  // Progreso en los cursos guardados en la base de datos (de pago).
-  Promise.all([fetchCourseProgress(), fetchCourses()]).then(([rows, courses]) => {
-    const box = document.getElementById('profile-courses');
+  // Cursos disponibles según el servidor (can_access_course: el admin los tiene todos) con su progreso.
+  Promise.all([fetchAccessibleCourses(), fetchCourses(), fetchCourseProgress()]).then(([ids, courses, rows]) => {
     const list = document.getElementById('profile-courses-list');
-    if (!box || !list || !rows || !rows.length) return;
-    list.innerHTML = rows.map(r => {
-      const pct = Number(r.progress_percentage) || 0;
-      const title = (courses.find(c => c.id === r.course_id) || { title: r.course_id }).title;
-      return `
-        <a href="#/aula-interactiva/${encodeURIComponent(r.course_id)}" class="flex items-center gap-3 p-2.5 -mx-1 rounded-xl hover:bg-bg transition-colors">
-          <span class="flex-1 min-w-0 truncate text-[13px] font-semibold text-ink">${esc(title)}</span>
-          <span class="w-24 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${pct}%"></span></span>
-          <span class="w-12 text-right text-[11px] font-mono font-bold ${r.completed_at ? 'text-accent' : 'text-ink2'}">${r.completed_at ? '✓' : `${pct}%`}</span>
-        </a>`;
-    }).join('');
-    box.classList.remove('hidden');
+    if (!list || !Array.isArray(ids)) return;
+    list.innerHTML = myCoursesHtml(courses.filter(c => ids.includes(c.id)).map(c => {
+      if (c.id === COURSE.id) return { id: c.id, title: c.title, percent: p.percent, done: p.complete };
+      const r = (rows || []).find(x => x.course_id === c.id);
+      return { id: c.id, title: c.title, percent: r ? Number(r.progress_percentage) || 0 : 0, done: Boolean(r && r.completed_at), draft: !c.published };
+    }));
   }).catch(() => {});
 }
 
