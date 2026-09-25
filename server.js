@@ -9,7 +9,9 @@ import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.PORT) || 3000;
 const BASE_DIR = path.dirname(fileURLToPath(import.meta.url));
-const PUBLIC_PREFIXES = ['index.html', '404.html', 'manifest.json', 'sw.js', 'robots.txt', 'sitemap.xml', 'assets/', 'css/', 'js/'];
+// Lo mismo que publica GitHub Pages: la app, las páginas de cada curso, el laboratorio y .well-known.
+const COURSE_SLUGS = JSON.parse(fs.readFileSync(path.join(BASE_DIR, 'scripts/course-pages.json'), 'utf8')).courses.map(c => c.slug + '/');
+const PUBLIC_PREFIXES = ['index.html', '404.html', 'manifest.json', 'sw.js', 'robots.txt', 'sitemap.xml', 'assets/', 'css/', 'js/', 'lab-linux/', '.well-known/', ...COURSE_SLUGS];
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -23,13 +25,14 @@ const MIME_TYPES = {
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2'
+  '.woff2': 'font/woff2',
+  '.wasm': 'application/wasm'
 };
 
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'X-Frame-Options': 'DENY',
+  'X-Frame-Options': 'SAMEORIGIN', // como en producción: el aula incrusta el laboratorio Linux
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
   // Google Identity Services necesita poder abrir su popup y comunicarse con la ventana
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
@@ -51,7 +54,7 @@ const server = http.createServer((req, res) => {
   } catch (e) {
     return send(res, 400, 'Bad Request', { 'Content-Type': 'text/plain; charset=utf-8' });
   }
-  if (reqPath === '/') reqPath = '/index.html';
+  if (reqPath.endsWith('/')) reqPath += 'index.html'; // /shodan/ → /shodan/index.html, como GitHub Pages
 
   const filePath = path.resolve(BASE_DIR, '.' + reqPath);
   const relative = path.relative(BASE_DIR, filePath).split(path.sep).join('/');

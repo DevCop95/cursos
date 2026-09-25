@@ -2,21 +2,21 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v68';
-import { resolveRoute } from './router.js?v=dev101x-v68';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v68';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v68';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v68';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v68';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v68';
-import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v68';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v68';
-import { COURSE } from './content.js?v=dev101x-v68';
-import { fetchCourses } from './cloud.js?v=dev101x-v68';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v68';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v68';
-import { startPresence } from './progress.js?v=dev101x-v68';
-import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v68';
+import { appState, isSessionValid } from './state.js?v=dev101x-v69';
+import { resolveRoute } from './router.js?v=dev101x-v69';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v69';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v69';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v69';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v69';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v69';
+import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v69';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v69';
+import { COURSE } from './content.js?v=dev101x-v69';
+import { fetchCourses } from './cloud.js?v=dev101x-v69';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v69';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v69';
+import { startPresence } from './progress.js?v=dev101x-v69';
+import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v69';
 
 const $ = id => document.getElementById(id);
 
@@ -26,9 +26,9 @@ function lazy(load) {
   let p = null;
   return () => (p = p || load().catch(err => { p = null; throw err; }));
 }
-const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v68'));
-const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v68'));
-const adminView = lazy(() => import('./views/admin.js?v=dev101x-v68'));
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v69'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v69'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v69'));
 // Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
 const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
 function prefetchViews() {
@@ -369,7 +369,7 @@ revalidateSession()
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v68').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v69').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

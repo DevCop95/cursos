@@ -4,21 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Terminal Linux real para el aula (se abre dentro de un iframe). Mismo CSP que index.html. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="robots" content="noindex" />
   <title>Terminal Linux | Dev101x</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&icon_names=2d,3d,account_tree,add_circle,admin_panel_settings,arrow_forward,block,bug_report,category,check,check_circle,chevron_right,clear,close,cloud,cloud_off,code,commit,content_copy,csv,cut,description,dns,download,edit,egg,eject,error,expand,expand_more,fact_check,flag,forward,function,gavel,group,groups,hd,help,home,host,hourglass_top,http,iframe,image,info,input,insights,key,label,labs,lan,laptop_windows,lightbulb,link,list,list_alt,local_fire_department,lock,lock_open,login,logout,mail,menu,menu_book,message,more,mouse,open_in_new,output,pending,person,person_remove,play_arrow,play_circle,power_settings_new,print,psychology,query_stats,quiz,radar,radio,radio_button_unchecked,resize,rocket_launch,route,save,schedule_send,school,science,script,search,security,send,shadow,share,shield,shield_person,sleep,smart_display,sort,source,start,step,steps,storage,switch_account,sync,tab,tag,target,task_alt,terminal,tips_and_updates,title,travel_explore,tty,tune,unpublished,usb,verified,verified_user,visibility,warning,watch,wc,wifi_tethering,workspace_premium&display=block" />
+  <link rel="preload" href="/assets/fonts/dm-mono-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v69" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
-  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v68" />
-  <link rel="stylesheet" href="lab.css?v=dev101x-v68" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v69" />
+  <link rel="stylesheet" href="lab.css?v=dev101x-v69" />
   <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js" defer></script>
   <script src="v86/libv86.js" defer></script>
-  <script src="lab.js?v=dev101x-v68" defer></script>
+  <script src="lab.js?v=dev101x-v69" defer></script>
 </head>
 <body class="bg-term font-sans h-screen overflow-hidden">
   <div id="lab-start" class="h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
