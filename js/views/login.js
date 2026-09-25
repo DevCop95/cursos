@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v60';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v60';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v60';
-import { esc } from '../lib/html.js?v=dev101x-v60';
-import { avatarFor, showToast } from '../ui.js?v=dev101x-v60';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v61';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v61';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v61';
+import { esc } from '../lib/html.js?v=dev101x-v61';
+import { avatarFor, showToast } from '../ui.js?v=dev101x-v61';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -213,6 +213,31 @@ export function renderLogin(container, onSuccess) {
         </button>
       </section>
 
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">
+        <div class="flex flex-col gap-4 min-w-0">
+          <div class="flex flex-col gap-2">
+            <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">En el móvil o en el ordenador</p>
+            <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Practica donde estés</h2>
+            <p class="text-[15px] text-ink2 leading-relaxed">La consola, las lecciones y tu avance funcionan igual en el móvil. Empiezas en el ordenador y sigues desde el teléfono, sin instalar nada.</p>
+          </div>
+          <div class="flex flex-col gap-1.5" role="tablist" aria-label="Pantallas de la app">
+            ${PHONE_SCREENS.map((s, i) => `
+              <button type="button" role="tab" data-phone-tab="${i}" aria-selected="${i === 0}" class="phone-tab">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">${s.icon}</span>
+                <span class="flex flex-col text-left min-w-0">
+                  <span class="text-sm font-semibold text-ink">${esc(s.title)}</span>
+                  <span class="text-xs text-muted">${esc(s.text)}</span>
+                </span>
+              </button>`).join('')}
+          </div>
+        </div>
+        <button type="button" class="phone-frame justify-self-center" data-phone-next aria-label="Ver la siguiente pantalla">
+          <span class="phone-screen">
+            ${PHONE_SCREENS.map((s, i) => `<img src="${s.img}" alt="${esc(s.alt)}" width="488" height="1055" loading="lazy" decoding="async" class="phone-shot${i === 0 ? ' is-active' : ''}" data-phone-shot="${i}" />`).join('')}
+          </span>
+        </button>
+      </section>
+
       <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8">
         <h2 class="text-base font-bold text-ink mb-3">Temario</h2>
         <ol class="flex flex-col divide-y divide-line/70">
@@ -229,4 +254,44 @@ export function renderLogin(container, onSuccess) {
   `;
   if (isCloudEnabled()) paintActions();
   else mountGoogleButton();
+  initPhoneShowcase(container);
+}
+
+// ---------------------------------------------------------------------------
+// Móvil de muestra: capturas reales de la app. Se cambian tocando las pestañas o el móvil; pasan solas
+// mientras se ve la sección, hasta que el usuario toca algo (y nunca con "reducir movimiento").
+// ---------------------------------------------------------------------------
+const PHONE_SCREENS = [
+  { icon: 'terminal', title: 'La consola', text: 'Escribe comandos de Nmap y ve el resultado al momento.', img: 'assets/landing/movil-consola.webp', alt: 'Consola del laboratorio en el móvil con un escaneo de Nmap' },
+  { icon: 'menu_book', title: 'Las lecciones', text: 'Cada lección con su objetivo, práctica y pregunta.', img: 'assets/landing/movil-leccion.webp', alt: 'Ficha de una lección en el móvil' },
+  { icon: 'school', title: 'Tu avance', text: 'Continúa donde lo dejaste, en cualquier dispositivo.', img: 'assets/landing/movil-cursos.webp', alt: 'Pantalla Mis cursos en el móvil con el avance del curso' }
+];
+
+function initPhoneShowcase(container) {
+  const tabs = [...container.querySelectorAll('[data-phone-tab]')];
+  const shots = [...container.querySelectorAll('[data-phone-shot]')];
+  const phone = container.querySelector('[data-phone-next]');
+  if (!tabs.length || !phone) return;
+  let current = 0;
+  let timer = null;
+  const show = i => {
+    current = (i + shots.length) % shots.length;
+    shots.forEach((s, k) => s.classList.toggle('is-active', k === current));
+    tabs.forEach((t, k) => t.setAttribute('aria-selected', String(k === current)));
+  };
+  const stop = () => { clearInterval(timer); timer = null; };
+  tabs.forEach(t => t.addEventListener('click', () => { stop(); show(Number(t.dataset.phoneTab)); }));
+  phone.addEventListener('click', () => { stop(); show(current + 1); });
+
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !('IntersectionObserver' in window)) return;
+  let touched = false;
+  [...tabs, phone].forEach(el => el.addEventListener('click', () => { touched = true; }));
+  const io = new IntersectionObserver(([entry]) => {
+    if (!phone.isConnected) { io.disconnect(); stop(); return; }
+    if (entry.isIntersecting && !touched && !timer) {
+      timer = setInterval(() => { if (!phone.isConnected) { stop(); io.disconnect(); return; } show(current + 1); }, 4500);
+    } else if (!entry.isIntersecting) stop();
+  }, { threshold: 0.5 });
+  io.observe(phone);
 }

@@ -5,16 +5,16 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v60';
-import { isCloudEnabled } from '../config.js?v=dev101x-v60';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v60';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v60';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v60';
-import { rankView } from '../lib/ranks.js?v=dev101x-v60';
-import { openAdminThread } from './messages.js?v=dev101x-v60';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v60';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v60';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v60';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v61';
+import { isCloudEnabled } from '../config.js?v=dev101x-v61';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v61';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v61';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v61';
+import { rankView } from '../lib/ranks.js?v=dev101x-v61';
+import { openAdminThread } from './messages.js?v=dev101x-v61';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v61';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v61';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v61';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [

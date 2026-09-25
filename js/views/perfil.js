@@ -1,16 +1,16 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v60';
-import { appState } from '../state.js?v=dev101x-v60';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v60';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v60';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v60';
-import { isAdmin } from '../auth.js?v=dev101x-v60';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v60';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v60';
-import { COURSE } from '../content.js?v=dev101x-v60';
-import { paintResume } from './resume.js?v=dev101x-v60'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v61';
+import { appState } from '../state.js?v=dev101x-v61';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v61';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v61';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v61';
+import { isAdmin } from '../auth.js?v=dev101x-v61';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v61';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v61';
+import { COURSE } from '../content.js?v=dev101x-v61';
+import { paintResume } from './resume.js?v=dev101x-v61'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
