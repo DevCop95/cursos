@@ -5,14 +5,14 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v47';
-import { isCloudEnabled } from '../config.js?v=dev101x-v47';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v47';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v47';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress } from '../cloud.js?v=dev101x-v47';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v47';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v47';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v47';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v48';
+import { isCloudEnabled } from '../config.js?v=dev101x-v48';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v48';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v48';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress } from '../cloud.js?v=dev101x-v48';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v48';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v48';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v48';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -220,7 +220,6 @@ export async function renderAdmin(container) {
           <p class="p-8 text-sm text-muted text-center">Cargando alumnos…</p>
         </div>
       </section>
-      <p class="text-[11px] text-muted px-1"><strong class="text-ink2">Gratis</strong>: solo cursos gratuitos · <strong class="text-ink2">Total</strong>: todos los cursos publicados. Pulsa un alumno para conceder o bloquear cursos concretos.</p>
 
       <h2 class="text-base font-bold text-ink mt-4 px-1">Cursos</h2>
       <section class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden">

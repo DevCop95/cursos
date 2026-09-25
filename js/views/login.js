@@ -4,11 +4,12 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v47';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v47';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v47';
-import { esc } from '../lib/html.js?v=dev101x-v47';
-import { avatarFor, showToast } from '../ui.js?v=dev101x-v47';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v48';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v48';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v48';
+import { esc } from '../lib/html.js?v=dev101x-v48';
+import { avatarFor, showToast } from '../ui.js?v=dev101x-v48';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v48';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -49,10 +50,13 @@ function accountHtml(acc) {
       <span class="whitespace-nowrap">Continuar como <strong class="font-semibold">${esc(first)}</strong></span>
       <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">arrow_forward</span>
     </button>
-    <div class="flex items-center gap-2 text-[11px] text-muted pl-1">
-      <button type="button" data-action="google-login" data-mode="other" class="hover:text-accent hover:underline underline-offset-2">Usar otra cuenta</button>
-      <span aria-hidden="true">·</span>
-      <button type="button" data-action="forget-account" class="hover:text-ink hover:underline underline-offset-2">No soy yo</button>
+    <div class="flex items-center gap-2 flex-wrap">
+      <button type="button" data-action="google-login" data-mode="other" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/70 border border-line hover:border-accent/60 hover:text-accent text-[12px] font-semibold text-ink2 transition-colors">
+        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">switch_account</span>Usar otra cuenta
+      </button>
+      <button type="button" data-action="forget-account" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/70 border border-line hover:border-rose-300 hover:text-rose-600 text-[12px] font-semibold text-ink2 transition-colors">
+        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">person_remove</span>No soy yo
+      </button>
     </div>`;
 }
 
@@ -196,7 +200,9 @@ export function renderLogin(container, onSuccess) {
           <div class="flex flex-col gap-2.5 max-w-[380px]">
             <div id="login-actions" class="flex flex-col gap-2 min-h-[44px]"></div>
             <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
-            <p class="text-[11px] text-muted">Solo usamos tu nombre, correo y foto de Google.</p>
+            <p class="self-start inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-900">
+              <span class="material-symbols-outlined text-[15px] text-accent" aria-hidden="true">verified_user</span>Solo usamos tu nombre, correo y foto de Google.
+            </p>
           </div>
         </div>
         <button type="button" data-action="open-video" data-start="0" class="group relative w-full aspect-video rounded-2xl overflow-hidden bg-term text-left" aria-label="Ver el video de la clase">
@@ -219,8 +225,32 @@ export function renderLogin(container, onSuccess) {
         </ol>
       </section>
 
-      <p class="text-center text-[11px] text-muted px-4 pb-2">Todo se practica contra un equipo simulado. Fuera del laboratorio, úsalo solo en sistemas con autorización.</p>
-      <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos: <a href="/pentesting-nmap/" class="font-semibold text-ink2 hover:text-accent">Pentesting 101 con Nmap (gratis)</a> · <a href="/git-github/" class="font-semibold text-ink2 hover:text-accent">Git y GitHub desde cero (premium)</a></p>
+      <section class="w-full" aria-labelledby="landing-courses">
+        <h2 id="landing-courses" class="text-base font-bold text-ink mb-3 px-1">Cursos</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <a href="/pentesting-nmap/" class="landing-card group rounded-2xl p-4 flex items-center gap-3 hover:border-accent/60 transition-colors">
+            <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">terminal</span></span>
+            <span class="min-w-0 flex flex-col gap-1">
+              <span class="text-[13px] font-bold text-ink leading-snug group-hover:text-accent">Pentesting 101 con Nmap</span>
+              <span class="self-start px-1.5 py-px rounded-md bg-emerald-50 text-accent border border-emerald-200 font-mono text-[10px] font-bold">GRATIS</span>
+            </span>
+          </a>
+          <a href="/git-github/" class="landing-card group rounded-2xl p-4 flex items-center gap-3 hover:border-accent/60 transition-colors">
+            <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">account_tree</span></span>
+            <span class="min-w-0 flex flex-col gap-1">
+              <span class="text-[13px] font-bold text-ink leading-snug group-hover:text-accent">Git y GitHub desde cero</span>
+              <span class="self-start px-1.5 py-px rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-mono text-[10px] font-bold">PREMIUM</span>
+            </span>
+          </a>
+          <div class="landing-card rounded-2xl p-4 flex items-center gap-3">
+            <img src="${UPCOMING.icon}" alt="" width="44" height="44" class="w-11 h-11 rounded-xl shrink-0" loading="lazy" />
+            <span class="min-w-0 flex flex-col gap-1">
+              <span class="text-[13px] font-bold text-ink leading-snug">${esc(UPCOMING.short)}</span>
+              <span class="self-start px-1.5 py-px rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-mono text-[10px] font-bold">PRÓXIMO LANZAMIENTO</span>
+            </span>
+          </div>
+        </div>
+      </section>
       <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a></p>
     </div>
   `;

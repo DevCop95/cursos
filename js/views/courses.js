@@ -1,14 +1,15 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v47';
-import { appState } from '../state.js?v=dev101x-v47';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v47';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v47';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v47';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js?v=dev101x-v47';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v47';
-import { openDialog } from '../ui.js?v=dev101x-v47';
+import { esc } from '../lib/html.js?v=dev101x-v48';
+import { appState } from '../state.js?v=dev101x-v48';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v48';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v48';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v48';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js?v=dev101x-v48';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v48';
+import { openDialog } from '../ui.js?v=dev101x-v48';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v48';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
@@ -276,11 +277,24 @@ export function renderExplorar(container) {
       <p class="mt-auto text-xs text-muted">Próximamente</p>
     </article>`;
 
+  // Próximo lanzamiento: misma tarjeta que los demás, con el icono de la herramienta y sin botón de acceso.
   const soonTile = `
-    <div class="rounded-2xl border-2 border-dashed border-line flex flex-col items-center justify-center gap-2 p-6 min-h-[220px] text-center text-muted">
-      <span class="material-symbols-outlined text-3xl" aria-hidden="true">hourglass_top</span>
-      <span class="text-sm font-semibold">Más cursos próximamente</span>
-    </div>`;
+    <article class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden flex flex-col">
+      <div class="relative bg-term px-4 py-4 flex items-start justify-between gap-3 overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
+        <div class="relative flex flex-col gap-2 min-w-0">
+          <span class="self-start px-2 py-0.5 rounded-md bg-rose-400/15 text-rose-300 border border-rose-400/30 font-mono text-[10px] font-bold">PRÓXIMO LANZAMIENTO</span>
+          <img src="${UPCOMING.icon}" alt="" width="30" height="30" class="w-[30px] h-[30px] rounded-md" loading="lazy" />
+        </div>
+      </div>
+      <div class="p-4 flex flex-col gap-3 flex-1">
+        <div class="flex flex-col gap-1">
+          <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(UPCOMING.title)}</h3>
+          <p class="text-xs text-muted leading-relaxed line-clamp-2">${esc(UPCOMING.description)}</p>
+        </div>
+        <span class="mt-auto h-10 rounded-xl bg-bg border border-line text-[13px] font-semibold text-muted inline-flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">hourglass_top</span>Próximamente</span>
+      </div>
+    </article>`;
 
   container.innerHTML = `
     <div class="flex flex-col w-full py-4 sm:py-6 gap-5 max-w-5xl mx-auto">
@@ -307,7 +321,7 @@ export function renderExplorar(container) {
     const grid = document.getElementById('catalog-grid');
     if (!grid) return;
     const upcoming = list.filter(c => c.published && !COURSES.some(local => local.id === c.id));
-    grid.innerHTML = COURSES.map(tile).join('') + (upcoming.length ? upcoming.map(upcomingTile).join('') : soonTile);
+    grid.innerHTML = COURSES.map(tile).join('') + upcoming.map(upcomingTile).join('') + soonTile;
     const count = document.getElementById('catalog-count');
     if (count) count.innerHTML = `<strong class="text-ink">${COURSES.length + upcoming.length}</strong> <span class="text-muted">cursos</span>`;
   }).catch(() => {});

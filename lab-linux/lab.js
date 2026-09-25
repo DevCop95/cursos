@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const IMG = 'img-v1/';
-  const HOOK_URL = 'lab-hook.sh?v=dev101x-v47';
+  const HOOK_URL = 'lab-hook.sh?v=dev101x-v48';
   const HOOK_PATH = '/tmp/.dev101x-lab.sh';
   const $ = id => document.getElementById(id);
   let emulator = null;
@@ -147,7 +147,10 @@
       }
     });
 
-    emulator.add_listener('emulator-ready', () => {
+    emulator.add_listener('emulator-ready', async () => {
+      // xterm mide el ancho de cada letra al abrirse: con otra fuente (DM Mono aún sin cargar) las columnas
+      // quedan descuadradas. Se espera a la fuente, como mucho 2 s.
+      try { await Promise.race([document.fonts.load('13px "DM Mono"'), new Promise(r => setTimeout(r, 2000))]); } catch (e) { /* sigue */ }
       $('lab-start').classList.add('hidden');
       $('lab-term').classList.remove('hidden');
       term = new window.Terminal({
