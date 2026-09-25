@@ -91,6 +91,8 @@ html, body {
   transition: opacity 0.45s ease;
 }
 .phone-shot.is-active { opacity: 1; }
+/* Popup de acceso: los botones de Google centrados */
+.login-modal-actions > * { align-self: center; }
 .phone-tab {
   display: flex;
   align-items: flex-start;

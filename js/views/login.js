@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v61';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v61';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v61';
-import { esc } from '../lib/html.js?v=dev101x-v61';
-import { avatarFor, showToast } from '../ui.js?v=dev101x-v61';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v62';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v62';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v62';
+import { esc } from '../lib/html.js?v=dev101x-v62';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v62';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -70,6 +70,7 @@ function paintActions() {
   const box = document.getElementById('login-actions');
   const statusEl = document.getElementById('login-status');
   if (!box) return;
+  if (loginStatus) openLoginModal();
 
   if (statusEl) {
     const error = loginStatus && loginStatus.type === 'error' ? loginStatus.text : '';
@@ -176,49 +177,30 @@ async function mountGoogleButton() {
 }
 
 // ---------------------------------------------------------------------------
-// Página pública (antes del login): lo esencial del curso y el acceso.
+// Página pública (antes del login): el móvil con la app como portada, el curso y el acceso en un popup.
 // ---------------------------------------------------------------------------
 export function renderLogin(container, onSuccess) {
   onLoginSuccess = onSuccess;
   const lessons = COURSE.syllabus.reduce((n, m) => n + m.lessons.length, 0);
 
   container.innerHTML = `
-    <div class="relative z-10 w-full max-w-4xl mx-auto flex flex-col gap-5">
-      <div class="flex items-center gap-2.5 px-1">
-        <img src="assets/icon-192.png" alt="" class="w-8 h-8 rounded-lg pixelated" />
-        <span class="font-extrabold text-lg tracking-tight text-ink">Dev<em class="not-italic text-accent">101x</em></span>
+    <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col gap-5">
+      <div class="flex items-center justify-between gap-3 px-1">
+        <div class="flex items-center gap-2.5">
+          <img src="assets/icon-192.png" alt="" class="w-8 h-8 rounded-lg pixelated" />
+          <span class="font-extrabold text-lg tracking-tight text-ink">Dev<em class="not-italic text-accent">101x</em></span>
+        </div>
+        <button type="button" data-open-login class="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-white border border-line hover:border-accent/60 hover:text-accent text-sm font-semibold text-ink transition-colors">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">login</span>Entrar
+        </button>
       </div>
 
-      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center modal-enter">
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-12 items-center modal-enter">
         <div class="flex flex-col gap-5 min-w-0">
           <div class="flex flex-col gap-3">
-            <h1 class="text-[32px] sm:text-[40px] leading-[1.05] font-extrabold text-ink tracking-tight">Pentesting 101</h1>
-            <p class="text-[15px] text-ink2 leading-relaxed">Aprende a reconocer una red y a escanear puertos con Nmap desde Windows. Practicas en una consola dentro del navegador, sin instalar nada.</p>
-            <p class="text-xs font-mono text-muted">${esc(COURSE.duration.toLowerCase())} · ${lessons} lecciones · en español</p>
-          </div>
-          <div class="flex flex-col gap-2.5 max-w-[380px]">
-            <div id="login-actions" class="flex flex-col gap-2 min-h-[44px]"></div>
-            <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
-            <p class="self-start inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-900">
-              <span class="material-symbols-outlined text-[15px] text-accent" aria-hidden="true">verified_user</span>Solo usamos tu nombre, correo y foto de Google.
-            </p>
-          </div>
-        </div>
-        <button type="button" data-action="open-video" data-start="0" class="group relative w-full aspect-video rounded-2xl overflow-hidden bg-term text-left" aria-label="Ver el video de la clase">
-          <img src="https://i.ytimg.com/vi/${COURSE_VIDEO.id}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" decoding="async" />
-          <span class="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors"></span>
-          <span class="absolute inset-0 flex items-center justify-center">
-            <span class="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-accent text-4xl" aria-hidden="true">play_arrow</span></span>
-          </span>
-        </button>
-      </section>
-
-      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">
-        <div class="flex flex-col gap-4 min-w-0">
-          <div class="flex flex-col gap-2">
-            <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">En el móvil o en el ordenador</p>
-            <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Practica donde estés</h2>
-            <p class="text-[15px] text-ink2 leading-relaxed">La consola, las lecciones y tu avance funcionan igual en el móvil. Empiezas en el ordenador y sigues desde el teléfono, sin instalar nada.</p>
+            <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
+            <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Practica donde estés</h1>
+            <p class="text-[15px] text-ink2 leading-relaxed">Aprende pentesting con una consola dentro del navegador. La consola, las lecciones y tu avance funcionan igual en el móvil y en el ordenador, sin instalar nada.</p>
           </div>
           <div class="flex flex-col gap-1.5" role="tablist" aria-label="Pantallas de la app">
             ${PHONE_SCREENS.map((s, i) => `
@@ -230,10 +212,37 @@ export function renderLogin(container, onSuccess) {
                 </span>
               </button>`).join('')}
           </div>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button type="button" data-open-login class="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
+              Empezar gratis<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+            </button>
+            <span class="text-xs text-muted">Con tu cuenta de Google</span>
+          </div>
         </div>
         <button type="button" class="phone-frame justify-self-center" data-phone-next aria-label="Ver la siguiente pantalla">
           <span class="phone-screen">
-            ${PHONE_SCREENS.map((s, i) => `<img src="${s.img}" alt="${esc(s.alt)}" width="488" height="1055" loading="lazy" decoding="async" class="phone-shot${i === 0 ? ' is-active' : ''}" data-phone-shot="${i}" />`).join('')}
+            ${PHONE_SCREENS.map((s, i) => `<img src="${s.img}" alt="${esc(s.alt)}" width="488" height="1055" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" class="phone-shot${i === 0 ? ' is-active' : ''}" data-phone-shot="${i}" />`).join('')}
+          </span>
+        </button>
+      </section>
+
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div class="flex flex-col gap-4 min-w-0">
+          <div class="flex flex-col gap-2">
+            <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Curso gratis</p>
+            <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Pentesting 101</h2>
+            <p class="text-[15px] text-ink2 leading-relaxed">Aprende a reconocer una red y a escanear puertos con Nmap desde Windows, lección a lección y con laboratorios.</p>
+            <p class="text-xs font-mono text-muted">${esc(COURSE.duration.toLowerCase())} · ${lessons} lecciones · en español</p>
+          </div>
+          <button type="button" data-open-login class="self-start inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-white border border-line hover:border-accent/60 hover:text-accent text-sm font-semibold text-ink transition-colors">
+            Empezar el curso<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+          </button>
+        </div>
+        <button type="button" data-action="open-video" data-start="0" class="group relative w-full aspect-video rounded-2xl overflow-hidden bg-term text-left" aria-label="Ver el video de la clase">
+          <img src="https://i.ytimg.com/vi/${COURSE_VIDEO.id}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
+          <span class="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors"></span>
+          <span class="absolute inset-0 flex items-center justify-center">
+            <span class="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-accent text-4xl" aria-hidden="true">play_arrow</span></span>
           </span>
         </button>
       </section>
@@ -251,10 +260,38 @@ export function renderLogin(container, onSuccess) {
 
       <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a></p>
     </div>
+
+    <div id="login-modal" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="login-modal-title" class="relative w-full sm:max-w-sm bg-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-line modal-enter p-6 sm:p-7 flex flex-col gap-5">
+        <button type="button" data-action="close-modal" data-target="login-modal" class="absolute top-3 right-3 w-8 h-8 rounded-lg text-muted hover:text-ink hover:bg-bg flex items-center justify-center" aria-label="Cerrar">
+          <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
+        </button>
+        <div class="flex flex-col items-center text-center gap-2 pt-1">
+          <img src="assets/icon-192.png" alt="" class="w-12 h-12 rounded-xl pixelated" />
+          <h2 id="login-modal-title" class="text-xl font-extrabold text-ink tracking-tight">Entra en Dev101x</h2>
+          <p class="text-sm text-ink2">Usa tu cuenta de Google para guardar tu avance y seguir en cualquier dispositivo.</p>
+        </div>
+        <div id="login-actions" class="login-modal-actions flex flex-col items-center gap-2 min-h-[44px]"></div>
+        <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+        <p class="self-center inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-900">
+          <span class="material-symbols-outlined text-[15px] text-accent" aria-hidden="true">verified_user</span>Solo usamos tu nombre, correo y foto de Google.
+        </p>
+      </div>
+    </div>
   `;
   if (isCloudEnabled()) paintActions();
   else mountGoogleButton();
   initPhoneShowcase(container);
+  container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
+  if (loginStatus) openLoginModal();
+}
+
+function openLoginModal() {
+  const m = document.getElementById('login-modal');
+  if (!m || !m.classList.contains('hidden')) return;
+  openModal('login-modal');
+  const main = m.querySelector('#login-actions button');
+  if (main) main.focus();
 }
 
 // ---------------------------------------------------------------------------
