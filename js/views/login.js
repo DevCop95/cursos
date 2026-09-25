@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v66';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v66';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v66';
-import { esc } from '../lib/html.js?v=dev101x-v66';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v66';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v67';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v67';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v67';
+import { esc } from '../lib/html.js?v=dev101x-v67';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v67';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -130,10 +130,22 @@ function setGsiStatus(el, message, tone) {
   el.replaceChildren(span);
 }
 
+// La librería de Google solo hace falta en este modo: se descarga aquí y no en cada visita (el modo nube
+// entra por la redirección de Supabase).
+function loadGoogleIdentity() {
+  if (document.querySelector('script[data-gsi]')) return;
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.dataset.gsi = '1';
+  document.head.appendChild(s);
+}
+
 async function mountGoogleButton() {
   const el = document.getElementById('login-actions');
   if (!el) return;
   el.innerHTML = `<div class="w-full h-12 flex items-center justify-center gap-3 rounded-xl bg-white border border-line text-sm text-ink2">${SPINNER}<span>Cargando Google…</span></div>`;
+  loadGoogleIdentity();
 
   for (let i = 0; i < 40 && !(window.google && window.google.accounts && window.google.accounts.id); i++) {
     await new Promise(r => setTimeout(r, 100));

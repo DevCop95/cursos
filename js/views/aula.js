@@ -1,15 +1,15 @@
 /**
  * Vista: Aula interactiva (terminal simulada, ficha técnica del comando, recursos de Nmap y temario).
  */
-import { esc } from '../lib/html.js?v=dev101x-v66';
-import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v66';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v66';
-import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v66';
-import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v66';
-import { showToast, openDialog } from '../ui.js?v=dev101x-v66';
-import { isCloudEnabled } from '../config.js?v=dev101x-v66';
-import * as cloud from '../cloud.js?v=dev101x-v66';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v66';
+import { esc } from '../lib/html.js?v=dev101x-v67';
+import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v67';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v67';
+import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v67';
+import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v67';
+import { showToast, openDialog } from '../ui.js?v=dev101x-v67';
+import { isCloudEnabled } from '../config.js?v=dev101x-v67';
+import * as cloud from '../cloud.js?v=dev101x-v67';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v67';
 
 const LINE_CLASSES = {
   error: 'text-red-400',
