@@ -3,12 +3,12 @@
  * (guardado por usuario en este navegador). La primera vez solo se anota; si luego sube, se muestra una ventana.
  * Se guarda el nivel más alto visto: reiniciar un curso y volver a subir no repite el aviso.
  */
-import { appState, isSessionValid } from '../state.js?v=dev101x-v67';
-import { isCloudEnabled } from '../config.js?v=dev101x-v67';
-import { fetchUserStats } from '../cloud.js?v=dev101x-v67';
-import { rankView, rankUpFrom } from '../lib/ranks.js?v=dev101x-v67';
-import { openDialog } from '../ui.js?v=dev101x-v67';
-import { esc } from '../lib/html.js?v=dev101x-v67';
+import { appState, isSessionValid } from '../state.js?v=dev101x-v68';
+import { isCloudEnabled } from '../config.js?v=dev101x-v68';
+import { fetchUserStats } from '../cloud.js?v=dev101x-v68';
+import { rankView, rankUpFrom } from '../lib/ranks.js?v=dev101x-v68';
+import { openDialog } from '../ui.js?v=dev101x-v68';
+import { esc } from '../lib/html.js?v=dev101x-v68';
 
 const seenKey = userId => `dev101x_seen_rank:${userId}`;
 let timer = null;

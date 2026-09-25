@@ -4,11 +4,14 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v67';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v67';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v67';
-import { esc } from '../lib/html.js?v=dev101x-v67';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v67';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v68';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v68';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v68';
+import { esc } from '../lib/html.js?v=dev101x-v68';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v68';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v68';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v68';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v68';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -270,6 +273,8 @@ export function renderLogin(container, onSuccess) {
         </ol>
       </section>
 
+      ${moreCoursesHtml()}
+
       <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a></p>
     </div>
 
@@ -304,6 +309,45 @@ function openLoginModal() {
   openModal('login-modal');
   const main = m.querySelector('#login-actions button');
   if (main) main.focus();
+}
+
+// ---------------------------------------------------------------------------
+// "Más cursos": el resto del catálogo (datos públicos generados por npm run pages) y el próximo lanzamiento.
+// Cada ficha lleva a la página pública del curso.
+// ---------------------------------------------------------------------------
+function moreCourseIcon(c) {
+  return c.logo
+    ? `<img src="${esc(c.logo)}" alt="" width="28" height="28" loading="lazy" class="w-7 h-7 object-contain" />`
+    : `<span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
+}
+
+function moreCoursesHtml() {
+  const others = PUBLIC_COURSES.filter(c => c.id !== COURSE.id);
+  if (!others.length && !UPCOMING) return '';
+  const tile = c => `
+    <a href="/${esc(c.slug)}/" class="group flex items-center gap-3 p-3 rounded-2xl border border-line bg-white/60 hover:border-accent/60 hover:bg-white transition-colors min-w-0">
+      <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0">${moreCourseIcon(c)}</span>
+      <span class="flex flex-col min-w-0">
+        <span class="text-sm font-semibold text-ink leading-snug line-clamp-2 group-hover:text-accent">${esc(c.title)}</span>
+        <span class="text-[11px] font-mono text-muted truncate"><strong class="${c.free ? 'text-accent' : 'text-amber-700'} font-bold">${c.free ? 'GRATIS' : 'PREMIUM'}</strong> · ${c.lessons} lecciones · ${c.labs} labs</span>
+      </span>
+    </a>`;
+  const soon = UPCOMING ? `
+    <div class="flex items-center gap-3 p-3 rounded-2xl border border-dashed border-line min-w-0" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
+      <span class="w-11 h-11 rounded-xl bg-white border border-line flex items-center justify-center shrink-0"><img src="${esc(UPCOMING.icon)}" alt="" width="26" height="26" loading="lazy" class="w-[26px] h-[26px] object-contain" /></span>
+      <span class="flex flex-col min-w-0">
+        <span class="text-sm font-semibold text-ink2 leading-snug line-clamp-2">${esc(UPCOMING.short || UPCOMING.title)}</span>
+        <span class="text-[11px] font-mono text-muted truncate">PRÓXIMAMENTE</span>
+      </span>
+    </div>` : '';
+  return `
+      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-4">
+          <h2 class="text-base font-bold text-ink">Más cursos</h2>
+          <span class="text-[11px] text-muted">Los premium se solicitan desde tu cuenta</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">${others.map(tile).join('')}${soon}</div>
+      </section>`;
 }
 
 // ---------------------------------------------------------------------------

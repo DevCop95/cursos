@@ -84,7 +84,8 @@
         }
       ],
       "labs": 5,
-      "videoAuthor": "Contando Bits"
+      "videoAuthor": "Contando Bits",
+      "logo": "assets/shodan.png"
     }
   ]
 }

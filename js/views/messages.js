@@ -4,10 +4,10 @@
  *  - Admin: la misma conversación para cualquier alumno (panel de administración), con respuesta.
  * Los mensajes de revocación de un curso se destacan en rojo. Todo el texto se escapa con esc().
  */
-import { esc } from '../lib/html.js?v=dev101x-v67';
-import { appState } from '../state.js?v=dev101x-v67';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v67';
-import { fetchMessages, sendMessage, adminSendMessage, markMessagesRead } from '../cloud.js?v=dev101x-v67';
+import { esc } from '../lib/html.js?v=dev101x-v68';
+import { appState } from '../state.js?v=dev101x-v68';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v68';
+import { fetchMessages, sendMessage, adminSendMessage, markMessagesRead } from '../cloud.js?v=dev101x-v68';
 
 const MAX = 1000;
 
