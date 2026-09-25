@@ -1,16 +1,16 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v57';
-import { appState } from '../state.js?v=dev101x-v57';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v57';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v57';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v57';
-import { isAdmin } from '../auth.js?v=dev101x-v57';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v57';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v57';
-import { COURSE } from '../content.js?v=dev101x-v57';
-import { paintResume } from './resume.js?v=dev101x-v57'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v58';
+import { appState } from '../state.js?v=dev101x-v58';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v58';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v58';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v58';
+import { isAdmin } from '../auth.js?v=dev101x-v58';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v58';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v58';
+import { COURSE } from '../content.js?v=dev101x-v58';
+import { paintResume } from './resume.js?v=dev101x-v58'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -137,7 +137,7 @@ export function renderPerfil(container) {
             <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${average(initial)}%</span>
           </div>
         </div>
-        <div id="profile-rank-bar" class="hidden relative px-5 pb-4" title="Cada curso vale 150 puntos: tu % de avance, o 150 al terminarlo. Los rangos altos llegarán con más cursos."></div>
+        <div id="profile-rank-bar" class="hidden relative px-5 pb-4" title="Cada curso vale 150 puntos: tu % de avance, o 150 al terminarlo. Cada rango equivale a 3 cursos terminados."></div>
       </section>
 
       <div id="resume-card" class="hidden"></div>

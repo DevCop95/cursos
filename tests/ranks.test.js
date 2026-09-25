@@ -12,14 +12,14 @@ test('rango: avance hacia Script Kiddie (450 pts = los 3 cursos actuales)', () =
 });
 
 test('rango: con los 3 cursos se entra justo en Script Kiddie y el siguiente es Hacker', () => {
-  const v = rankView({ points: 450, rank: 'Script Kiddie', rank_from: 450, next_rank: 'Hacker', next_at: 1500 });
+  const v = rankView({ points: 450, rank: 'Script Kiddie', rank_from: 450, next_rank: 'Hacker', next_at: 900 });
   assert.equal(v.name, 'Script Kiddie');
   assert.equal(v.pct, 0);
-  assert.equal(v.remaining, 1050);
+  assert.equal(v.remaining, 450);
 });
 
 test('rango: el último rango queda al 100 % y sin siguiente', () => {
-  const v = rankView({ points: 16000, rank: 'Omniscient', rank_from: 15000, next_rank: null, next_at: null });
+  const v = rankView({ points: 2800, rank: 'Omniscient', rank_from: 2700, next_rank: null, next_at: null });
   assert.equal(v.pct, 100);
   assert.equal(v.next, null);
   assert.equal(v.remaining, 0);

@@ -1,16 +1,16 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v57';
-import { appState } from '../state.js?v=dev101x-v57';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v57';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v57';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v57';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v57';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v57';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v57';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v57';
-import { paintResume } from './resume.js?v=dev101x-v57';
+import { esc } from '../lib/html.js?v=dev101x-v58';
+import { appState } from '../state.js?v=dev101x-v58';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v58';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v58';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v58';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v58';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v58';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v58';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v58';
+import { paintResume } from './resume.js?v=dev101x-v58';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
@@ -66,7 +66,7 @@ function dbTile(c, progress, content) {
   const cta = pct === 100 ? 'Repasar' : pct > 0 ? 'Continuar' : 'Empezar';
   const labs = content && Array.isArray(content.labs) ? content.labs.length : 0;
   return `
-    <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
+    <article data-db-course class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
       <div class="relative bg-term px-4 py-4 flex items-center justify-between gap-3 overflow-hidden">
         <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
@@ -168,19 +168,20 @@ export function renderMisCursos(container) {
     </div>
   `;
   paintResume(document.getElementById('resume-card'));
+  // Al entrar la vista se pinta más de una vez: cada carga solo escribe en SU rejilla (si ya se reemplazó, se descarta).
+  const myGrid = document.getElementById('my-courses-grid');
   // Cursos de pago (contenido en Supabase) a los que el alumno tiene acceso.
   Promise.all([fetchCourses(), fetchCourseProgress().catch(() => [])]).then(([courses, progress]) => {
     rememberCourses(courses);
-    const grid = document.getElementById('my-courses-grid');
-    if (!grid) return;
+    if (!myGrid.isConnected) return null;
     const mine = courses.filter(c => c.has_content && !COURSES.some(l => l.id === c.id) && appState.enabledCourses.includes(c.id));
     if (!mine.length) return null;
     return Promise.all(mine.map(c => dbContent.has(c.id)
       ? dbContent.get(c.id)
       : fetchCourseContent(c.id).then(ct => { if (ct) dbContent.set(c.id, ct); return ct; }).catch(() => null)
     )).then(contents => {
-      const grid2 = document.getElementById('my-courses-grid');
-      if (!grid2) return;
+      const grid2 = myGrid;
+      if (!grid2.isConnected || grid2.querySelector('[data-db-course]')) return;
       const explore = grid2.querySelector('a[href="#/explorar-cursos"]');
       const html = mine.map((c, i) => dbTile(c, (progress || []).find(r => r.course_id === c.id), contents[i])).join('');
       if (explore) explore.insertAdjacentHTML('beforebegin', html);

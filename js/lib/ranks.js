@@ -18,7 +18,7 @@ export const courseIcon = id => COURSE_ICONS[id] || 'school';
 
 /**
  * Datos para pintar el rango a partir de lo que devuelve user_stats (progresión larga, estilo HTB: cada curso
- * vale 150 puntos y Script Kiddie empieza en 450). rank_from y next_at son puntos.
+ * vale 150 puntos y cada rango son 3 cursos: 450 puntos). rank_from y next_at son puntos.
  * { name, icon, tone, points, next, remaining (puntos), pct (avance hacia el siguiente rango) }.
  */
 export function rankView(stats) {

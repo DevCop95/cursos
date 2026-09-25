@@ -396,6 +396,12 @@ input:focus-visible,
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* El contenedor principal recibe el foco al cambiar de vista (lectores de pantalla): sin contorno,
+   si no aparecen dos líneas verdes a los lados al entrar. */
+[tabindex="-1"]:focus,
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 
 /* Cabecera del perfil y anillo de progreso */
 .profile-glow {
