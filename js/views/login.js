@@ -4,14 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v69';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v69';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v69';
-import { esc } from '../lib/html.js?v=dev101x-v69';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v69';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v69';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v69';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v69';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v70';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v70';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v70';
+import { esc } from '../lib/html.js?v=dev101x-v70';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v70';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v70';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v70';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v70';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v70';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -316,8 +317,9 @@ function openLoginModal() {
 // Cada ficha lleva a la página pública del curso.
 // ---------------------------------------------------------------------------
 function moreCourseIcon(c) {
-  return c.logo
-    ? `<img src="${esc(c.logo)}" alt="" width="28" height="28" loading="lazy" class="w-7 h-7 object-contain" />`
+  const logo = courseLogo(c.id) || c.logo;
+  return logo
+    ? `<img src="${esc(logo)}" alt="" width="28" height="28" loading="lazy" class="w-7 h-7 object-contain" />`
     : `<span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
 }
 

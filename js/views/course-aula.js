@@ -3,13 +3,13 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v69';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v69';
-import { isCloudEnabled } from '../config.js?v=dev101x-v69';
-import * as cloud from '../cloud.js?v=dev101x-v69';
-import { appState } from '../state.js?v=dev101x-v69';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v69';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v69';
+import { esc } from '../lib/html.js?v=dev101x-v70';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v70';
+import { isCloudEnabled } from '../config.js?v=dev101x-v70';
+import * as cloud from '../cloud.js?v=dev101x-v70';
+import { appState } from '../state.js?v=dev101x-v70';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v70';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v70';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',

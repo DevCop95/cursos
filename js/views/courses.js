@@ -1,16 +1,25 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v69';
-import { appState } from '../state.js?v=dev101x-v69';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v69';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v69';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v69';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v69';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v69';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v69';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v69';
-import { paintResume } from './resume.js?v=dev101x-v69';
+import { esc } from '../lib/html.js?v=dev101x-v70';
+import { appState } from '../state.js?v=dev101x-v70';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v70';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v70';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v70';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v70';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v70';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v70';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v70';
+import { paintResume } from './resume.js?v=dev101x-v70';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v70';
+
+// Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
+function cardLogo(id, icon) {
+  const src = courseLogo(id);
+  return src
+    ? `<img src="${esc(src)}" alt="" height="36" loading="lazy" decoding="async" class="h-9 w-auto max-w-[64px] object-contain object-left" />`
+    : `<span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">${esc(icon)}</span>`;
+}
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
@@ -74,7 +83,7 @@ function dbTile(c, progress, content) {
             ${content && content.categoryLabel ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(content.categoryLabel)}</span>` : ''}
             <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
           </span>
-          <span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">code</span>
+          ${cardLogo(c.id, 'code')}
         </div>
         <div class="relative">${ringHtml(pct)}</div>
       </div>
@@ -112,7 +121,7 @@ export function renderMisCursos(container) {
         <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
           <span class="self-start px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(c.categoryLabel)}</span>
-          <span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">terminal</span>
+          ${cardLogo(c.id, 'terminal')}
         </div>
         <div class="relative">${ringHtml(p.percent)}</div>
       </div>
@@ -240,7 +249,7 @@ export function renderExplorar(container) {
           <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
           <div class="relative flex flex-col gap-2 min-w-0">
             <span class="self-start px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(c.categoryLabel)}</span>
-            <span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">terminal</span>
+            ${cardLogo(c.id, 'terminal')}
           </div>
           <span class="relative px-2 py-0.5 rounded-md bg-white/10 text-slate-200 font-mono text-[10px] shrink-0">${esc(c.duration)}</span>
         </div>
@@ -281,7 +290,7 @@ export function renderExplorar(container) {
               ${info.category ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(info.category)}</span>` : ''}
               <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
             </span>
-            <span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">code</span>
+            ${cardLogo(c.id, 'code')}
           </div>
           ${info.duration ? `<span class="relative px-2 py-0.5 rounded-md bg-white/10 text-slate-200 font-mono text-[10px] shrink-0">${esc(info.duration)}</span>` : ''}
         </div>
