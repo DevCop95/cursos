@@ -1,14 +1,14 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v43';
-import { appState } from '../state.js?v=dev101x-v43';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v43';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v43';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v43';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js?v=dev101x-v43';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v43';
-import { openDialog } from '../ui.js?v=dev101x-v43';
+import { esc } from '../lib/html.js?v=dev101x-v44';
+import { appState } from '../state.js?v=dev101x-v44';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v44';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v44';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v44';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent } from '../cloud.js?v=dev101x-v44';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v44';
+import { openDialog } from '../ui.js?v=dev101x-v44';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
@@ -84,7 +84,7 @@ function dbTile(c, progress, content) {
         ${p ? `
         <div class="flex items-center gap-3 text-[11px] font-mono text-muted">
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${p.lessonsDone.length}/${p.lessons.length}</span>
-          ${labs ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${labs} labs</span>` : ''}
+          ${labs ? `<span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${labs} labs</span>` : ''}
           ${content.video ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
         </div>` : ''}
         <div class="mt-auto flex items-center gap-2">
@@ -121,7 +121,7 @@ export function renderMisCursos(container) {
         </div>
         <div class="flex items-center gap-3 text-[11px] font-mono text-muted">
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${p.lessonsDone.length}/${TOTAL_LESSONS}</span>
-          <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${LAB_STEPS.length} labs</span>
+          <span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${LAB_STEPS.length} labs</span>
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>
         </div>
         <div class="mt-auto flex items-center gap-2">
@@ -213,7 +213,7 @@ export function renderExplorar(container) {
           </div>
           <div class="flex items-center gap-3 text-[11px] font-mono text-muted flex-wrap">
             <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${lessons} lecciones</span>
-            <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${LAB_STEPS.length} labs</span>
+            <span class="inline-flex items-center gap-1" title="Laboratorios prácticos"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${LAB_STEPS.length} labs</span>
             <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>
           </div>
           <div class="mt-auto flex items-center gap-2">
@@ -254,7 +254,7 @@ export function renderExplorar(container) {
           </div>
           <div class="flex items-center gap-3 text-[11px] font-mono text-muted flex-wrap">
             ${info.lessons ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${info.lessons} lecciones</span>` : ''}
-            ${info.labs ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${info.labs} labs</span>` : ''}
+            ${info.labs ? `<span class="inline-flex items-center gap-1" title="Laboratorios prácticos"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${info.labs} labs</span>` : ''}
             ${info.videoAuthor ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
           </div>
           <div class="mt-auto flex items-center gap-2">

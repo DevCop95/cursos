@@ -5,14 +5,14 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v43';
-import { isCloudEnabled } from '../config.js?v=dev101x-v43';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v43';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v43';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v43';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v43';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v43';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v43';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v44';
+import { isCloudEnabled } from '../config.js?v=dev101x-v44';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v44';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v44';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v44';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v44';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v44';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v44';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -50,6 +50,33 @@ function overrideMode(row, courseId) {
 
 function accessFor(row, course) {
   return courseAccess(course, row, row.access);
+}
+
+// Progreso del alumno en cada curso al que tiene acceso (o en el que ya tiene progreso).
+// Nmap se calcula con sus pasos (student_progress); los demás vienen de course_progress.
+function courseProgressItems(row) {
+  return lastCourses.map(c => {
+    if (c.id === COURSE.id) {
+      const p = computeProgress((row.progress && row.progress.steps) || {});
+      return { course: c, percent: p.percent, done: Boolean(completedAt(row)), allowed: accessFor(row, c).allowed, started: p.percent > 0 };
+    }
+    const cp = (row.courseProgress || []).find(x => x.course_id === c.id);
+    const percent = cp ? Number(cp.progress_percentage) || 0 : 0;
+    return { course: c, percent, done: Boolean(cp && cp.completed_at), allowed: accessFor(row, c).allowed, started: Boolean(cp) };
+  }).filter(i => i.allowed || i.started);
+}
+
+const shortTitle = title => String(title || '').split(/[\s:]+/)[0];
+
+function progressBarsHtml(row) {
+  const items = courseProgressItems(row);
+  if (!items.length) return '<span class="text-[11px] text-muted">—</span>';
+  return items.map(i => `
+    <div class="flex items-center gap-2 w-44" title="${esc(i.course.title)}">
+      <span class="w-16 truncate text-[10px] text-muted">${esc(shortTitle(i.course.title))}</span>
+      <div class="flex-1 h-1.5 rounded-full bg-bg overflow-hidden"><div class="h-full rounded-full bg-accent" style="width: ${i.percent}%;"></div></div>
+      <span class="w-8 text-right font-mono text-[11px] tabular-nums ${i.done ? 'text-accent font-bold' : 'text-ink2'}">${i.done ? '✓' : `${i.percent}%`}</span>
+    </div>`).join('');
 }
 
 function formatDate(iso) {
@@ -130,7 +157,6 @@ function tableHtml(allRows) {
       </thead>
       <tbody class="divide-y divide-line/60">
         ${rows.map(r => {
-          const p = computeProgress((r.progress && r.progress.steps) || {});
           return `
             <tr class="hover:bg-bg/50 transition-colors">
               <td class="pl-4 pr-2 py-2.5">
@@ -146,14 +172,7 @@ function tableHtml(allRows) {
                 </button>
               </td>
               <td class="px-3 py-2.5 whitespace-nowrap">${statusHtml(r, now)}</td>
-              <td class="px-3 py-2.5 hidden sm:table-cell">
-                <div class="flex items-center gap-2 w-32">
-                  <div class="flex-1 h-1.5 rounded-full bg-bg overflow-hidden"><div class="h-full rounded-full bg-accent" style="width: ${p.percent}%;"></div></div>
-                  ${completedAt(r)
-                    ? '<span class="material-symbols-outlined text-[18px] text-accent w-8 text-right" title="Curso terminado" aria-label="Curso terminado">verified</span>'
-                    : `<span class="font-mono text-[11px] text-ink2 tabular-nums w-8 text-right">${p.percent}%</span>`}
-                </div>
-              </td>
+              <td class="px-3 py-2.5 hidden sm:table-cell"><div class="flex flex-col gap-1">${progressBarsHtml(r)}</div></td>
               <td class="px-3 py-2.5 text-right">${levelSelect(r)}</td>
             </tr>`;
         }).join('')}
@@ -173,7 +192,7 @@ function coursesHtml(courses) {
         <li class="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
           <div class="min-w-0">
             <p class="text-sm font-semibold text-ink truncate">${esc(c.title)}</p>
-            <p class="text-[11px] font-mono text-muted">${esc(c.id)}${c.id === COURSE.id ? '' : ' · sin contenido todavía'}</p>
+            <p class="text-[11px] font-mono text-muted">${esc(c.id)}${c.id === COURSE.id || c.has_content ? '' : ' · sin contenido todavía'}</p>
           </div>
           <div class="flex items-center gap-4">${toggle(c, 'is_free', 'Gratis')}${toggle(c, 'published', 'Publicado')}</div>
         </li>`).join('')}
@@ -299,31 +318,28 @@ export function openUserDetails(userId) {
           </div>
           ${levelSelect(r)}
         </div>
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="p-2.5 rounded-xl bg-bg/70 border border-line/70"><p class="text-lg font-extrabold text-accent">${p.percent}%</p><p class="text-[10px] font-mono text-muted">Progreso</p></div>
-          <div class="p-2.5 rounded-xl bg-bg/70 border border-line/70"><p class="text-lg font-extrabold text-ink">${p.lessonsDone.length}/${TOTAL_LESSONS}</p><p class="text-[10px] font-mono text-muted">Lecciones</p></div>
-          <div class="p-2.5 rounded-xl bg-bg/70 border border-line/70"><p class="text-lg font-extrabold text-ink">${p.labsDone.length}/${LAB_STEPS.length}</p><p class="text-[10px] font-mono text-muted">Labs</p></div>
-        </div>
+        <section class="flex flex-col gap-2">
+          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Progreso por curso</h3>
+          ${courseProgressItems(r).map(i => `
+            <div class="flex items-center gap-3 text-xs">
+              <span class="flex-1 min-w-0 truncate text-ink font-semibold">${esc(i.course.title)}</span>
+              <span class="w-20 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${i.percent}%"></span></span>
+              <span class="w-10 text-right font-mono font-bold ${i.done ? 'text-accent' : 'text-ink2'}">${i.done ? '✓' : `${i.percent}%`}</span>
+            </div>`).join('') || '<p class="text-xs text-muted">Sin cursos todavía.</p>'}
+          <details class="rounded-xl border border-line bg-bg/40 text-xs">
+            <summary class="cursor-pointer px-3 py-2 font-semibold text-ink2 select-none">Detalle de ${esc(shortTitle(COURSE.title))}: ${p.lessonsDone.length}/${TOTAL_LESSONS} lecciones · ${p.labsDone.length}/${LAB_STEPS.length} labs</summary>
+            <ul class="flex flex-col gap-1.5 px-3 pb-3">
+              ${LAB_STEPS.map(lab => {
+                const done = isLabDone(lab, steps);
+                return `<li class="flex items-center gap-2"><span class="material-symbols-outlined text-[16px] ${done ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${done ? 'check_circle' : 'radio_button_unchecked'}</span><span class="${done ? 'text-ink font-semibold' : 'text-ink2'}">${esc(lab.title)}</span></li>`;
+              }).join('')}
+            </ul>
+          </details>
+        </section>
         <section>
-          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Cursos</h3>
+          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Acceso a cursos</h3>
           <ul id="user-courses" class="flex flex-col divide-y divide-line/60">${userCoursesHtml(r)}</ul>
         </section>
-        ${(r.courseProgress || []).length ? `
-        <section class="flex flex-col gap-2">
-          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Progreso en cursos de pago</h3>
-          ${r.courseProgress.map(cp => `
-            <div class="flex items-center gap-3 text-xs">
-              <span class="flex-1 min-w-0 truncate text-ink font-semibold">${esc((lastCourses.find(x => x.id === cp.course_id) || { title: cp.course_id }).title)}</span>
-              <span class="w-20 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${Number(cp.progress_percentage) || 0}%"></span></span>
-              <span class="w-10 text-right font-mono font-bold ${cp.completed_at ? 'text-accent' : 'text-ink2'}">${cp.completed_at ? '✓' : `${Number(cp.progress_percentage) || 0}%`}</span>
-            </div>`).join('')}
-        </section>` : ''}
-        <ul class="flex flex-col gap-1.5">
-          ${LAB_STEPS.map(lab => {
-            const done = isLabDone(lab, steps);
-            return `<li class="flex items-center gap-2 text-xs"><span class="material-symbols-outlined text-[16px] ${done ? 'text-accent' : 'text-[#b6b2a9]'}" aria-hidden="true">${done ? 'check_circle' : 'radio_button_unchecked'}</span><span class="${done ? 'text-ink font-semibold' : 'text-ink2'}">${esc(lab.title)}</span></li>`;
-          }).join('')}
-        </ul>
         <dl class="flex flex-col divide-y divide-line/60 text-xs font-mono">
           ${row('Último login', esc(formatDate(r.last_login)))}
           ${row('Última actividad', esc(formatDate(r.last_seen)))}
@@ -409,10 +425,12 @@ export function exportCsv() {
     const p = computeProgress((r.progress && r.progress.steps) || {});
     const last = lastActivity(r);
     const courses = lastCourses.map(c => (accessFor(r, c).allowed ? 'sí' : 'no'));
-    return [r.id, r.full_name || '', r.email, r.role, r.role === 'admin' || r.access_level === 'full' ? 'total' : 'gratis', ...courses, p.percent, p.labsDone.length,
+    const items = courseProgressItems(r);
+    const pct = lastCourses.map(c => { const i = items.find(x => x.course.id === c.id); return i ? i.percent : ''; });
+    return [r.id, r.full_name || '', r.email, r.role, r.role === 'admin' || r.access_level === 'full' ? 'total' : 'gratis', ...courses, ...pct, p.labsDone.length,
       STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || '', completedAt(r) || ''];
   });
-  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', 'Nivel', ...lastCourses.map(c => `Acceso ${c.id}`), 'Progreso %', 'Labs', 'Estado', 'Última actividad', 'Último login', 'Curso terminado'], rows);
+  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', 'Nivel', ...lastCourses.map(c => `Acceso ${c.id}`), ...lastCourses.map(c => `Progreso ${c.id} %`), `Labs ${COURSE.id}`, 'Estado', 'Última actividad', 'Último login', `Terminado ${COURSE.id}`], rows);
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;

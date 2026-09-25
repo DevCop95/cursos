@@ -1,15 +1,14 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v43';
-import { appState } from '../state.js?v=dev101x-v43';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v43';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v43';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v43';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v43';
-import { isAdmin } from '../auth.js?v=dev101x-v43';
-import { fetchOwnCompletions, fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v43';
-import { COURSE } from '../content.js?v=dev101x-v43'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v44';
+import { appState } from '../state.js?v=dev101x-v44';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v44';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v44';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v44';
+import { isAdmin } from '../auth.js?v=dev101x-v44';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v44';
+import { COURSE } from '../content.js?v=dev101x-v44'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -37,6 +36,23 @@ function paintBadgeCount(steps, bestStreak) {
   title.textContent = `Insignias · ${all.filter(b => b.earned).length}/${all.length}`;
 }
 
+// Resumen de la cabecera: número de cursos, terminados y progreso medio (anillo).
+const RING = 169.6;
+const average = items => (items.length ? Math.round(items.reduce((sum, c) => sum + c.percent, 0) / items.length) : 0);
+const ringOffset = pct => (RING * (1 - pct / 100)).toFixed(1);
+
+function summaryHtml(items) {
+  const done = items.filter(c => c.done).length;
+  return `<strong class="text-white">${items.length}</strong> ${items.length === 1 ? 'curso' : 'cursos'}${done ? ` · <strong class="text-emerald-300">${done}</strong> ${done === 1 ? 'terminado' : 'terminados'}` : ''}`;
+}
+
+function paintSummary(items) {
+  const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+  set('profile-summary', el => { el.innerHTML = summaryHtml(items); });
+  set('profile-pct', el => { el.textContent = `${average(items)}%`; });
+  set('profile-ring', el => { el.setAttribute('stroke-dashoffset', ringOffset(average(items))); });
+}
+
 // Cursos del alumno: [{ id, title, percent, done, draft }]
 function myCoursesHtml(items) {
   if (!items.length) return '<p class="text-xs text-muted">Aún no tienes cursos. Mira el catálogo.</p>';
@@ -56,8 +72,8 @@ export function renderPerfil(container) {
   const admin = isAdmin();
   const p = currentProgress();
   const steps = currentSteps();
-  const ring = 169.6;
-
+  // Hasta que responda el servidor solo se conoce el curso de Nmap (su progreso está en el navegador).
+  const initial = [{ id: COURSE.id, title: COURSE.title, percent: p.percent, done: p.complete }];
 
   container.innerHTML = `
     <div class="flex flex-col w-full py-4 sm:py-6 gap-4 max-w-2xl mx-auto">
@@ -70,17 +86,16 @@ export function renderPerfil(container) {
             <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">${esc(user.email)}</p>
             <div class="flex items-center gap-x-3 gap-y-1.5 mt-2 font-mono text-[11px] flex-wrap">
               <span class="px-2 py-0.5 rounded-md font-bold ${admin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">${admin ? 'ADMIN' : 'ESTUDIANTE'}</span>
-              <span class="text-slate-400"><strong class="text-white">${p.lessonsDone.length}</strong>/${TOTAL_LESSONS} lecciones</span>
+              <span id="profile-summary" class="text-slate-400">${summaryHtml(initial)}</span>
               <span id="profile-streak" class="text-slate-400 hidden" title="Días seguidos con actividad"></span>
-              <span id="profile-completed" class="hidden px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-bold"></span>
             </div>
           </div>
-          <div class="relative shrink-0">
+          <div class="relative shrink-0" title="Progreso medio de tus cursos">
             <svg class="w-[72px] h-[72px] -rotate-90" viewBox="0 0 64 64" aria-hidden="true">
               <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6" />
-              <circle cx="32" cy="32" r="27" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round" stroke-dasharray="${ring}" stroke-dashoffset="${(ring * (1 - p.percent / 100)).toFixed(1)}" class="progress-ring" />
+              <circle cx="32" cy="32" r="27" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round" stroke-dasharray="${RING}" stroke-dashoffset="${ringOffset(average(initial))}" class="progress-ring" id="profile-ring" />
             </svg>
-            <span class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${p.percent}%</span>
+            <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${average(initial)}%</span>
           </div>
         </div>
       </section>
@@ -90,7 +105,7 @@ export function renderPerfil(container) {
           <h2 class="text-sm font-bold text-ink">Mis cursos</h2>
           <a href="#/explorar-cursos" class="text-[11px] font-mono font-bold text-accent hover:underline shrink-0">Catálogo →</a>
         </div>
-        <div id="profile-courses-list" class="flex flex-col gap-0.5">${myCoursesHtml([{ id: COURSE.id, title: COURSE.title, percent: p.percent, done: p.complete }])}</div>
+        <div id="profile-courses-list" class="flex flex-col gap-0.5">${myCoursesHtml(initial)}</div>
       </section>
 
       <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
@@ -123,24 +138,17 @@ export function renderPerfil(container) {
     if (grid) grid.innerHTML = badgesHtml(steps, streak.best);
     paintBadgeCount(steps, streak.best);
   });
-  // Curso terminado según el registro del servidor (course_completions).
-  fetchOwnCompletions().then(list => {
-    const done = list.find(c => c.course_id === COURSE.id);
-    const el = document.getElementById('profile-completed');
-    if (!done || !el) return;
-    el.textContent = '✓ Curso terminado';
-    el.title = `Terminado el ${formatDate(done.completed_at)}`;
-    el.classList.remove('hidden');
-  }).catch(() => {});
   // Cursos disponibles según el servidor (can_access_course: el admin los tiene todos) con su progreso.
   Promise.all([fetchAccessibleCourses(), fetchCourses(), fetchCourseProgress()]).then(([ids, courses, rows]) => {
     const list = document.getElementById('profile-courses-list');
     if (!list || !Array.isArray(ids)) return;
-    list.innerHTML = myCoursesHtml(courses.filter(c => ids.includes(c.id)).map(c => {
+    const items = courses.filter(c => ids.includes(c.id)).map(c => {
       if (c.id === COURSE.id) return { id: c.id, title: c.title, percent: p.percent, done: p.complete };
       const r = (rows || []).find(x => x.course_id === c.id);
       return { id: c.id, title: c.title, percent: r ? Number(r.progress_percentage) || 0 : 0, done: Boolean(r && r.completed_at), draft: !c.published };
-    }));
+    });
+    list.innerHTML = myCoursesHtml(items);
+    paintSummary(items);
   }).catch(() => {});
 }
 
