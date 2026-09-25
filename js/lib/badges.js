@@ -2,8 +2,8 @@
  * Insignias del alumno (módulo puro, con tests). Pocas y con sentido para un solo curso; se derivan
  * del progreso y de la racha, que valida el servidor, así que no hace falta guardarlas aparte.
  */
-import { LAB_STEPS } from '../content.js?v=dev101x-v53';
-import { isLabDone, isCommandStep } from '../lab.js?v=dev101x-v53';
+import { LAB_STEPS } from '../content.js?v=dev101x-v54';
+import { isLabDone, isCommandStep } from '../lab.js?v=dev101x-v54';
 
 export function computeBadges(steps = {}, { bestStreak = 0 } = {}) {
   return [

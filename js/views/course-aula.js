@@ -3,12 +3,12 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v53';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v53';
-import { isCloudEnabled } from '../config.js?v=dev101x-v53';
-import * as cloud from '../cloud.js?v=dev101x-v53';
-import { appState } from '../state.js?v=dev101x-v53';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v53';
+import { esc } from '../lib/html.js?v=dev101x-v54';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v54';
+import { isCloudEnabled } from '../config.js?v=dev101x-v54';
+import * as cloud from '../cloud.js?v=dev101x-v54';
+import { appState } from '../state.js?v=dev101x-v54';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v54';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -446,7 +446,7 @@ async function runReconCommand(arg, rule) {
     } else {
       pushLines([
         { text: `[+] ${hosts.length} hostname(s) de ${res.domain}:`, type: 'system' },
-        ...hosts.map(h => ({ text: `    ${res.domain}\t${h}`, type: 'info' })),
+        ...hosts.map(h => ({ text: `    ${h}`, type: 'info' })),
         { text: '[LAB] Datos públicos de CT. Reconocimiento pasivo: no se ha tocado el objetivo.', type: 'hint' }
       ]);
     }
