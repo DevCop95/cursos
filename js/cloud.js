@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v51';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v52';
 
 let clientPromise = null;
 
@@ -205,6 +205,30 @@ export async function answerCourseQuiz(courseId, step, answer) {
   const client = await getClient();
   if (!client) throw new Error('Las preguntas necesitan conexión con el servidor.');
   const { data, error } = await client.rpc('answer_course_quiz', { p_course: courseId, p_step: step, p_answer: String(answer || '').slice(0, 200) });
+  if (error) throw error;
+  return data;
+}
+
+// Reconocimiento pasivo real de un dominio (hostnames en Certificate Transparency), vía la Edge Function
+// 'recon'. Solo para alumnos con acceso al curso de Shodan. Devuelve { domain, hostnames, total } o { error }.
+export async function recon(domain) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está disponible.');
+  const { data, error } = await client.functions.invoke('recon', { body: { domain } });
+  if (error) {
+    // El cuerpo de error de la función trae un mensaje útil (403, 400…).
+    let msg = 'No se pudo hacer el reconocimiento.';
+    try { msg = (await error.context.json()).error || msg; } catch (e) { /* sin cuerpo */ }
+    throw new Error(msg);
+  }
+  return data;
+}
+
+// Rango, puntos e insignias (cursos terminados), calculados en el servidor. Sin userId: los propios.
+export async function fetchUserStats(userId = null) {
+  const client = await getClient();
+  if (!client) return null;
+  const { data, error } = await client.rpc('user_stats', { p_user: userId });
   if (error) throw error;
   return data;
 }

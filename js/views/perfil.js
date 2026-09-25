@@ -1,15 +1,16 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v51';
-import { appState } from '../state.js?v=dev101x-v51';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v51';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v51';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v51';
-import { isAdmin } from '../auth.js?v=dev101x-v51';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v51';
-import { COURSE } from '../content.js?v=dev101x-v51';
-import { paintResume } from './resume.js?v=dev101x-v51'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v52';
+import { appState } from '../state.js?v=dev101x-v52';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v52';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v52';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v52';
+import { isAdmin } from '../auth.js?v=dev101x-v52';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats } from '../cloud.js?v=dev101x-v52';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v52';
+import { COURSE } from '../content.js?v=dev101x-v52';
+import { paintResume } from './resume.js?v=dev101x-v52'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -20,21 +21,57 @@ function formatDate(iso) {
   }
 }
 
-function badgesHtml(steps, bestStreak) {
+// Logros pequeños del laboratorio de Nmap (primer comando, labs, reto, racha): fila discreta.
+function achievementsHtml(steps, bestStreak) {
   return computeBadges(steps, { bestStreak }).map(b => `
-    <div class="flex flex-col items-center text-center gap-1.5 p-2.5 rounded-xl border ${b.earned ? 'border-emerald-200 bg-emerald-50/60' : 'border-line bg-bg/50'}" title="${esc(b.desc)}">
-      <span class="w-10 h-10 rounded-full flex items-center justify-center ${b.earned ? 'bg-accent text-white' : 'bg-white text-[#c4bfb6] border border-line'}">
-        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">${b.earned ? esc(b.icon) : 'lock'}</span>
+    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-semibold ${b.earned ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900' : 'border-line bg-bg/60 text-muted'}" title="${esc(b.desc)}">
+      <span class="material-symbols-outlined text-[14px]" aria-hidden="true">${b.earned ? esc(b.icon) : 'lock'}</span>${esc(b.title)}
+    </span>`).join('');
+}
+
+const shortDate = iso => { try { return new Date(iso).toLocaleDateString('es', { dateStyle: 'medium' }); } catch (e) { return ''; } };
+
+// Insignias: una por curso. Ganada (curso terminado, según el servidor) o bloqueada con su avance.
+function courseBadgesHtml(items, earned) {
+  const byId = new Map(earned.map(b => [b.course_id, b]));
+  const list = [
+    ...items.map(c => ({ id: c.id, title: c.title, percent: c.percent, badge: byId.get(c.id) })),
+    ...earned.filter(b => !items.some(c => c.id === b.course_id)).map(b => ({ id: b.course_id, title: b.title, percent: 100, badge: b }))
+  ];
+  if (!list.length) return '<p class="text-xs text-muted col-span-full">Termina un curso para ganar tu primera insignia.</p>';
+  return list.map(c => c.badge ? `
+    <div class="flex flex-col items-center text-center gap-2 p-3 rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white" title="Curso terminado">
+      <span class="relative w-14 h-14 rounded-2xl bg-term flex items-center justify-center ring-2 ring-amber-300 shadow-sm">
+        <span class="material-symbols-outlined text-emerald-400 text-[28px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>
+        <span class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center"><span class="material-symbols-outlined text-white text-[14px]" aria-hidden="true">workspace_premium</span></span>
       </span>
-      <span class="text-[11px] font-semibold leading-tight ${b.earned ? 'text-ink' : 'text-muted'}">${esc(b.title)}</span>
+      <span class="text-[12px] font-bold text-ink leading-tight line-clamp-2">${esc(c.title)}</span>
+      <span class="text-[10px] font-mono text-amber-800">${esc(shortDate(c.badge.completed_at))}</span>
+    </div>` : `
+    <div class="flex flex-col items-center text-center gap-2 p-3 rounded-2xl border border-line bg-bg/40" title="Termina el curso para ganar esta insignia">
+      <span class="w-14 h-14 rounded-2xl bg-white border border-line flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#c4bfb6] text-[28px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>
+      </span>
+      <span class="text-[12px] font-semibold text-muted leading-tight line-clamp-2">${esc(c.title)}</span>
+      <span class="text-[10px] font-mono text-muted">${Number(c.percent) || 0}% · bloqueada</span>
     </div>`).join('');
 }
 
-function paintBadgeCount(steps, bestStreak) {
-  const title = document.getElementById('badges-title');
-  if (!title) return;
-  const all = computeBadges(steps, { bestStreak });
-  title.textContent = `Insignias · ${all.filter(b => b.earned).length}/${all.length}`;
+// Rango (calculado en el servidor): chip en la cabecera y barra hasta el siguiente.
+function paintRank(stats) {
+  const v = rankView(stats);
+  const chip = document.getElementById('profile-rank');
+  const bar = document.getElementById('profile-rank-bar');
+  if (!v || !chip || !bar) return;
+  chip.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold border ${v.tone}`;
+  chip.innerHTML = `<span class="material-symbols-outlined text-[14px]" aria-hidden="true">${esc(v.icon)}</span>${esc(v.name)}`;
+  bar.innerHTML = `
+    <div class="flex items-center justify-between gap-2 text-[11px] font-mono mb-1.5">
+      <span class="text-slate-300"><strong class="text-white">${v.points}</strong> puntos</span>
+      <span class="text-slate-400">${v.next ? `${v.remaining} para <strong class="text-slate-200">${esc(v.next)}</strong>` : 'Rango máximo'}</span>
+    </div>
+    <div class="h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full bg-emerald-400 transition-all" style="width: ${v.pct}%"></div></div>`;
+  bar.classList.remove('hidden');
 }
 
 // Resumen de la cabecera: número de cursos, terminados y progreso medio (anillo).
@@ -87,6 +124,7 @@ export function renderPerfil(container) {
             <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">${esc(user.email)}</p>
             <div class="flex items-center gap-x-3 gap-y-1.5 mt-2 font-mono text-[11px] flex-wrap">
               <span class="px-2 py-0.5 rounded-md font-bold ${admin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">${admin ? 'ADMIN' : 'ESTUDIANTE'}</span>
+              <span id="profile-rank" class="hidden"></span>
               <span id="profile-summary" class="text-slate-400">${summaryHtml(initial)}</span>
               <span id="profile-streak" class="text-slate-400 hidden" title="Días seguidos con actividad"></span>
             </div>
@@ -99,6 +137,7 @@ export function renderPerfil(container) {
             <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${average(initial)}%</span>
           </div>
         </div>
+        <div id="profile-rank-bar" class="hidden relative px-5 pb-4" title="Puntos: 1 por cada % de avance en tus cursos y 150 por curso terminado"></div>
       </section>
 
       <div id="resume-card" class="hidden"></div>
@@ -114,9 +153,13 @@ export function renderPerfil(container) {
       <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
         <div class="flex items-center justify-between gap-2 mb-3">
           <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias</h2>
-          <span class="text-[11px] font-mono text-muted shrink-0 truncate max-w-[50%]">${esc(COURSE.title)}</span>
+          <span class="text-[11px] font-mono text-muted shrink-0">Una por curso terminado</span>
         </div>
-        <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">${badgesHtml(steps, 0)}</div>
+        <div id="course-badges" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">${courseBadgesHtml(initial, [])}</div>
+        <div class="mt-4 pt-3 border-t border-line/60">
+          <p class="text-[11px] font-mono text-muted mb-2">Logros del laboratorio de Nmap</p>
+          <div id="achievements" class="flex flex-wrap gap-1.5">${achievementsHtml(steps, 0)}</div>
+        </div>
       </section>
 
       ${admin ? '' : `
@@ -139,7 +182,6 @@ export function renderPerfil(container) {
       </div>
     </div>
   `;
-  paintBadgeCount(steps, 0);
   paintResume(document.getElementById('resume-card'));
   // La racha llega del servidor: se pinta cuando responde.
   fetchStreak().then(streak => {
@@ -148,12 +190,11 @@ export function renderPerfil(container) {
       el.innerHTML = `🔥 <strong class="text-white">${streak.current}</strong> ${streak.current === 1 ? 'día' : 'días'}`;
       el.classList.remove('hidden');
     }
-    const grid = document.getElementById('badges-grid');
-    if (grid) grid.innerHTML = badgesHtml(steps, streak.best);
-    paintBadgeCount(steps, streak.best);
+    const row = document.getElementById('achievements');
+    if (row) row.innerHTML = achievementsHtml(steps, streak.best);
   });
   // Cursos disponibles según el servidor (can_access_course: el admin los tiene todos) con su progreso.
-  Promise.all([fetchAccessibleCourses(), fetchCourses(), fetchCourseProgress()]).then(([ids, courses, rows]) => {
+  Promise.all([fetchAccessibleCourses(), fetchCourses(), fetchCourseProgress(), fetchUserStats().catch(() => null)]).then(([ids, courses, rows, stats]) => {
     const list = document.getElementById('profile-courses-list');
     if (!list || !Array.isArray(ids)) return;
     const items = courses.filter(c => ids.includes(c.id)).map(c => {
@@ -163,6 +204,12 @@ export function renderPerfil(container) {
     });
     list.innerHTML = myCoursesHtml(items);
     paintSummary(items);
+    const earned = (stats && Array.isArray(stats.badges)) ? stats.badges : [];
+    const badges = document.getElementById('course-badges');
+    if (badges) badges.innerHTML = courseBadgesHtml(items, earned);
+    const title = document.getElementById('badges-title');
+    if (title) title.textContent = `Insignias · ${earned.length}`;
+    paintRank(stats);
   }).catch(() => {});
 }
 

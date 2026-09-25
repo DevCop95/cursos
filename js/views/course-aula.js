@@ -3,12 +3,12 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v51';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v51';
-import { isCloudEnabled } from '../config.js?v=dev101x-v51';
-import * as cloud from '../cloud.js?v=dev101x-v51';
-import { appState } from '../state.js?v=dev101x-v51';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v51';
+import { esc } from '../lib/html.js?v=dev101x-v52';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v52';
+import { isCloudEnabled } from '../config.js?v=dev101x-v52';
+import * as cloud from '../cloud.js?v=dev101x-v52';
+import { appState } from '../state.js?v=dev101x-v52';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v52';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -415,11 +415,59 @@ function renderScreen() {
   screen.scrollTop = screen.scrollHeight;
 }
 
+// Comandos "en vivo" del curso (terminal.live): en vez de la salida simulada, llaman a una función real.
+// Ahora solo 'recon' (reconocimiento pasivo de un dominio). El patrón captura el argumento en el grupo 1.
+function liveCommand(cmd) {
+  for (const rule of (S.content.terminal.live || [])) {
+    let re;
+    try { re = new RegExp(rule.match, 'i'); } catch (e) { continue; }
+    const m = cmd.match(re);
+    if (m) return { rule, arg: (m[1] || '').trim() };
+  }
+  return null;
+}
+
+function pushLines(lines) {
+  S.lines.push(...lines);
+  if (S.lines.length > MAX_LINES) S.lines.splice(0, S.lines.length - MAX_LINES);
+  renderScreen();
+  scheduleSave();
+}
+
+async function runReconCommand(arg, rule) {
+  if (!arg) { pushLines([{ text: 'Uso: recons101x <dominio>  (por ejemplo: recons101x dev101x.online)', type: 'hint' }]); return; }
+  pushLines([{ text: `[*] Consultando Certificate Transparency para ${arg}…`, type: 'slate' }]);
+  try {
+    const res = await cloud.recon(arg);
+    if (!res || res.error) { pushLines([{ text: `[!] ${res && res.error ? res.error : 'No se pudo hacer el reconocimiento.'}`, type: 'error' }]); return; }
+    const hosts = Array.isArray(res.hostnames) ? res.hostnames : [];
+    if (!hosts.length) {
+      pushLines([{ text: `[i] Sin hostnames para ${res.domain} en Certificate Transparency.`, type: 'hint' }]);
+    } else {
+      pushLines([
+        { text: `[+] ${hosts.length} hostname(s) de ${res.domain}:`, type: 'system' },
+        ...hosts.map(h => ({ text: `    ${res.domain}\t${h}`, type: 'info' })),
+        { text: '[LAB] Datos públicos de CT. Reconocimiento pasivo: no se ha tocado el objetivo.', type: 'hint' }
+      ]);
+    }
+    if (rule && rule.steps) recordFreshSteps(rule.steps);
+  } catch (err) {
+    pushLines([{ text: `[!] ${err.message || 'No se pudo hacer el reconocimiento.'}`, type: 'error' }]);
+  }
+}
+
 export function runCourseCmd(raw) {
   if (!S) return;
   const cmd = String(raw || '').trim();
   if (!cmd) return;
   const prompt = promptFor(S.content.terminal, S.state);
+  const live = liveCommand(cmd);
+  if (live) {
+    S.lines.push({ text: prompt + cmd, type: 'cmd' });
+    renderScreen();
+    if (live.rule.action === 'recon') runReconCommand(live.arg, live.rule);
+    return;
+  }
   const r = runCourseCommand(S.content.terminal, cmd, S.state);
   if (r.clear) { S.lines = []; renderScreen(); scheduleSave(); return; }
   S.state = r.state;

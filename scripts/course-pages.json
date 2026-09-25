@@ -28,13 +28,63 @@
         "Conectar con GitHub por SSH, subir proyectos y colaborar con Pull Requests."
       ],
       "modules": [
-        { "title": "Módulo 1: Instalación y configuración", "lessons": 2 },
-        { "title": "Módulo 2: Tu primer repositorio", "lessons": 4 },
-        { "title": "Módulo 3: Ramas", "lessons": 2 },
-        { "title": "Módulo 4: Colaborar en GitHub", "lessons": 6 }
+        {
+          "title": "Módulo 1: Instalación y configuración",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 2: Tu primer repositorio",
+          "lessons": 4
+        },
+        {
+          "title": "Módulo 3: Ramas",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 4: Colaborar en GitHub",
+          "lessons": 6
+        }
       ],
       "labs": 3,
       "videoAuthor": "MoureDev"
+    },
+    {
+      "slug": "shodan",
+      "id": "shodan-101",
+      "seoTitle": "Curso de Shodan en español: reconocimiento en internet | Dev101x",
+      "seoDescription": "Aprende Shodan desde cero en español: la CLI, consultar un host, filtros (port, country, org, product), facets y exportar resultados, practicando en una terminal simulada en el navegador.",
+      "free": false,
+      "workload": "PT16H",
+      "title": "Shodan: reconocimiento en internet",
+      "category": "CIBERSEGURIDAD",
+      "duration": "2 Semanas",
+      "description": "Aprende a usar Shodan, el buscador de dispositivos conectados a internet, para reconocer qué expone una organización: puertos, servicios, versiones y avisos. Practicas la CLI en una terminal simulada dentro del navegador, con datos de ejemplo.",
+      "objectives": [
+        "Entender qué indexa Shodan y para qué sirve en un reconocimiento autorizado.",
+        "Configurar la CLI con tu clave y consultar un host: puertos, servicios y versiones.",
+        "Buscar con filtros (port, country, org, product) y contar resultados sin descargarlos.",
+        "Resumir la exposición con facets y exportar los hallazgos para un informe."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Qué es Shodan",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 2: La CLI y tu cuenta",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 3: Consultar y buscar",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 4: Resumir y el reto",
+          "lessons": 3
+        }
+      ],
+      "labs": 4,
+      "videoAuthor": "Contando Bits"
     }
   ]
 }
