@@ -2,25 +2,39 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v59';
-import { resolveRoute } from './router.js?v=dev101x-v59';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v59';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v59';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v59';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v59';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v59';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v59';
-import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v59';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v59';
-import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v59';
-import { COURSE } from './content.js?v=dev101x-v59';
-import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress, answerAccessRequest, openThread, openRevokeDialog, confirmRevoke } from './views/admin.js?v=dev101x-v59';
-import { fetchCourses } from './cloud.js?v=dev101x-v59';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v59';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v59';
-import { startPresence } from './progress.js?v=dev101x-v59';
+import { appState, isSessionValid } from './state.js?v=dev101x-v60';
+import { resolveRoute } from './router.js?v=dev101x-v60';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v60';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v60';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v60';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v60';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v60';
+import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v60';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v60';
+import { COURSE } from './content.js?v=dev101x-v60';
+import { fetchCourses } from './cloud.js?v=dev101x-v60';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v60';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v60';
+import { startPresence } from './progress.js?v=dev101x-v60';
 
 const $ = id => document.getElementById(id);
+
+// Las vistas pesadas (aulas y panel de admin) se descargan al abrirlas, no al entrar: el login y "Mis cursos"
+// cargan antes. Con la sesión iniciada se precargan en segundo plano para que el aula abra al instante.
+function lazy(load) {
+  let p = null;
+  return () => (p = p || load().catch(err => { p = null; throw err; }));
+}
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v60'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v60'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v60'));
+// Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
+const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
+function prefetchViews() {
+  if (!isSessionValid()) return;
+  const go = () => { courseView().catch(() => {}); aulaView().catch(() => {}); if (isAdmin()) adminView().catch(() => {}); };
+  if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500);
+}
 
 // Anti-clickjacking: la app no se muestra dentro de un iframe (GitHub Pages no deja enviar X-Frame-Options
 // y la meta CSP no admite frame-ancestors). Si alguien la incrusta, se intenta salir del marco y, si no, se oculta.
@@ -58,7 +72,9 @@ function updateChrome(route) {
   }
 }
 
+let renderSeq = 0;
 function render() {
+  const seq = ++renderSeq;
   const authenticated = isSessionValid();
   const { route, param, redirect, denied } = resolveRoute(window.location.hash, { authenticated, admin: isAdmin() });
   if (redirect) history.replaceState(null, '', redirect);
@@ -79,19 +95,25 @@ function render() {
   }
 
   view.className = 'w-full pt-[76px] pb-6 sm:pt-20 sm:pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col';
+  // Vista que se descarga al abrirla: se pinta solo si el usuario no ha cambiado de ruta mientras tanto.
+  const paintLazy = (mod, fn) => {
+    view.innerHTML = '';
+    withView(mod, m => { if (seq !== renderSeq) return; fn(m); view.focus({ preventScroll: true }); });
+  };
   switch (route) {
     case 'aula-interactiva':
       // El curso de Nmap vive en el código; el resto (de pago) se carga desde Supabase.
       if (appState.enabledCourses.includes(param)) rememberLastCourse(param);
-      if (param === COURSE.id) renderAula(view, param);
-      else renderCourseAula(view, param);
-      break;
+      if (param === COURSE.id) paintLazy(aulaView, m => m.renderAula(view, param));
+      else paintLazy(courseView, m => m.renderCourseAula(view, param));
+      return;
+    case 'panel-admin': paintLazy(adminView, m => m.renderAdmin(view)); return;
     case 'explorar-cursos': renderExplorar(view); break;
     case 'perfil': renderPerfil(view); break;
-    case 'panel-admin': renderAdmin(view); break;
     default: renderMisCursos(view);
   }
   view.focus({ preventScroll: true });
+  prefetchViews();
 }
 
 // Aviso de cursos nuevos (p. ej. el admin concedió una solicitud). Se comprueba al abrir la app y al volver a
@@ -152,7 +174,7 @@ function goToCommand(key) {
   const aula = '#/aula-interactiva/pentesting-101';
   appState.activeCommandKey = key;
   if (window.location.hash !== aula) window.location.hash = aula;
-  else selectExplanation(key, false);
+  else withView(aulaView, m => m.selectExplanation(key, false));
   setTimeout(() => {
     const card = $('command-explanation-card');
     if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -167,33 +189,33 @@ const ACTIONS = {
   'logout': () => { toggleProfile(false); doLogout(); },
   'open-course': el => openCourseDetail(el.dataset.id),
   'request-access': el => requestAccess(el),
-  'open-lesson': el => openLesson(el.dataset.id),
-  'open-video': el => openVideo(Number(el.dataset.start) || 0),
-  'video-seek': el => seekVideo(Number(el.dataset.start) || 0),
-  'open-resources': () => openResources(),
-  'open-cheatsheet': () => openCheatSheet(),
-  'open-hint': el => openHint(el.dataset.step),
-  'c-run': el => runCourseCmdFromUi(el),
-  'c-lesson': el => openCourseLesson(el.dataset.id),
-  'c-video': el => openCourseVideo(Number(el.dataset.start) || 0),
-  'c-seek': el => seekCourseVideo(Number(el.dataset.start) || 0),
-  'c-hint': el => openCourseHint(el.dataset.step),
-  'c-cheat': () => openCourseCheatSheet(),
+  'open-lesson': el => withView(aulaView, m => m.openLesson(el.dataset.id)),
+  'open-video': el => withView(aulaView, m => m.openVideo(Number(el.dataset.start) || 0)),
+  'video-seek': el => withView(aulaView, m => m.seekVideo(Number(el.dataset.start) || 0)),
+  'open-resources': () => withView(aulaView, m => m.openResources()),
+  'open-cheatsheet': () => withView(aulaView, m => m.openCheatSheet()),
+  'open-hint': el => withView(aulaView, m => m.openHint(el.dataset.step)),
+  'c-run': el => withView(courseView, m => m.runCourseCmdFromUi(el)),
+  'c-lesson': el => withView(courseView, m => m.openCourseLesson(el.dataset.id)),
+  'c-video': el => withView(courseView, m => m.openCourseVideo(Number(el.dataset.start) || 0)),
+  'c-seek': el => withView(courseView, m => m.seekCourseVideo(Number(el.dataset.start) || 0)),
+  'c-hint': el => withView(courseView, m => m.openCourseHint(el.dataset.step)),
+  'c-cheat': () => withView(courseView, m => m.openCourseCheatSheet()),
   'open-db-course': el => openDbCourseDetail(el.dataset.id),
-  'c-resources': () => openCourseResources(),
-  'c-expl': el => selectCourseExplanation(el.dataset.key),
-  'c-reset': () => resetCourseLab(),
-  'c-mode': el => setCourseTerminalMode(el.dataset.mode),
-  'c-linux-reset': () => resetLinuxLab(),
-  'print-cheatsheet': () => printCheatSheet(),
+  'c-resources': () => withView(courseView, m => m.openCourseResources()),
+  'c-expl': el => withView(courseView, m => m.selectCourseExplanation(el.dataset.key)),
+  'c-reset': () => withView(courseView, m => m.resetCourseLab()),
+  'c-mode': el => withView(courseView, m => m.setCourseTerminalMode(el.dataset.mode)),
+  'c-linux-reset': () => withView(courseView, m => m.resetLinuxLab()),
+  'print-cheatsheet': () => withView(aulaView, m => m.printCheatSheet()),
   'open-account': () => openAccountDetails(),
-  'admin-user': el => openUserDetails(el.dataset.user),
-  'admin-thread': el => openThread(el.dataset.user),
-  'admin-revoke': el => openRevokeDialog(el),
+  'admin-user': el => withView(adminView, m => m.openUserDetails(el.dataset.user)),
+  'admin-thread': el => withView(adminView, m => m.openThread(el.dataset.user)),
+  'admin-revoke': el => withView(adminView, m => m.openRevokeDialog(el)),
   'open-messages': () => { toggleProfile(false); openMessages(); },
-  'admin-grant-request': el => answerAccessRequest(el, true),
-  'admin-reject-request': el => answerAccessRequest(el, false),
-  'admin-reset': el => resetUserProgress(el),
+  'admin-grant-request': el => withView(adminView, m => m.answerAccessRequest(el, true)),
+  'admin-reject-request': el => withView(adminView, m => m.answerAccessRequest(el, false)),
+  'admin-reset': el => withView(adminView, m => m.resetUserProgress(el)),
   'close-modal': el => closeModal(el.dataset.target),
   'toggle-panel': el => {
     const panel = $(el.dataset.target);
@@ -203,7 +225,7 @@ const ACTIONS = {
     const chevron = el.querySelector('[data-chevron]');
     if (chevron) chevron.classList.toggle('rotate-180', open);
   },
-  'select-cmd': el => selectExplanation(el.dataset.key, el.dataset.run === '1'),
+  'select-cmd': el => withView(aulaView, m => m.selectExplanation(el.dataset.key, el.dataset.run === '1')),
   'run-cmd': el => {
     // Desde una ficha de lección: cerrar la ventana y llevar la vista a la terminal.
     if (el.closest('#app-dialog')) {
@@ -211,12 +233,12 @@ const ACTIONS = {
       const screen = $('terminal-screen');
       if (screen) screen.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    executeCommand(el.dataset.cmd);
+    withView(aulaView, m => m.executeCommand(el.dataset.cmd));
   },
   'copy-cmd': el => copyText(el.dataset.cmd),
-  'nmap-cat': el => switchNmapCategory(el.dataset.idx),
-  'export-csv': () => exportCsv(),
-  'admin-filter': el => setAdminFilter(el.dataset.filter),
+  'nmap-cat': el => withView(aulaView, m => m.switchNmapCategory(el.dataset.idx)),
+  'export-csv': () => withView(adminView, m => m.exportCsv()),
+  'admin-filter': el => withView(adminView, m => m.setAdminFilter(el.dataset.filter)),
   'google-login': el => loginWithGoogle(el),
   'forget-account': () => forgetAccount()
 };
@@ -235,19 +257,19 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   const action = el.dataset && el.dataset.action;
-  if (action === 'admin-level') setAccessLevel(el);
-  else if (action === 'admin-override') setCourseOverride(el);
-  else if (action === 'admin-course-flag') setCourseFlag(el);
+  if (action === 'admin-level') withView(adminView, m => m.setAccessLevel(el));
+  else if (action === 'admin-override') withView(adminView, m => m.setCourseOverride(el));
+  else if (action === 'admin-course-flag') withView(adminView, m => m.setCourseFlag(el));
 });
 
 document.addEventListener('submit', e => {
   const form = e.target;
   if (form.dataset.action === 'quiz') {
     e.preventDefault();
-    submitQuiz(form);
+    withView(aulaView, m => m.submitQuiz(form));
     return;
   }
-  const messageForms = { 'send-message': submitMessage, 'admin-reply': submitAdminReply, 'admin-revoke-confirm': confirmRevoke };
+  const messageForms = { 'send-message': submitMessage, 'admin-reply': submitAdminReply, 'admin-revoke-confirm': f => withView(adminView, m => m.confirmRevoke(f)) };
   if (messageForms[form.dataset.action]) {
     e.preventDefault();
     messageForms[form.dataset.action](form);
@@ -255,7 +277,7 @@ document.addEventListener('submit', e => {
   }
   if (form.dataset.action === 'c-quiz') {
     e.preventDefault();
-    submitCourseQuiz(form);
+    withView(courseView, m => m.submitCourseQuiz(form));
     return;
   }
   if (form.dataset.action === 'c-terminal') {
@@ -263,7 +285,8 @@ document.addEventListener('submit', e => {
     const input = $('c-input');
     if (input) {
       historyFor(input).push(input.value);
-      runCourseCmd(input.value);
+      const cmd = input.value;
+      withView(courseView, m => m.runCourseCmd(cmd));
       input.value = '';
     }
     return;
@@ -273,7 +296,8 @@ document.addEventListener('submit', e => {
     const input = $('terminal-input');
     if (input) {
       historyFor(input).push(input.value);
-      executeCommand(input.value);
+      const cmd = input.value;
+      withView(aulaView, m => m.executeCommand(cmd));
       input.value = '';
     }
   }
@@ -281,7 +305,7 @@ document.addEventListener('submit', e => {
 
 // Notas de lección: guardado automático al escribir.
 document.addEventListener('input', e => {
-  if (e.target.matches && e.target.matches('textarea[data-note]')) onNoteInput(e.target);
+  if (e.target.matches && e.target.matches('textarea[data-note]')) withView(aulaView, m => m.onNoteInput(e.target));
   if (e.target.matches && e.target.matches('textarea[data-counter]')) updateCounter(e.target);
 });
 
@@ -336,7 +360,7 @@ revalidateSession()
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v59').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v60').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

@@ -1,16 +1,16 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v59';
-import { appState } from '../state.js?v=dev101x-v59';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v59';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v59';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v59';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v59';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v59';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v59';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v59';
-import { paintResume } from './resume.js?v=dev101x-v59';
+import { esc } from '../lib/html.js?v=dev101x-v60';
+import { appState } from '../state.js?v=dev101x-v60';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v60';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v60';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v60';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v60';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v60';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v60';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v60';
+import { paintResume } from './resume.js?v=dev101x-v60';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).

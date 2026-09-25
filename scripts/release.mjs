@@ -28,11 +28,11 @@ function jsFiles(dir) {
   });
 }
 
-// 1. Imports relativos de los módulos: './x.js' → './x.js?v=<versión>'.
+// 1. Imports relativos de los módulos (también los dinámicos, import('./x.js')): './x.js' → './x.js?v=<versión>'.
 let changed = 0;
 for (const file of jsFiles('js')) {
   const before = read(file);
-  const after = before.replace(/((?:from|import)\s+')(\.{1,2}\/[^'?]+\.js)(?:\?v=[^']*)?'/g, `$1$2?v=${next}'`);
+  const after = before.replace(/((?:from|import)\s*\(?\s*')(\.{1,2}\/[^'?]+\.js)(?:\?v=[^']*)?'/g, `$1$2?v=${next}'`);
   if (after !== before) { write(file, after); changed++; }
 }
 
