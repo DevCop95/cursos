@@ -5,14 +5,14 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v44';
-import { isCloudEnabled } from '../config.js?v=dev101x-v44';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v44';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v44';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse } from '../cloud.js?v=dev101x-v44';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v44';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v44';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v44';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v45';
+import { isCloudEnabled } from '../config.js?v=dev101x-v45';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v45';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v45';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress } from '../cloud.js?v=dev101x-v45';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v45';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v45';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v45';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -57,8 +57,9 @@ function accessFor(row, course) {
 function courseProgressItems(row) {
   return lastCourses.map(c => {
     if (c.id === COURSE.id) {
-      const p = computeProgress((row.progress && row.progress.steps) || {});
-      return { course: c, percent: p.percent, done: Boolean(completedAt(row)), allowed: accessFor(row, c).allowed, started: p.percent > 0 };
+      const steps = (row.progress && row.progress.steps) || {};
+      const p = computeProgress(steps);
+      return { course: c, percent: p.percent, done: Boolean(completedAt(row)), allowed: accessFor(row, c).allowed, started: Object.keys(steps).length > 0 };
     }
     const cp = (row.courseProgress || []).find(x => x.course_id === c.id);
     const percent = cp ? Number(cp.progress_percentage) || 0 : 0;
@@ -325,6 +326,7 @@ export function openUserDetails(userId) {
               <span class="flex-1 min-w-0 truncate text-ink font-semibold">${esc(i.course.title)}</span>
               <span class="w-20 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${i.percent}%"></span></span>
               <span class="w-10 text-right font-mono font-bold ${i.done ? 'text-accent' : 'text-ink2'}">${i.done ? '✓' : `${i.percent}%`}</span>
+              ${i.started ? `<button type="button" data-action="admin-reset" data-user="${esc(r.id)}" data-course="${esc(i.course.id)}" class="shrink-0 px-2 py-1 rounded-lg border border-line hover:border-rose-300 hover:bg-rose-50 text-rose-600 text-[10px] font-semibold" title="Borra el progreso de este curso">Reiniciar</button>` : '<span class="w-[62px] shrink-0" aria-hidden="true"></span>'}
             </div>`).join('') || '<p class="text-xs text-muted">Sin cursos todavía.</p>'}
           <details class="rounded-xl border border-line bg-bg/40 text-xs">
             <summary class="cursor-pointer px-3 py-2 font-semibold text-ink2 select-none">Detalle de ${esc(shortTitle(COURSE.title))}: ${p.lessonsDone.length}/${TOTAL_LESSONS} lecciones · ${p.labsDone.length}/${LAB_STEPS.length} labs</summary>
@@ -404,6 +406,24 @@ export async function setCourseOverride(select) {
     if (mode !== 'auto') r.access.push({ course_id: course, enabled: mode === 'grant' });
   }
   refreshUserDetail(user);
+}
+
+// Borra el progreso de un alumno en un curso. En Nmap, su navegador descarta la copia local al volver a
+// sincronizar (student_progress.reset_at), así que no lo vuelve a subir.
+export async function resetUserProgress(btn) {
+  const { user, course } = btn.dataset;
+  const r = lastRows.find(row => row.id === user);
+  const c = lastCourses.find(x => x.id === course);
+  if (!r || !c) return;
+  const who = r.full_name || r.email;
+  if (!window.confirm(`¿Reiniciar el progreso de ${who} en «${c.title}»? Se borran sus comandos, respuestas y el estado del laboratorio. No se puede deshacer.`)) return;
+  const ok = await saving(btn, () => adminResetProgress(user, course), 'Progreso reiniciado');
+  if (!ok) return;
+  if (course === COURSE.id) r.progress = { ...(r.progress || {}), steps: {}, progress_percentage: 0, completed_at: null };
+  else r.courseProgress = (r.courseProgress || []).filter(cp => cp.course_id !== course);
+  r.completions = (r.completions || []).filter(x => x.course_id !== course);
+  repaint();
+  openUserDetails(user);
 }
 
 export async function setCourseFlag(input) {

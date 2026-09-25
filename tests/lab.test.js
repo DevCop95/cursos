@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runCommand, computeProgress, pendingHints, pendingChecks, mergeSteps, TOTAL_LESSONS } from '../js/lab.js';
+import { runCommand, computeProgress, pendingHints, pendingChecks, mergeSteps, applyProgressReset, TOTAL_LESSONS } from '../js/lab.js';
 import { LAB_TARGET } from '../js/content.js';
 
 const steps = cmd => runCommand(cmd).steps;
@@ -92,4 +92,15 @@ test('pendingHints sugiere los comandos de la siguiente lección', () => {
 
 test('mergeSteps conserva la fecha más antigua', () => {
   assert.deepEqual(mergeSteps({ a: '2026-02-01' }, { a: '2026-01-01', b: '2026-03-01' }), { a: '2026-01-01', b: '2026-03-01' });
+});
+
+test('reinicio del admin: se descartan los pasos locales anteriores y solo una vez', () => {
+  const record = { steps: { ipconfig: '2026-09-24T06:16:21.000Z', whoami: '2026-09-26T10:00:00.000Z' }, completedAt: '2026-09-24T07:00:00.000Z' };
+  const reset = applyProgressReset(record, '2026-09-25T00:00:00.000Z');
+  assert.deepEqual(reset.steps, { whoami: '2026-09-26T10:00:00.000Z' });
+  assert.equal(reset.completedAt, null);
+  assert.equal(reset.resetAt, '2026-09-25T00:00:00.000Z');
+  // El mismo reinicio no se vuelve a aplicar; sin reinicio no cambia nada.
+  assert.equal(applyProgressReset(reset, '2026-09-25T00:00:00.000Z'), null);
+  assert.equal(applyProgressReset(record, null), null);
 });

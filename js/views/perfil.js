@@ -1,14 +1,14 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v44';
-import { appState } from '../state.js?v=dev101x-v44';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v44';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v44';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v44';
-import { isAdmin } from '../auth.js?v=dev101x-v44';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v44';
-import { COURSE } from '../content.js?v=dev101x-v44'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v45';
+import { appState } from '../state.js?v=dev101x-v45';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v45';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v45';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v45';
+import { isAdmin } from '../auth.js?v=dev101x-v45';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v45';
+import { COURSE } from '../content.js?v=dev101x-v45'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';

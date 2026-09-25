@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v44';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v45';
 
 let clientPromise = null;
 
@@ -98,7 +98,7 @@ export async function touchLastLogin(userId, fullName, avatarUrl) {
 export async function fetchOwnProgress(userId) {
   const client = await getClient();
   if (!client) return null;
-  const { data, error } = await client.from('student_progress').select('steps, completed_at').eq('user_id', userId).maybeSingle();
+  const { data, error } = await client.from('student_progress').select('steps, completed_at, reset_at').eq('user_id', userId).maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -272,6 +272,14 @@ export async function adminSetAccessLevel(userId, level) {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
   const { error } = await client.from('profiles').update({ access_level: level }).eq('id', userId);
+  if (error) throw error;
+}
+
+// Reinicia el progreso de un alumno en un curso (la función del servidor comprueba que eres admin).
+export async function adminResetProgress(userId, courseId) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { error } = await client.rpc('admin_reset_progress', { p_user: userId, p_course: courseId });
   if (error) throw error;
 }
 

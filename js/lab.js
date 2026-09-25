@@ -3,7 +3,7 @@
  *  - runCommand(): simula la salida de la consola y detecta qué pasos del laboratorio se completan.
  *  - computeProgress(): deriva lecciones, labs, porcentaje y habilidades a partir de los pasos.
  */
-import { COURSE, LAB_STEPS, LAB_TARGET, LAB_HOST_IP, SKILLS, STEP_HINTS } from './content.js?v=dev101x-v44';
+import { COURSE, LAB_STEPS, LAB_TARGET, LAB_HOST_IP, SKILLS, STEP_HINTS } from './content.js?v=dev101x-v45';
 
 const TARGET_ALIASES = [LAB_TARGET, 'srv-target', 'srv-target.lab', 'srv-target.dev101x.internal', 'srv-target.dev101x.lab'];
 const OPEN_PORTS = [
@@ -406,6 +406,15 @@ export function pendingChecks(steps = {}) {
 }
 
 // Une dos registros de pasos conservando la fecha más antigua de cada uno.
+// Reinicio hecho por el admin (student_progress.reset_at): descarta los pasos locales anteriores a esa fecha
+// para que el navegador no vuelva a subirlos. Devuelve el registro nuevo, o null si no hay reinicio pendiente.
+export function applyProgressReset(record = {}, resetAt) {
+  const since = Date.parse(resetAt || '');
+  if (!since || (record.resetAt && Date.parse(record.resetAt) >= since)) return null;
+  const steps = Object.fromEntries(Object.entries(record.steps || {}).filter(([, t]) => Date.parse(t) > since));
+  return { ...record, steps, completedAt: null, resetAt };
+}
+
 export function mergeSteps(a = {}, b = {}) {
   const out = { ...a };
   Object.entries(b || {}).forEach(([k, v]) => {
