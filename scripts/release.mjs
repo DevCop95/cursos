@@ -48,6 +48,7 @@ for (const slug of [...courses.map(c => c.slug), 'lab-linux']) {
   try { write(`${slug}/index.html`, read(`${slug}/index.html`).replace(/dev101x-v\d+/g, next)); } catch (e) { /* aún no generada */ }
 }
 write('lab-linux/embed.html', read('lab-linux/embed.html').replace(/dev101x-v\d+/g, next));
+write('lab-linux/lab.js', read('lab-linux/lab.js').replace(/dev101x-v\d+/g, next)); // URL de lab-hook.sh
 let sw = read('sw.js').replace(/dev101x-v\d+/g, next);
 sw = sw.replace(/'(\.\/js\/[^'?]+\.js)(?:\?v=[^']*)?'/g, `'$1?v=${next}'`);
 write('sw.js', sw);

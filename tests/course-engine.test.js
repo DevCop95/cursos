@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps } from '../js/lib/course-engine.js';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, realCourseSteps } from '../js/lib/course-engine.js';
 
 // Curso mínimo de ejemplo (el contenido real vive en Supabase, no en el repositorio).
 const COURSE = {
@@ -53,4 +53,38 @@ test('computeCourseProgress: preguntas obligatorias y reto final al final', () =
 test('pendingCourseSteps separa comandos y comprobaciones', () => {
   assert.deepEqual(pendingCourseSteps(COURSE, {}), { commands: ['v'], checks: ['q-a1-1'] });
   assert.deepEqual(pendingCourseSteps(COURSE, { v: 1 }), { commands: [], checks: ['q-a1-1'] });
+});
+
+// Terminal Linux real: reglas genéricas (las del curso viven en su contenido, en la base de datos).
+const RULES = [
+  { step: 'ver', cmd: '^tool --version$' },
+  { step: 'save', cmd: '^tool save', when: { count: '>=1' } },
+  { step: 'clash', cmd: '^tool mix', rc: null, when: { clash: '>=1' } },
+  { step: 'fix', cmd: '^tool (add|save)', after: 'clash', when: { clash: '0', dir: 'team' } },
+  { step: 'send', cmd: '^tool send', when: { upstream: '~^origin/(?!main$)' } }
+];
+const st = (cmd, extra = {}) => ({ cmd, rc: 0, dir: 'demo', repo: true, branch: 'main', commits: 0, upstream: '', conflict: 0, count: 0, clash: 0, ...extra });
+
+test('Linux real: el paso cuenta solo si el comando funcionó y el estado lo confirma', () => {
+  assert.deepEqual(realCourseSteps(RULES, st('tool --version')), ['ver']);
+  assert.deepEqual(realCourseSteps(RULES, st('tool --version', { rc: 127 })), []);
+  assert.deepEqual(realCourseSteps(RULES, st('tool save -m x', { count: 0 })), []);
+  assert.deepEqual(realCourseSteps(RULES, st('tool save -m x', { count: 1 })), ['save']);
+  // Un paso ya hecho no se repite.
+  assert.deepEqual(realCourseSteps(RULES, st('tool --version'), { ver: 'x' }), []);
+});
+
+test('Linux real: rc null acepta un comando que falla y "after" exige el paso previo', () => {
+  assert.deepEqual(realCourseSteps(RULES, st('tool mix other', { rc: 1, clash: 2 })), ['clash']);
+  assert.deepEqual(realCourseSteps(RULES, st('tool add file', { dir: 'team' })), []);
+  assert.deepEqual(realCourseSteps(RULES, st('tool add file', { dir: 'team' }), { clash: 'x' }), ['fix']);
+});
+
+test('Linux real: comandos encadenados y condiciones con patrón', () => {
+  assert.deepEqual(realCourseSteps(RULES, st('cd x && tool --version')), ['ver']);
+  assert.deepEqual(realCourseSteps(RULES, st('tool send', { upstream: 'origin/main' })), []);
+  assert.deepEqual(realCourseSteps(RULES, st('tool send', { upstream: 'origin/feature/x' })), ['send']);
+  assert.deepEqual(realCourseSteps(RULES, st('tool send', { upstream: '' })), []);
+  assert.deepEqual(realCourseSteps(null, st('tool --version')), []);
+  assert.deepEqual(realCourseSteps([{ step: 'bad', cmd: '(' }], st('(')), []);
 });

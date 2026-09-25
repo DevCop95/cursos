@@ -95,6 +95,43 @@ export function runCourseCommand(terminal, raw, state = initialCourseState(termi
   return result;
 }
 
+// ---------------------------------------------------------------------------
+// Terminal Linux real: tras cada comando, lab-hook.sh informa { cmd, rc, dir, repo, branch, commits,
+// upstream, conflict }. Cada regla del curso (terminal.real) es { step, cmd, rc?, when?, after? }:
+//  cmd: patrón del comando (se prueba con cada parte de "a && b; c"); rc: código de salida esperado
+//  (por defecto 0; null = cualquiera); when: { campo: valor | '>=1' | '!=x' | '~patrón' };
+//  after: paso que tiene que estar hecho antes. Devuelve los pasos nuevos que se cumplen.
+// ---------------------------------------------------------------------------
+function compare(actual, expected) {
+  const m = String(expected).match(/^(>=|<=|!=|>|<|~)(.*)$/);
+  if (!m) return String(actual ?? '') === String(expected);
+  const [, op, raw] = m;
+  if (op === '!=') return String(actual ?? '') !== raw;
+  if (op === '~') { try { return new RegExp(raw).test(String(actual ?? '')); } catch (e) { return false; } }
+  const a = Number(actual);
+  const b = Number(raw);
+  return op === '>=' ? a >= b : op === '<=' ? a <= b : op === '>' ? a > b : a < b;
+}
+
+export function realCourseSteps(rules, state, steps = {}) {
+  if (!Array.isArray(rules) || !state || typeof state.cmd !== 'string') return [];
+  const parts = normalize(state.cmd).split(/\s*(?:&&|\|\||;)\s*/).filter(Boolean);
+  const found = [];
+  const done = s => Boolean(steps[s]) || found.includes(s);
+  for (const r of rules) {
+    if (!r || typeof r.step !== 'string' || done(r.step)) continue;
+    let re;
+    try { re = new RegExp(r.cmd, 'i'); } catch (e) { continue; }
+    if (!parts.some(p => re.test(p))) continue;
+    const rc = r.rc === undefined ? 0 : r.rc;
+    if (rc !== null && Number(state.rc) !== Number(rc)) continue;
+    if (r.after && !done(r.after)) continue;
+    if (!Object.entries(r.when || {}).every(([k, v]) => compare(state[k], v))) continue;
+    found.push(r.step);
+  }
+  return found;
+}
+
 export function allLessons(content) {
   return (content.syllabus || []).flatMap(m => m.lessons.map(l => ({ ...l, module: m.module })));
 }

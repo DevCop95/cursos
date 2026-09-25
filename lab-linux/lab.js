@@ -3,11 +3,14 @@
  * La máquina arranca desde un estado ya iniciado (state.bin.zst) y lee los archivos del disco
  * bajo demanda (img-vN/flat). Todo se ejecuta en el equipo del alumno.
  * Sirve a la página del prototipo (index.html) y a la terminal del aula (embed.html, en un iframe):
- * el aula manda comandos con postMessage { type: 'dev101x-lab', run } y recibe { type, event: 'ready' }.
+ * el aula manda comandos con postMessage { type: 'dev101x-lab', run } y recibe { type, event: 'ready' } y,
+ * tras cada comando, { type, event: 'state', state } con lo que informa lab-hook.sh desde dentro de Linux.
  */
 (function () {
   'use strict';
   const IMG = 'img-v1/';
+  const HOOK_URL = 'lab-hook.sh?v=dev101x-v46';
+  const HOOK_PATH = '/tmp/.dev101x-lab.sh';
   const $ = id => document.getElementById(id);
   let emulator = null;
   let term = null;
@@ -18,8 +21,33 @@
 
   function status(text) { $('lab-status').textContent = text; }
 
-  function notifyParent(event) {
-    if (embedded) window.parent.postMessage({ type: 'dev101x-lab', event }, location.origin);
+  function notifyParent(event, extra) {
+    if (embedded) window.parent.postMessage({ type: 'dev101x-lab', event, ...extra }, location.origin);
+  }
+
+  // Estado que imprime lab-hook.sh tras cada comando: 1|codigo|comando(b64)|carpeta(b64)|repo|rama|commits|upstream|conflictos
+  const b64 = v => { try { return new TextDecoder().decode(Uint8Array.from(atob(v || ''), c => c.charCodeAt(0))); } catch (e) { return ''; } };
+  function parseState(data) {
+    const f = String(data).split('|');
+    if (f[0] !== '1' || f.length < 9) return null;
+    return {
+      rc: Number(f[1]), cmd: b64(f[2]).slice(0, 300), dir: b64(f[3]).slice(0, 120), repo: f[4] === '1',
+      branch: f[5].slice(0, 120), commits: Number(f[6]) || 0, upstream: f[7].slice(0, 120), conflict: Number(f[8]) || 0
+    };
+  }
+
+  // Copia lab-hook.sh dentro de la máquina (sistema de archivos 9p) y lo carga en la terminal.
+  async function installHook() {
+    try {
+      const res = await fetch(HOOK_URL, { cache: 'no-cache' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = (await res.text()).replace(/\r/g, '');
+      await emulator.create_file(HOOK_PATH, new TextEncoder().encode(text));
+      emulator.serial0_send(' . ' + HOOK_PATH + '; clear; cat /etc/motd\n');
+    } catch (e) {
+      console.warn('No se pudo preparar el laboratorio:', e);
+      emulator.serial0_send('clear; cat /etc/motd\n');
+    }
   }
 
   function setProgress(pct) {
@@ -90,6 +118,11 @@
       fit = new window.FitAddon.FitAddon();
       term.loadAddon(fit);
       term.open($('lab-term'));
+      term.parser.registerOscHandler(7777, data => {
+        const state = parseState(data);
+        if (state) notifyParent('state', { state });
+        return true;
+      });
       term.onData(data => emulator.serial0_send(data));
       emulator.add_listener('serial0-output-byte', byte => {
         pending.push(byte);
@@ -98,9 +131,10 @@
       ready = true;
       status('Listo · Linux real');
       syncSize();
-      emulator.serial0_send('clear; cat /etc/motd\n');
-      if (queued) { emulator.serial0_send(queued + '\n'); queued = null; }
-      notifyParent('ready');
+      installHook().then(() => {
+        if (queued) { emulator.serial0_send(queued + '\n'); queued = null; }
+        notifyParent('ready');
+      });
       term.focus();
     });
   }

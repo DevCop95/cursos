@@ -3,11 +3,11 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v45';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v45';
-import { isCloudEnabled } from '../config.js?v=dev101x-v45';
-import * as cloud from '../cloud.js?v=dev101x-v45';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor } from '../lib/course-engine.js?v=dev101x-v45';
+import { esc } from '../lib/html.js?v=dev101x-v46';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v46';
+import { isCloudEnabled } from '../config.js?v=dev101x-v46';
+import * as cloud from '../cloud.js?v=dev101x-v46';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps } from '../lib/course-engine.js?v=dev101x-v46';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -428,13 +428,35 @@ export function runCourseCmd(raw) {
   const key = explanationFor(cmd.replace(/\s+/g, ' '));
   if (key && key !== S.expl) selectCourseExplanation(key);
   else scheduleSave();
-  const fresh = r.steps.filter(s => !S.steps[s]);
-  if (fresh.length) {
-    cloud.recordCourseSteps(S.id, fresh)
-      .then(applyServerSteps)
-      .catch(err => { console.warn('No se pudo guardar el progreso:', err.message || err); showToast('No se pudo guardar el progreso', 'error'); });
-  }
+  recordFreshSteps(r.steps);
 }
+
+function recordFreshSteps(steps) {
+  const fresh = steps.filter(s => !S.steps[s]);
+  if (!fresh.length) return;
+  cloud.recordCourseSteps(S.id, fresh)
+    .then(applyServerSteps)
+    .catch(err => { console.warn('No se pudo guardar el progreso:', err.message || err); showToast('No se pudo guardar el progreso', 'error'); });
+}
+
+// Estado que manda la terminal Linux real tras cada comando (lab-hook.sh → lab.js → aquí). Solo se acepta
+// del iframe del laboratorio y los pasos se deciden con las reglas del curso (terminal.real).
+function onLinuxState(e) {
+  const frame = linuxFrame();
+  if (!S || S.mode !== 'linux' || !frame || e.source !== frame.contentWindow || e.origin !== location.origin) return;
+  const d = e.data;
+  if (!d || d.type !== 'dev101x-lab' || d.event !== 'state' || !d.state || typeof d.state.cmd !== 'string') return;
+  const st = d.state;
+  const state = {
+    cmd: st.cmd.slice(0, 300), rc: Number(st.rc), dir: String(st.dir || '').slice(0, 120), repo: Boolean(st.repo),
+    branch: String(st.branch || '').slice(0, 120), commits: Number(st.commits) || 0,
+    upstream: String(st.upstream || '').slice(0, 120), conflict: Number(st.conflict) || 0
+  };
+  const key = explanationFor(state.cmd.replace(/\s+/g, ' '));
+  if (key && key !== S.expl) selectCourseExplanation(key);
+  recordFreshSteps(realCourseSteps(S.content.terminal.real, state, S.steps));
+}
+window.addEventListener('message', onLinuxState);
 
 export function runCourseCmdFromUi(el) {
   const linux = S && S.mode === 'linux';
@@ -471,7 +493,8 @@ export function setCourseTerminalMode(mode) {
   toggle('c-sim', linux);
   toggle('c-sim-tools', linux);
   toggle('c-linux', !linux);
-  toggle('c-linux-note', !linux);
+  // Sin reglas para la terminal real, lo que se hace ahí es práctica libre (no cuenta para el progreso).
+  toggle('c-linux-note', !linux || Array.isArray(S.content.terminal.real));
   document.querySelectorAll('[data-action="c-mode"]').forEach(b => {
     const on = b.dataset.mode === mode;
     b.setAttribute('aria-pressed', String(on));
