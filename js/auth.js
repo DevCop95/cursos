@@ -5,11 +5,11 @@
  *  - Modo local: solo se comprueban los claims para mostrar el perfil; el rol es siempre
  *    'student' y no existe acceso de administración.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v49';
-import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v49';
-import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v49';
-import * as cloud from './cloud.js?v=dev101x-v49';
-import { pullProgressFromCloud } from './progress.js?v=dev101x-v49';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v50';
+import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v50';
+import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v50';
+import * as cloud from './cloud.js?v=dev101x-v50';
+import { pullProgressFromCloud } from './progress.js?v=dev101x-v50';
 
 let pendingNonce = null;
 
@@ -31,6 +31,29 @@ export async function prepareNonce() {
 async function loadCourseAccess() {
   const ids = await cloud.fetchAccessibleCourses().catch(() => null);
   return Array.isArray(ids) ? ids : [CONFIG.defaultCourseId];
+}
+
+// Cursos que el alumno ya conocía en este navegador, para avisarle de los accesos nuevos (p. ej. cuando el
+// admin concede una solicitud). La primera vez solo se anotan, sin avisar.
+const seenAccessKey = () => `dev101x_seen_access:${appState.session ? appState.session.userId : ''}`;
+
+export function takeNewCourseAccess() {
+  if (!appState.session || appState.session.mode !== 'cloud') return [];
+  let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(seenAccessKey()) || 'null'); } catch (e) { /* sin datos */ }
+  const ids = appState.enabledCourses || [];
+  try { localStorage.setItem(seenAccessKey(), JSON.stringify(ids)); } catch (e) { /* almacenamiento bloqueado */ }
+  return Array.isArray(seen) ? ids.filter(id => !seen.includes(id)) : [];
+}
+
+// Vuelve a pedir los cursos accesibles (al volver a la pestaña) y devuelve los nuevos.
+export async function checkNewCourseAccess() {
+  if (!appState.session || appState.session.mode !== 'cloud') return [];
+  const ids = await cloud.fetchAccessibleCourses().catch(() => null);
+  if (!Array.isArray(ids)) return [];
+  appState.enabledCourses = ids;
+  saveState(appState);
+  return takeNewCourseAccess();
 }
 
 // ---------------------------------------------------------------------------

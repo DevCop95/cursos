@@ -1,14 +1,15 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v49';
-import { appState } from '../state.js?v=dev101x-v49';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v49';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v49';
-import { avatarFor, openDialog } from '../ui.js?v=dev101x-v49';
-import { isAdmin } from '../auth.js?v=dev101x-v49';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v49';
-import { COURSE } from '../content.js?v=dev101x-v49'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v50';
+import { appState } from '../state.js?v=dev101x-v50';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v50';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v50';
+import { avatarFor, openDialog } from '../ui.js?v=dev101x-v50';
+import { isAdmin } from '../auth.js?v=dev101x-v50';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses } from '../cloud.js?v=dev101x-v50';
+import { COURSE } from '../content.js?v=dev101x-v50';
+import { paintResume } from './resume.js?v=dev101x-v50'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -100,6 +101,8 @@ export function renderPerfil(container) {
         </div>
       </section>
 
+      <div id="resume-card" class="hidden"></div>
+
       <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
         <div class="flex items-center justify-between gap-2 mb-2">
           <h2 class="text-sm font-bold text-ink">Mis cursos</h2>
@@ -127,6 +130,7 @@ export function renderPerfil(container) {
     </div>
   `;
   paintBadgeCount(steps, 0);
+  paintResume(document.getElementById('resume-card'));
   // La racha llega del servidor: se pinta cuando responde.
   fetchStreak().then(streak => {
     const el = document.getElementById('profile-streak');

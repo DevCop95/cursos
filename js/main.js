@@ -2,20 +2,22 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v49';
-import { resolveRoute } from './router.js?v=dev101x-v49';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect } from './auth.js?v=dev101x-v49';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v49';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v49';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v49';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v49';
-import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v49';
-import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v49';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v49';
-import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v49';
-import { COURSE } from './content.js?v=dev101x-v49';
-import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress, answerAccessRequest } from './views/admin.js?v=dev101x-v49';
-import { startPresence } from './progress.js?v=dev101x-v49';
+import { appState, isSessionValid } from './state.js?v=dev101x-v50';
+import { resolveRoute } from './router.js?v=dev101x-v50';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v50';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v50';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v50';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v50';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v50';
+import { renderAula, executeCommand, selectExplanation, switchNmapCategory, openLesson, openVideo, seekVideo, openResources, submitQuiz, onNoteInput, openCheatSheet, printCheatSheet, openHint } from './views/aula.js?v=dev101x-v50';
+import { renderPerfil, openAccountDetails } from './views/perfil.js?v=dev101x-v50';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v50';
+import { renderCourseAula, runCourseCmd, runCourseCmdFromUi, openCourseLesson, openCourseVideo, seekCourseVideo, openCourseHint, openCourseCheatSheet, openCourseResources, selectCourseExplanation, resetCourseLab, submitCourseQuiz, setCourseTerminalMode, resetLinuxLab } from './views/course-aula.js?v=dev101x-v50';
+import { COURSE } from './content.js?v=dev101x-v50';
+import { renderAdmin, exportCsv, setAdminFilter, openUserDetails, setAccessLevel, setCourseOverride, setCourseFlag, resetUserProgress, answerAccessRequest } from './views/admin.js?v=dev101x-v50';
+import { fetchCourses } from './cloud.js?v=dev101x-v50';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v50';
+import { startPresence } from './progress.js?v=dev101x-v50';
 
 const $ = id => document.getElementById(id);
 
@@ -71,6 +73,7 @@ function render() {
   switch (route) {
     case 'aula-interactiva':
       // El curso de Nmap vive en el código; el resto (de pago) se carga desde Supabase.
+      if (appState.enabledCourses.includes(param)) rememberLastCourse(param);
       if (param === COURSE.id) renderAula(view, param);
       else renderCourseAula(view, param);
       break;
@@ -82,7 +85,25 @@ function render() {
   view.focus({ preventScroll: true });
 }
 
+// Aviso de cursos nuevos (p. ej. el admin concedió una solicitud). Se comprueba al abrir la app y al volver a
+// la pestaña (como mucho una vez por minuto); las vistas con la lista de cursos se repintan.
+let lastAccessCheck = Date.now();
+async function announceNewAccess(ids) {
+  if (!ids || !ids.length) return;
+  const courses = await fetchCourses().catch(() => []);
+  const titles = ids.map(id => (courses.find(c => c.id === id) || { title: id }).title);
+  showToast(`Ya tienes acceso a ${titles.map(t => `«${t}»`).join(' y ')}`, 'success');
+  const { route } = resolveRoute(window.location.hash, { authenticated: isSessionValid(), admin: isAdmin() });
+  if (['mis-cursos', 'explorar-cursos', 'perfil'].includes(route)) render();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !isSessionValid() || Date.now() - lastAccessCheck < 60000) return;
+  lastAccessCheck = Date.now();
+  checkNewCourseAccess().then(announceNewAccess).catch(() => {});
+});
+
 function onLoggedIn() {
+  takeNewCourseAccess(); // anota los cursos actuales (sin avisar de los que ya tenía)
   startPresence();
   showToast(`Bienvenido, ${appState.session.name}`, 'success');
   window.location.hash = '#/mis-cursos';
@@ -289,12 +310,12 @@ if (oauthRedirect) {
 
 // Revalida la sesión contra el servidor (modo nube) sin bloquear el primer render.
 revalidateSession()
-  .then(changed => { if (changed) render(); })
+  .then(changed => { if (changed) render(); announceNewAccess(takeNewCourseAccess()); })
   .catch(err => console.warn('No se pudo revalidar la sesión:', err))
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v49').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v50').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

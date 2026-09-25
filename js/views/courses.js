@@ -1,15 +1,16 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v49';
-import { appState } from '../state.js?v=dev101x-v49';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v49';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v49';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v49';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v49';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v49';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v49';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v49';
+import { esc } from '../lib/html.js?v=dev101x-v50';
+import { appState } from '../state.js?v=dev101x-v50';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v50';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v50';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v50';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v50';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v50';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v50';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v50';
+import { paintResume } from './resume.js?v=dev101x-v50';
 
 const COURSES = [COURSE];
 // Contenido de los cursos de pago ya descargado (solo llega si el servidor da acceso).
@@ -155,6 +156,8 @@ export function renderMisCursos(container) {
         </div>
       </section>
 
+      <div id="resume-card" class="hidden"></div>
+
       <section id="my-courses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         ${enrolled.length ? enrolled.map(tile).join('') : `
           <div class="p-6 bg-surface rounded-2xl border border-line text-center text-sm text-muted sm:col-span-2 lg:col-span-3">
@@ -163,7 +166,9 @@ export function renderMisCursos(container) {
         ${enrolled.length ? exploreTile : ''}
       </section>
     </div>
-  `;  // Cursos de pago (contenido en Supabase) a los que el alumno tiene acceso.
+  `;
+  paintResume(document.getElementById('resume-card'));
+  // Cursos de pago (contenido en Supabase) a los que el alumno tiene acceso.
   Promise.all([fetchCourses(), fetchCourseProgress().catch(() => [])]).then(([courses, progress]) => {
     rememberCourses(courses);
     const grid = document.getElementById('my-courses-grid');
@@ -346,6 +351,7 @@ export function renderExplorar(container) {
       </section>
     </div>
   `;
+
   // El catálogo real está en Supabase: añade los cursos que aún no tienen contenido.
   Promise.all([fetchCourses(), fetchAccessRequests().catch(() => [])]).then(([list, requests]) => {
     myRequests = new Map(requests.map(r => [r.course_id, r.rejected_at ? 'rejected' : 'pending']));
