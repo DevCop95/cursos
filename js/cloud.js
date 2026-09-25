@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v52';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v53';
 
 let clientPromise = null;
 
@@ -214,14 +214,20 @@ export async function answerCourseQuiz(courseId, step, answer) {
 export async function recon(domain) {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está disponible.');
-  const { data, error } = await client.functions.invoke('recon', { body: { domain } });
-  if (error) {
-    // El cuerpo de error de la función trae un mensaje útil (403, 400…).
-    let msg = 'No se pudo hacer el reconocimiento.';
-    try { msg = (await error.context.json()).error || msg; } catch (e) { /* sin cuerpo */ }
-    throw new Error(msg);
-  }
-  return data;
+  const { data: sess } = await client.auth.getSession();
+  const token = sess && sess.session && sess.session.access_token;
+  if (!token) throw new Error('Inicia sesión para usar recons101x.');
+  // Se llama por fetch directo (no functions.invoke) para adjuntar el token del alumno de forma explícita
+  // y poder leer el mensaje de error del cuerpo tal cual.
+  const res = await fetch(`${CONFIG.supabaseUrl}/functions/v1/recon`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, apikey: CONFIG.supabaseAnonKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain })
+  });
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* respuesta sin JSON */ }
+  if (!res.ok) throw new Error((body && body.error) || `No se pudo hacer el reconocimiento (${res.status}).`);
+  return body;
 }
 
 // Rango, puntos e insignias (cursos terminados), calculados en el servidor. Sin userId: los propios.
