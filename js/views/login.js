@@ -4,11 +4,11 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v65';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v65';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v65';
-import { esc } from '../lib/html.js?v=dev101x-v65';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v65';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v66';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v66';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v66';
+import { esc } from '../lib/html.js?v=dev101x-v66';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v66';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">

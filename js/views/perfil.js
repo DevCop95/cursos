@@ -1,17 +1,17 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v65';
-import { appState, saveState } from '../state.js?v=dev101x-v65';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v65';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v65';
-import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v65';
-import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v65';
-import { isAdmin } from '../auth.js?v=dev101x-v65';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v65';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v65';
-import { COURSE } from '../content.js?v=dev101x-v65';
-import { paintResume } from './resume.js?v=dev101x-v65'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v66';
+import { appState, saveState } from '../state.js?v=dev101x-v66';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v66';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v66';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v66';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v66';
+import { isAdmin } from '../auth.js?v=dev101x-v66';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v66';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v66';
+import { COURSE } from '../content.js?v=dev101x-v66';
+import { paintResume } from './resume.js?v=dev101x-v66'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -231,9 +231,9 @@ export function openNameDialog() {
     body: `
       <form data-action="set-name" class="flex flex-col gap-3" novalidate>
         <label for="name-input" class="text-[13px] text-ink2">Es el nombre que ves en la app y el que ve el administrador. Tu cuenta de Google no cambia.</label>
-        <input id="name-input" name="name" type="text" maxlength="40" autocomplete="nickname" value="${esc(user.name || '')}"
+        <input id="name-input" name="name" type="text" maxlength="40" autocomplete="nickname" spellcheck="false" value="${esc(user.name || '')}"
           class="h-11 px-3 rounded-xl bg-white border border-line focus:border-accent outline-none text-sm text-ink" />
-        <p class="text-[11px] text-muted">Entre 2 y 40 caracteres: letras, números, espacios y . ' - _</p>
+        <p class="text-[11px] text-muted">Entre 2 y 40 letras. Solo letras y espacios, sin números ni símbolos.</p>
         <p id="name-error" role="alert" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
         <div class="flex flex-wrap items-center gap-2 pt-1">
           <button type="submit" class="h-10 px-5 rounded-xl bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">Guardar</button>
