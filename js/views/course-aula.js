@@ -3,13 +3,13 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v73';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v73';
-import { isCloudEnabled } from '../config.js?v=dev101x-v73';
-import * as cloud from '../cloud.js?v=dev101x-v73';
-import { appState } from '../state.js?v=dev101x-v73';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v73';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v73';
+import { esc } from '../lib/html.js?v=dev101x-v74';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v74';
+import { isCloudEnabled } from '../config.js?v=dev101x-v74';
+import * as cloud from '../cloud.js?v=dev101x-v74';
+import { appState } from '../state.js?v=dev101x-v74';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v74';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v74';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -180,11 +180,11 @@ function paintAula(container) {
                 <button type="button" data-action="c-mode" data-mode="${mode}" aria-pressed="${S.mode === mode}" class="px-2 py-0.5 rounded text-[10px] transition-colors ${S.mode === mode ? MODE_ON : MODE_OFF}">${label}</button>`).join('')}
               </div>` : ''}
               <span id="c-linux-note" class="hidden text-[10px] text-slate-400" title="Aquí practicas libremente; el progreso del curso se cuenta en la terminal simulada">práctica libre</span>
-              <button type="button" id="c-linux-reset" data-action="c-linux-reset" title="Vuelve a empezar la máquina Linux desde cero (no borra tu progreso)" class="hidden px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
+              <button type="button" id="c-linux-reset" data-action="c-linux-reset" title="Vuelve a empezar la máquina Linux desde cero (no borra tu progreso)" class="hidden px-2.5 h-7 sm:h-6 items-center rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
               <span id="c-sim-tools" class="flex items-center gap-2">
-              <button type="button" data-action="c-reset" title="Vuelve a empezar el laboratorio (no borra tu progreso)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
-              <button type="button" data-action="c-run" data-cmd="clear" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">clear</button>
-              <button type="button" data-action="c-run" data-cmd="help" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
+              <button type="button" data-action="c-reset" title="Vuelve a empezar el laboratorio (no borra tu progreso)" class="px-2.5 h-7 sm:h-6 inline-flex items-center rounded bg-slate-800 hover:bg-slate-700 text-rose-300 text-[10px]">reiniciar</button>
+              <button type="button" data-action="c-run" data-cmd="clear" class="px-2.5 h-7 sm:h-6 inline-flex items-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">clear</button>
+              <button type="button" data-action="c-run" data-cmd="help" class="px-2.5 h-7 sm:h-6 inline-flex items-center rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
               </span>
             </div>
           </div>

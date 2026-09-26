@@ -1,15 +1,15 @@
 /**
  * Vista: Aula interactiva (terminal simulada, ficha técnica del comando, recursos de Nmap y temario).
  */
-import { esc } from '../lib/html.js?v=dev101x-v73';
-import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v73';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v73';
-import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v73';
-import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v73';
-import { showToast, openDialog } from '../ui.js?v=dev101x-v73';
-import { isCloudEnabled } from '../config.js?v=dev101x-v73';
-import * as cloud from '../cloud.js?v=dev101x-v73';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v73';
+import { esc } from '../lib/html.js?v=dev101x-v74';
+import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v74';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v74';
+import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v74';
+import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v74';
+import { showToast, openDialog } from '../ui.js?v=dev101x-v74';
+import { isCloudEnabled } from '../config.js?v=dev101x-v74';
+import * as cloud from '../cloud.js?v=dev101x-v74';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v74';
 
 const LINE_CLASSES = {
   error: 'text-red-400',
@@ -819,9 +819,9 @@ export function renderAula(container, courseId) {
                 <span class="text-emerald-400 hidden md:inline">→ target ${LAB_TARGET}</span>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <button type="button" data-action="run-cmd" data-cmd="progreso" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 text-[10px]">progreso</button>
-                <button type="button" data-action="run-cmd" data-cmd="cls" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">cls</button>
-                <button type="button" data-action="run-cmd" data-cmd="help" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
+                <button type="button" data-action="run-cmd" data-cmd="progreso" class="px-2.5 h-7 sm:h-6 inline-flex items-center rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 text-[10px]">progreso</button>
+                <button type="button" data-action="run-cmd" data-cmd="cls" class="px-2.5 h-7 sm:h-6 inline-flex items-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">cls</button>
+                <button type="button" data-action="run-cmd" data-cmd="help" class="px-2.5 h-7 sm:h-6 inline-flex items-center rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px]">help</button>
               </div>
             </div>
 

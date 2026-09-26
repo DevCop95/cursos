@@ -5,19 +5,20 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v73';
-import { isCloudEnabled } from '../config.js?v=dev101x-v73';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v73';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v73';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v73';
-import { rankView } from '../lib/ranks.js?v=dev101x-v73';
-import { groupRequests } from '../lib/requests.js?v=dev101x-v73';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v73';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v73';
-import { openAdminThread } from './messages.js?v=dev101x-v73';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v73';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v73';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v73';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v74';
+import { isCloudEnabled } from '../config.js?v=dev101x-v74';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v74';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v74';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v74';
+import { rankView } from '../lib/ranks.js?v=dev101x-v74';
+import { groupRequests } from '../lib/requests.js?v=dev101x-v74';
+import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v74';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v74';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v74';
+import { openAdminThread } from './messages.js?v=dev101x-v74';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v74';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v74';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v74';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -42,6 +43,10 @@ let lastCourses = [];
 let lastRequests = []; // solicitudes de acceso pendientes
 let lastMessages = []; // mensajes de todas las conversaciones
 let currentFilter = 'active';
+// Tabla de alumnos: búsqueda y cuántas filas se ven (se amplía de PAGE en PAGE).
+const PAGE = 25;
+let userQuery = '';
+let userLimit = PAGE;
 let refreshTimer = null;
 
 // Fecha en que el servidor registró el curso como terminado (o null).
@@ -153,6 +158,12 @@ function tableHtml(allRows) {
     const msg = currentFilter === 'online' ? 'No hay nadie en línea ahora mismo.' : 'Ningún usuario ha estado activo en los últimos 7 días.';
     return `<p class="p-8 text-sm text-muted text-center">${msg}</p>`;
   }
+  const found = searchUsers(rows, userQuery);
+  if (!found.length) {
+    return `<p class="p-8 text-sm text-muted text-center">Ningún alumno coincide con «${esc(userQuery.trim())}».</p>`;
+  }
+  const shown = found.slice(0, userLimit);
+  const rest = found.length - shown.length;
   return `
     <table class="w-full text-left border-collapse">
       <thead class="text-[11px] text-muted font-mono uppercase">
@@ -164,7 +175,7 @@ function tableHtml(allRows) {
         </tr>
       </thead>
       <tbody class="divide-y divide-line/60">
-        ${rows.map(r => {
+        ${shown.map(r => {
           return `
             <tr class="hover:bg-bg/50 transition-colors">
               <td class="pl-4 pr-2 py-2.5">
@@ -185,7 +196,11 @@ function tableHtml(allRows) {
             </tr>`;
         }).join('')}
       </tbody>
-    </table>`;
+    </table>
+    <div class="px-4 py-2.5 border-t border-line flex items-center justify-between gap-3 text-[11px] font-mono text-muted">
+      <span>Mostrando ${shown.length} de ${found.length}</span>
+      ${rest > 0 ? `<button type="button" data-action="admin-more" class="h-8 px-3 rounded-lg bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink font-sans">Mostrar ${Math.min(PAGE, rest)} más · quedan ${rest}</button>` : ''}
+    </div>`;
 }
 
 function coursesHtml(courses) {
@@ -225,6 +240,12 @@ export async function renderAdmin(container) {
       <div id="admin-messages"></div>
       <section class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden">
         <div id="admin-toolbar" class="px-4 py-3 border-b border-line flex items-center justify-between gap-3 flex-wrap"></div>
+        <div class="px-4 py-2.5 border-b border-line">
+          <label class="relative block">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted" aria-hidden="true">search</span>
+            <input id="admin-q" type="search" placeholder="Buscar alumno por nombre o correo" autocomplete="off" aria-label="Buscar alumno" class="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-line focus:border-accent outline-none text-sm" />
+          </label>
+        </div>
         <div id="admin-table" class="overflow-x-auto">
           <p class="p-8 text-sm text-muted text-center">Cargando alumnos…</p>
         </div>
@@ -237,6 +258,17 @@ export async function renderAdmin(container) {
       <p class="text-[11px] text-muted px-1">Los cursos nuevos se crean en Supabase (tabla <code class="font-mono">courses</code>) y aparecen aquí para gestionarlos.</p>
     </div>`;
 
+  userQuery = '';
+  userLimit = PAGE;
+  const search = container.querySelector('#admin-q');
+  if (search) {
+    search.addEventListener('input', () => {
+      userQuery = search.value;
+      userLimit = PAGE;
+      const table = container.querySelector('#admin-table');
+      if (table && lastRows.length) table.innerHTML = tableHtml(lastRows);
+    });
+  }
   clearInterval(refreshTimer);
   await loadRows(container);
   // Refresco periódico mientras el panel siga en pantalla.
@@ -259,40 +291,63 @@ function paint(container) {
   if (messages) messages.innerHTML = messagesHtml();
 }
 
-// Conversaciones con alumnos: primero las que tienen mensajes sin leer, luego la más reciente.
+// Conversaciones con alumnos: primero las que tienen mensajes sin leer, luego la más reciente. Se ven
+// THREADS_VISIBLE; el resto, en un panel con buscador.
+const THREADS_VISIBLE = 5;
+function threadRowHtml(t, now) {
+  const r = lastRows.find(x => x.id === t.userId) || { email: 'Alumno', full_name: '' };
+  return `
+    <li>
+      <button type="button" data-action="admin-thread" data-user="${esc(t.userId)}" class="w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-bg/60">
+        <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
+        <span class="min-w-0 flex-1">
+          <span class="block text-[13px] ${t.unread ? 'font-bold text-ink' : 'font-semibold text-ink2'} truncate">${esc(r.full_name || r.email)}</span>
+          <span class="block text-[11px] text-muted truncate">${t.last.from_admin ? 'Tú: ' : ''}${esc(t.last.body)}</span>
+        </span>
+        <span class="text-[10px] font-mono text-muted shrink-0">${esc(relativeTime(Date.parse(t.last.created_at), now))}</span>
+        ${t.unread ? `<span class="px-1.5 py-px rounded-md bg-rose-500 text-white text-[10px] font-mono shrink-0">${t.unread}</span>` : ''}
+      </button>
+    </li>`;
+}
+
 function messagesHtml() {
-  const byUser = new Map();
-  lastMessages.forEach(m => { if (!byUser.has(m.user_id)) byUser.set(m.user_id, []); byUser.get(m.user_id).push(m); });
-  if (!byUser.size) return '';
+  const threads = groupThreads(lastMessages);
+  if (!threads.length) return '';
   const now = Date.now();
-  const threads = [...byUser.entries()]
-    .map(([userId, list]) => ({ userId, last: list[list.length - 1], unread: list.filter(m => !m.from_admin && !m.read_at).length }))
-    .sort((a, b) => (b.unread > 0) - (a.unread > 0) || Date.parse(b.last.created_at) - Date.parse(a.last.created_at));
   const unreadTotal = threads.reduce((n, t) => n + t.unread, 0);
   return `
     <details class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden" ${unreadTotal ? 'open' : ''}>
       <summary class="px-4 py-3 text-sm font-bold text-ink flex items-center gap-2 cursor-pointer select-none">
         <span class="material-symbols-outlined text-[18px] text-accent" aria-hidden="true">mail</span>Mensajes
-        ${unreadTotal ? `<span class="px-1.5 py-px rounded-md bg-rose-500 text-white text-[10px] font-mono">${unreadTotal} sin leer</span>` : `<span class="text-[11px] font-mono text-muted font-normal">${threads.length} ${threads.length === 1 ? 'conversación' : 'conversaciones'}</span>`}
+        ${unreadTotal ? `<span class="px-1.5 py-px rounded-md bg-rose-500 text-white text-[10px] font-mono">${unreadTotal} sin leer</span>` : ''}
+        <span class="text-[11px] font-mono text-muted font-normal">${threads.length} ${threads.length === 1 ? 'conversación' : 'conversaciones'}</span>
       </summary>
-      <ul class="divide-y divide-line/60 border-t border-line">
-        ${threads.map(t => {
-          const r = lastRows.find(x => x.id === t.userId) || { email: 'Alumno', full_name: '' };
-          return `
-            <li>
-              <button type="button" data-action="admin-thread" data-user="${esc(t.userId)}" class="w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-bg/60">
-                <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
-                <span class="min-w-0 flex-1">
-                  <span class="block text-[13px] ${t.unread ? 'font-bold text-ink' : 'font-semibold text-ink2'} truncate">${esc(r.full_name || r.email)}</span>
-                  <span class="block text-[11px] text-muted truncate">${t.last.from_admin ? 'Tú: ' : ''}${esc(t.last.body)}</span>
-                </span>
-                <span class="text-[10px] font-mono text-muted shrink-0">${esc(relativeTime(Date.parse(t.last.created_at), now))}</span>
-                ${t.unread ? `<span class="px-1.5 py-px rounded-md bg-rose-500 text-white text-[10px] font-mono shrink-0">${t.unread}</span>` : ''}
-              </button>
-            </li>`;
-        }).join('')}
-      </ul>
+      <ul class="divide-y divide-line/60 border-t border-line">${threads.slice(0, THREADS_VISIBLE).map(t => threadRowHtml(t, now)).join('')}</ul>
+      ${threads.length > THREADS_VISIBLE ? `<button type="button" data-action="admin-threads-all" class="w-full px-4 py-2.5 border-t border-line text-[12px] font-semibold text-ink2 hover:bg-bg/60">Ver todas · ${threads.length} conversaciones</button>` : ''}
     </details>`;
+}
+
+export function openAllThreads() {
+  openDialog({
+    title: 'Mensajes',
+    kicker: `${groupThreads(lastMessages).length} CONVERSACIONES`,
+    body: `
+      <div class="flex flex-col gap-3">
+        <input id="threads-q" type="search" placeholder="Buscar por nombre o correo" autocomplete="off" class="h-10 px-3 rounded-xl bg-white border border-line focus:border-accent outline-none text-sm" />
+        <ul id="threads-list" class="divide-y divide-line/60 rounded-xl border border-line bg-surface overflow-hidden"></ul>
+      </div>`
+  });
+  const q = document.getElementById('threads-q');
+  const paintList = () => {
+    const list = document.getElementById('threads-list');
+    if (!list) return;
+    const ids = new Set(searchUsers(lastRows, q ? q.value : '').map(r => r.id));
+    const threads = groupThreads(lastMessages).filter(t => !(q && q.value.trim()) || ids.has(t.userId));
+    const now = Date.now();
+    list.innerHTML = threads.length ? threads.map(t => threadRowHtml(t, now)).join('') : '<li class="px-4 py-6 text-center text-sm text-muted">Ninguna conversación coincide.</li>';
+  };
+  if (q) q.addEventListener('input', paintList);
+  paintList();
 }
 
 export async function openThread(userId) {
@@ -499,7 +554,14 @@ function repaint() {
 export function setAdminFilter(filter) {
   if (!FILTERS.some(f => f.id === filter)) return;
   currentFilter = filter;
+  userLimit = PAGE;
   repaint();
+}
+
+export function showMoreUsers() {
+  userLimit += PAGE;
+  const table = document.getElementById('admin-table');
+  if (table) table.innerHTML = tableHtml(lastRows);
 }
 
 // ---------------------------------------------------------------------------

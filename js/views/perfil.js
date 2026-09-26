@@ -1,19 +1,19 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v73';
-import { appState, saveState } from '../state.js?v=dev101x-v73';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v73';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v73';
-import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v73';
-import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v73';
-import { isAdmin } from '../auth.js?v=dev101x-v73';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v73';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v73';
-import { COURSE } from '../content.js?v=dev101x-v73';
-import { paintResume } from './resume.js?v=dev101x-v73';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v73';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v73'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v74';
+import { appState, saveState } from '../state.js?v=dev101x-v74';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v74';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v74';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v74';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v74';
+import { isAdmin } from '../auth.js?v=dev101x-v74';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v74';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v74';
+import { COURSE } from '../content.js?v=dev101x-v74';
+import { paintResume } from './resume.js?v=dev101x-v74';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v74';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v74'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -71,7 +71,7 @@ function paintRank(stats) {
   const chip = document.getElementById('profile-rank');
   const bar = document.getElementById('profile-rank-bar');
   if (!v || !chip || !bar) return;
-  chip.className = `inline-flex items-center gap-1 h-[23px] px-2 leading-none rounded-md font-bold border ${v.tone}`;
+  chip.className = `inline-flex items-center gap-1 h-[23px] px-2 leading-none whitespace-nowrap rounded-md font-bold border ${v.tone}`;
   chip.innerHTML = `<span class="material-symbols-outlined text-[14px]" aria-hidden="true">${esc(v.icon)}</span>${esc(v.name)}`;
   bar.innerHTML = `
     <div class="flex items-center justify-between gap-2 text-[11px] font-mono mb-1.5">
@@ -103,12 +103,12 @@ function paintSummary(items) {
 function myCoursesHtml(items) {
   if (!items.length) return '<p class="text-xs text-muted">Aún no tienes cursos. Mira el catálogo.</p>';
   return items.map(c => `
-    <a href="#/aula-interactiva/${encodeURIComponent(c.id)}" class="flex items-center gap-3 p-2.5 -mx-1 rounded-xl hover:bg-bg transition-colors">
-      <span class="flex-1 min-w-0 flex items-center gap-2">
+    <a href="#/aula-interactiva/${encodeURIComponent(c.id)}" class="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-1.5 p-2.5 -mx-1 rounded-xl hover:bg-bg transition-colors">
+      <span class="basis-full sm:basis-auto flex-1 min-w-0 flex items-center gap-2">
         <span class="truncate text-[13px] font-semibold text-ink">${esc(c.title)}</span>
         ${c.draft ? '<span class="px-1.5 py-px rounded bg-amber-100 text-amber-900 text-[9px] font-mono font-bold shrink-0">BORRADOR</span>' : ''}
       </span>
-      <span class="w-20 sm:w-28 bg-bg h-1.5 rounded-full overflow-hidden shrink-0" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${c.percent}%"></span></span>
+      <span class="flex-1 sm:flex-none sm:w-28 bg-bg h-1.5 rounded-full overflow-hidden" aria-hidden="true"><span class="block bg-accent h-full rounded-full" style="width: ${c.percent}%"></span></span>
       <span class="w-14 text-right text-[11px] font-mono font-bold shrink-0 ${c.done ? 'text-accent' : c.percent ? 'text-ink2' : 'text-muted'}">${c.done ? '✓' : c.percent ? `${c.percent}%` : 'Empezar'}</span>
     </a>`).join('');
 }
@@ -134,8 +134,8 @@ export function renderPerfil(container) {
     <div class="flex flex-col w-full py-4 sm:py-6 gap-4 max-w-2xl mx-auto">
       <section class="relative bg-term rounded-2xl border border-term-line overflow-hidden">
         <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
-        <div class="relative p-5 flex items-center gap-4">
-          <img src="${esc(avatarFor(user))}" alt="" referrerpolicy="no-referrer" class="w-16 h-16 rounded-2xl object-cover bg-term-2 ring-2 ring-emerald-500/30 shrink-0" />
+        <div class="relative p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
+          <img src="${esc(avatarFor(user))}" alt="" referrerpolicy="no-referrer" class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl object-cover bg-term-2 ring-2 ring-emerald-500/30 shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-1.5 min-w-0">
               <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-tight truncate">${esc(user.name)}</h1>
@@ -152,11 +152,11 @@ export function renderPerfil(container) {
             </div>
           </div>
           <div class="relative shrink-0" title="Progreso medio de tus cursos">
-            <svg class="w-[72px] h-[72px] -rotate-90" viewBox="0 0 64 64" aria-hidden="true">
+            <svg class="w-14 h-14 sm:w-[72px] sm:h-[72px] -rotate-90" viewBox="0 0 64 64" aria-hidden="true">
               <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6" />
               <circle cx="32" cy="32" r="27" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round" stroke-dasharray="${RING}" stroke-dashoffset="${ringOffset(average(initial))}" class="progress-ring" id="profile-ring" />
             </svg>
-            <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${average(initial)}%</span>
+            <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-sm sm:text-base font-extrabold text-white">${average(initial)}%</span>
           </div>
         </div>
         <div id="profile-rank-bar" class="${user.mode === 'cloud' ? '' : 'hidden '}relative px-5 pb-4" title="Cada curso vale 150 puntos: tu % de avance, o 150 al terminarlo. Cada rango equivale a 3 cursos terminados.">${user.mode === 'cloud' ? RANK_BAR_PLACEHOLDER : ''}</div>

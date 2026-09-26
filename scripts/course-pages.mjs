@@ -109,7 +109,7 @@ function page(c, other) {
   <div class="max-w-4xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-5">
     <header class="flex items-center justify-between gap-3">
       <a href="/" class="flex items-center gap-2.5 font-extrabold text-[17px]"><img src="/assets/icon-192.png" alt="" class="w-9 h-9 rounded-lg" /><span>Dev<em class="not-italic text-accent">101x</em> Cursos</span></a>
-      <a href="/" class="text-xs font-semibold text-muted hover:text-accent">Entrar</a>
+      <a href="/" class="inline-flex items-center h-9 px-4 rounded-full bg-white border border-line hover:border-accent/60 hover:text-accent text-sm font-semibold text-ink transition-colors">Entrar</a>
     </header>
 
     <nav aria-label="Ruta" class="text-[11px] font-mono text-muted"><a href="/" class="hover:text-accent">Cursos</a> / <span class="text-ink2">${esc(c.title)}</span></nav>
