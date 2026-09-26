@@ -2,21 +2,22 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v70';
-import { resolveRoute } from './router.js?v=dev101x-v70';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v70';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v70';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v70';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v70';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v70';
-import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v70';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v70';
-import { COURSE } from './content.js?v=dev101x-v70';
-import { fetchCourses } from './cloud.js?v=dev101x-v70';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v70';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v70';
-import { startPresence } from './progress.js?v=dev101x-v70';
-import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v70';
+import { appState, isSessionValid } from './state.js?v=dev101x-v71';
+import { resolveRoute } from './router.js?v=dev101x-v71';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v71';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v71';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v71';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v71';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v71';
+import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v71';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v71';
+import { COURSE } from './content.js?v=dev101x-v71';
+import { fetchCourses } from './cloud.js?v=dev101x-v71';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v71';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v71';
+import { startPresence } from './progress.js?v=dev101x-v71';
+import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v71';
+import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v71';
 
 const $ = id => document.getElementById(id);
 
@@ -26,9 +27,9 @@ function lazy(load) {
   let p = null;
   return () => (p = p || load().catch(err => { p = null; throw err; }));
 }
-const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v70'));
-const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v70'));
-const adminView = lazy(() => import('./views/admin.js?v=dev101x-v70'));
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v71'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v71'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v71'));
 // Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
 const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
 function prefetchViews() {
@@ -74,8 +75,10 @@ function updateChrome(route) {
 }
 
 let renderSeq = 0;
+let lazyLoading = false; // hay una vista descargándose con su pantalla de carga programada
 function render() {
   const seq = ++renderSeq;
+  if (lazyLoading) { hideLoader(); lazyLoading = false; }
   const authenticated = isSessionValid();
   const { route, param, redirect, denied } = resolveRoute(window.location.hash, { authenticated, admin: isAdmin() });
   if (redirect) history.replaceState(null, '', redirect);
@@ -97,18 +100,22 @@ function render() {
 
   view.className = 'w-full pt-[76px] pb-6 sm:pt-20 sm:pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col';
   // Vista que se descarga al abrirla: se pinta solo si el usuario no ha cambiado de ruta mientras tanto.
-  const paintLazy = (mod, fn) => {
+  // Si la descarga tarda (más de 0,3 s), se muestra la pantalla de carga con la marca.
+  const paintLazy = (mod, fn, text) => {
     view.innerHTML = '';
-    withView(mod, m => { if (seq !== renderSeq) return; fn(m); view.focus({ preventScroll: true }); });
+    lazyLoading = true;
+    showLoader(text, { delay: 300 });
+    withView(mod, m => { if (seq !== renderSeq) return; fn(m); view.focus({ preventScroll: true }); })
+      .finally(() => { if (seq === renderSeq) { hideLoader(); lazyLoading = false; } });
   };
   switch (route) {
     case 'aula-interactiva':
       // El curso de Nmap vive en el código; el resto (de pago) se carga desde Supabase.
       if (appState.enabledCourses.includes(param)) rememberLastCourse(param);
-      if (param === COURSE.id) paintLazy(aulaView, m => m.renderAula(view, param));
-      else paintLazy(courseView, m => m.renderCourseAula(view, param));
+      if (param === COURSE.id) paintLazy(aulaView, m => m.renderAula(view, param), 'Preparando el aula…');
+      else paintLazy(courseView, m => m.renderCourseAula(view, param), 'Preparando el aula…');
       return;
-    case 'panel-admin': paintLazy(adminView, m => m.renderAdmin(view)); return;
+    case 'panel-admin': paintLazy(adminView, m => m.renderAdmin(view), 'Cargando el panel…'); return;
     case 'explorar-cursos': renderExplorar(view); break;
     case 'perfil': renderPerfil(view); break;
     default: renderMisCursos(view);
@@ -352,7 +359,9 @@ const oauthRedirect = takeOAuthRedirect();
 if (oauthRedirect) setLoginStatus(oauthRedirect.code ? { type: 'pending' } : null);
 render();
 if (oauthRedirect) {
+  if (oauthRedirect.code) showLoader('Verificando tu cuenta…');
   completeOAuthRedirect(oauthRedirect).then(result => {
+    hideLoader();
     if (result.ok) {
       setLoginStatus(null);
       onLoggedIn();
@@ -369,7 +378,7 @@ revalidateSession()
   .finally(startPresence);
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v70').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v71').catch(() => {}));
   // Cuando se activa una versión nueva del service worker, se recarga una vez para no mezclar
   // archivos de dos despliegues (solo si ya había uno antes: la primera visita no recarga).
   if (navigator.serviceWorker.controller) {

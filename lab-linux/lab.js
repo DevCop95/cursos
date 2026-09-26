@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const IMG = 'img-v1/';
-  const HOOK_URL = 'lab-hook.sh?v=dev101x-v70';
+  const HOOK_URL = 'lab-hook.sh?v=dev101x-v71';
   const HOOK_PATH = '/tmp/.dev101x-lab.sh';
   const $ = id => document.getElementById(id);
   let emulator = null;

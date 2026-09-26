@@ -1,17 +1,17 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v70';
-import { appState } from '../state.js?v=dev101x-v70';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v70';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v70';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v70';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v70';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v70';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v70';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v70';
-import { paintResume } from './resume.js?v=dev101x-v70';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v70';
+import { esc } from '../lib/html.js?v=dev101x-v71';
+import { appState } from '../state.js?v=dev101x-v71';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v71';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v71';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v71';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v71';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v71';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v71';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v71';
+import { paintResume } from './resume.js?v=dev101x-v71';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v71';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {
