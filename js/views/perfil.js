@@ -1,19 +1,19 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v75';
-import { appState, saveState } from '../state.js?v=dev101x-v75';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v75';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v75';
-import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v75';
-import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v75';
-import { isAdmin } from '../auth.js?v=dev101x-v75';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v75';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v75';
-import { COURSE } from '../content.js?v=dev101x-v75';
-import { paintResume } from './resume.js?v=dev101x-v75';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v75';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v75'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v76';
+import { appState, saveState } from '../state.js?v=dev101x-v76';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v76';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v76';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v76';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v76';
+import { isAdmin } from '../auth.js?v=dev101x-v76';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v76';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v76';
+import { COURSE } from '../content.js?v=dev101x-v76';
+import { paintResume } from './resume.js?v=dev101x-v76';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v76';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v76'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -28,7 +28,7 @@ function formatDate(iso) {
 function achievementsHtml(steps, bestStreak) {
   return computeBadges(steps, { bestStreak }).map(b => `
     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-semibold ${b.earned ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900' : 'border-line bg-bg/60 text-muted'}" title="${esc(b.desc)}">
-      <span class="material-symbols-outlined text-[14px]" aria-hidden="true">${b.earned ? esc(b.icon) : 'lock'}</span>${esc(b.title)}
+      <span class="material-symbols-outlined !text-[14px]" aria-hidden="true">${b.earned ? esc(b.icon) : 'lock'}</span>${esc(b.title)}
     </span>`).join('');
 }
 
@@ -43,20 +43,20 @@ function courseBadgesHtml(items, earned) {
   ];
   if (!list.length) return '<p class="text-xs text-muted col-span-full">Termina un curso para ganar tu primera insignia.</p>';
   return list.map(c => c.badge ? `
-    <div class="flex flex-col items-center text-center gap-2 p-3 rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white" title="Curso terminado">
-      <span class="relative w-14 h-14 rounded-2xl bg-term flex items-center justify-center ring-2 ring-amber-300 shadow-sm">
-        <span class="material-symbols-outlined text-emerald-400 text-[28px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>
-        <span class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center"><span class="material-symbols-outlined text-white text-[14px]" aria-hidden="true">workspace_premium</span></span>
+    <div class="flex flex-col items-center text-center gap-1.5 p-2.5 rounded-xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white" title="Curso terminado">
+      <span class="relative w-11 h-11 rounded-xl bg-term flex items-center justify-center ring-2 ring-amber-300 shadow-sm">
+        <span class="material-symbols-outlined text-emerald-400 !text-[22px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>
+        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center"><span class="material-symbols-outlined text-white !text-[12px]" aria-hidden="true">workspace_premium</span></span>
       </span>
-      <span class="text-[12px] font-bold text-ink leading-tight line-clamp-2">${esc(c.title)}</span>
-      <span class="text-[10px] font-mono text-amber-800">${esc(shortDate(c.badge.completed_at))}</span>
+      <span class="text-[11px] font-bold text-ink leading-tight line-clamp-2">${esc(c.title)}</span>
+      <span class="text-[10px] font-mono text-amber-800 whitespace-nowrap">${esc(shortDate(c.badge.completed_at))}</span>
     </div>` : `
-    <div class="flex flex-col items-center text-center gap-2 p-3 rounded-2xl border border-line bg-bg/40" title="Termina el curso para ganar esta insignia">
-      <span class="w-14 h-14 rounded-2xl bg-white border border-line flex items-center justify-center">
-        <span class="material-symbols-outlined text-[#c4bfb6] text-[28px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>
+    <div class="flex flex-col items-center text-center gap-1.5 p-2.5 rounded-xl border border-line bg-bg/40" title="Termina el curso para ganar esta insignia">
+      <span class="w-11 h-11 rounded-xl bg-white border border-line flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#c4bfb6] !text-[22px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>
       </span>
-      <span class="text-[12px] font-semibold text-muted leading-tight line-clamp-2">${esc(c.title)}</span>
-      <span class="text-[10px] font-mono text-muted">${Number(c.percent) || 0}% · bloqueada</span>
+      <span class="text-[11px] font-semibold text-muted leading-tight line-clamp-2">${esc(c.title)}</span>
+      <span class="inline-flex items-center gap-0.5 text-[10px] font-mono text-muted whitespace-nowrap"><span class="material-symbols-outlined !text-[12px]" aria-hidden="true">lock</span>${Number(c.percent) || 0}%</span>
     </div>`).join('');
 }
 
@@ -177,7 +177,7 @@ export function renderPerfil(container) {
           <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias${cachedStats ? ` · ${cachedBadges.length}` : ''}</h2>
           <span class="text-[11px] font-mono text-muted shrink-0">Una por curso terminado</span>
         </div>
-        <div id="course-badges" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">${courseBadgesHtml(initial, cachedBadges)}</div>
+        <div id="course-badges" class="grid grid-cols-3 sm:grid-cols-4 gap-2">${courseBadgesHtml(initial, cachedBadges)}</div>
         <div class="mt-4 pt-3 border-t border-line/60">
           <p class="text-[11px] font-mono text-muted mb-2">Logros del laboratorio de Nmap</p>
           <div id="achievements" class="flex flex-wrap gap-1.5">${achievementsHtml(steps, 0)}</div>

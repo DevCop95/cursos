@@ -15,3 +15,8 @@ scripts/linux-lab/.build/
 
 # Pruebas de navegador y capturas de la portada (solo local)
 e2e/
+
+# Caso del curso de OSINT (contiene las respuestas del reto): solo local, se usa al construir la imagen del laboratorio
+scripts/linux-lab/setup-osint.sh
+scripts/linux-lab/osint-tools/
+scripts/linux-lab/caso-propuesta.pdf

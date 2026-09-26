@@ -2,8 +2,6 @@
   Linux real (Alpine) dentro de tu navegador · Dev101x
   Nada sale de tu equipo. Si algo se rompe, recarga la página.
 
-  Prueba:  git --version
-           cd hola-git && git init
-           git clone https://github.com/dev101x-lab/proyecto-equipo.git
-  (github.com funciona sin conexión: son repos de práctica dentro de esta máquina)
+  Curso de Git:    git --version  ·  cd hola-git && git init
+  Curso de OSINT:  cp -r /srv/osint/caso ~/caso && cd ~/caso
 

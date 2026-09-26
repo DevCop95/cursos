@@ -1,9 +1,18 @@
 # Imagen del laboratorio Linux real (Alpine 32 bits) que corre en el navegador con v86.
 # Construir: bash scripts/linux-lab/build.sh
+
+# Fase "caso": genera las pruebas ficticias del curso de OSINT (fotos con metadatos, PDF, perfiles).
+# ImageMagick solo se usa aquí; la imagen final recibe los archivos ya hechos.
+FROM docker.io/i386/alpine:3.21.0 AS caso
+RUN apk add --no-cache imagemagick imagemagick-jpeg exiftool
+COPY setup-osint.sh caso-propuesta.pdf /tmp/
+RUN sh /tmp/setup-osint.sh
+
 FROM docker.io/i386/alpine:3.21.0
 
 RUN apk add --no-cache openrc alpine-base agetty alpine-conf linux-virt linux-firmware-none \
-    git bash nano less ncurses-terminfo-base
+    git bash nano less ncurses-terminfo-base \
+    exiftool jq file
 
 RUN setup-hostname dev101x-lab \
  && adduser -D -s /bin/bash alumno \
@@ -21,6 +30,11 @@ RUN git config --system init.defaultBranch main \
 
 COPY setup-lab.sh /tmp/setup-lab.sh
 RUN sh /tmp/setup-lab.sh && rm /tmp/setup-lab.sh
+
+# Curso de OSINT: el caso (solo lectura en /srv/osint/caso) y sherlock/holehe de laboratorio (sin conexión).
+COPY --from=caso /srv/osint /srv/osint
+COPY osint-tools/sherlock osint-tools/holehe /usr/local/bin/
+RUN chmod 755 /usr/local/bin/sherlock /usr/local/bin/holehe
 
 COPY bashrc /home/alumno/.bashrc
 COPY motd /etc/motd

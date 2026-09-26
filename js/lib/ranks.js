@@ -13,7 +13,7 @@ export const RANKS = [
 ];
 
 // Icono de la insignia de cada curso (los que no estén aquí usan uno genérico).
-export const COURSE_ICONS = { 'pentesting-101': 'radar', 'git-github-101': 'account_tree', 'shodan-101': 'travel_explore' };
+export const COURSE_ICONS = { 'pentesting-101': 'radar', 'git-github-101': 'account_tree', 'shodan-101': 'travel_explore', 'osint-101': 'person_search' };
 export const courseIcon = id => COURSE_ICONS[id] || 'school';
 
 /**
