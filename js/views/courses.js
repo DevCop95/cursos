@@ -1,17 +1,19 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v71';
-import { appState } from '../state.js?v=dev101x-v71';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v71';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v71';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v71';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v71';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v71';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v71';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v71';
-import { paintResume } from './resume.js?v=dev101x-v71';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v71';
+import { esc } from '../lib/html.js?v=dev101x-v72';
+import { appState } from '../state.js?v=dev101x-v72';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v72';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v72';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v72';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v72';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v72';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v72';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v72';
+import { paintResume } from './resume.js?v=dev101x-v72';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v72';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v72';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v72';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {
@@ -67,42 +69,69 @@ function ringHtml(percent) {
     </span>`;
 }
 
-// Tarjeta de un curso de pago (contenido en Supabase) en Mis Cursos: misma forma que la de Nmap.
-function dbTile(c, progress, content) {
+// Resumen de la tarjeta de un curso de pago: lo justo para pintarla (se guarda para la próxima visita).
+function tileData(c, progress, content) {
   const steps = (progress && progress.steps) || {};
   const p = content ? computeCourseProgress(content, steps) : null;
-  const pct = p ? p.percent : (progress ? Number(progress.progress_percentage) || 0 : 0);
-  const cta = pct === 100 ? 'Repasar' : pct > 0 ? 'Continuar' : 'Empezar';
-  const labs = content && Array.isArray(content.labs) ? content.labs.length : 0;
+  return {
+    id: c.id,
+    title: c.title,
+    free: Boolean(c.is_free),
+    category: (content && content.categoryLabel) || '',
+    pct: p ? p.percent : (progress ? Number(progress.progress_percentage) || 0 : 0),
+    hasContent: Boolean(p),
+    complete: Boolean(p && p.complete) || Boolean(progress && progress.completed_at),
+    next: p && !p.complete && p.nextLesson ? p.nextLesson.title : '',
+    lessonsDone: p ? p.lessonsDone.length : 0,
+    lessonsTotal: p ? p.lessons.length : 0,
+    labsDone: p ? p.labsDone.length : 0,
+    labsTotal: content && Array.isArray(content.labs) ? content.labs.length : 0,
+    video: Boolean(content && content.video)
+  };
+}
+
+// Mientras llega el servidor (primera visita): misma forma que la tarjeta real, con el título y el logo que ya
+// se conocen y huecos grises en lo demás, para que nada se mueva al llegar los datos.
+function placeholderData(id) {
+  const pub = PUBLIC_COURSES.find(c => c.id === id) || {};
+  return { id, title: pub.title || '', free: Boolean(pub.free), category: pub.category || '', placeholder: true };
+}
+
+const bone = w => `<span class="inline-block h-3 ${w} rounded bg-line/70 animate-pulse align-middle"></span>`;
+
+// Tarjeta de un curso de pago en Mis Cursos: misma forma que la de Nmap.
+function dbTile(d) {
+  const cta = d.pct === 100 ? 'Repasar' : d.pct > 0 ? 'Continuar' : 'Empezar';
   return `
-    <article data-db-course class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
+    <article data-db-course="${esc(d.id)}" class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
       <div class="relative bg-term px-4 py-4 flex items-center justify-between gap-3 overflow-hidden">
         <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
           <span class="flex items-center gap-1.5 flex-wrap">
-            ${content && content.categoryLabel ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(content.categoryLabel)}</span>` : ''}
-            <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
+            ${d.category ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(d.category)}</span>` : ''}
+            <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${d.free ? 'GRATIS' : 'PREMIUM'}</span>
           </span>
-          ${cardLogo(c.id, 'code')}
+          ${cardLogo(d.id, 'code')}
         </div>
-        <div class="relative">${ringHtml(pct)}</div>
+        <div class="relative">${d.placeholder ? '<span class="block w-16 h-16 rounded-full border-[5px] border-white/10 animate-pulse"></span>' : ringHtml(d.pct)}</div>
       </div>
       <div class="p-4 flex flex-col gap-3 flex-1">
         <div class="flex flex-col gap-1">
-          <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
-          ${p ? `<p class="text-xs text-muted truncate">${p.complete ? '✓ Curso completado' : `Siguiente: ${esc(p.nextLesson.title)}`}</p>` : ''}
+          <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(d.title)}</h3>
+          ${d.placeholder ? `<p class="h-4 flex items-center">${bone('w-3/4')}</p>` : d.hasContent ? `<p class="text-xs text-muted truncate h-4 leading-4">${d.complete ? '✓ Curso completado' : `Siguiente: ${esc(d.next)}`}</p>` : ''}
         </div>
-        ${p ? `
-        <div class="flex items-center gap-3 text-[11px] font-mono text-muted">
-          <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${p.lessonsDone.length}/${p.lessons.length}</span>
-          ${labs ? `<span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${labs} labs</span>` : ''}
-          ${content.video ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
+        ${d.placeholder ? `
+        <div class="h-5 flex items-center gap-3">${bone('w-12')}${bone('w-16')}${bone('w-12')}</div>` : d.hasContent ? `
+        <div class="h-5 flex items-center gap-3 text-[11px] font-mono text-muted">
+          <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${d.lessonsDone}/${d.lessonsTotal}</span>
+          ${d.labsTotal ? `<span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${d.labsDone}/${d.labsTotal} labs</span>` : ''}
+          ${d.video ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
         </div>` : ''}
         <div class="mt-auto flex items-center gap-2">
-          <a href="#/aula-interactiva/${esc(c.id)}" class="flex-1 h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>${cta}</span>
+          <a href="#/aula-interactiva/${esc(d.id)}" class="flex-1 h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_arrow</span><span>${d.placeholder ? 'Abrir' : cta}</span>
           </a>
-          ${content ? `<button type="button" data-action="open-db-course" data-id="${esc(c.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors" title="Ver temario">Temario</button>` : ''}
+          ${d.hasContent || d.placeholder ? `<button type="button" data-action="open-db-course" data-id="${esc(d.id)}" class="h-10 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink transition-colors" title="Ver temario">Temario</button>` : ''}
         </div>
       </div>
     </article>`;
@@ -114,6 +143,12 @@ export function renderMisCursos(container) {
   const enrolled = COURSES.filter(c => appState.enabledCourses.includes(c.id));
   const p = currentProgress();
   const cta = p.complete ? 'Repasar' : p.percent > 0 ? 'Continuar' : 'Empezar';
+  // Cursos de pago habilitados: se pintan ya, con lo último que se vio o con su hueco (sin saltos al llegar).
+  const premiumIds = appState.enabledCourses.filter(id => !COURSES.some(l => l.id === id));
+  const cached = (readViewCache('mis-cursos', user) || []).filter(d => d && premiumIds.includes(d.id));
+  const firstTiles = cached.length ? cached : premiumIds.filter(id => PUBLIC_COURSES.some(c => c.id === id)).map(placeholderData);
+  const hasAny = enrolled.length + firstTiles.length > 0;
+  const doneCount = tiles => (p.complete ? 1 : 0) + tiles.filter(d => d.complete).length;
 
   const tile = c => `
     <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
@@ -128,9 +163,9 @@ export function renderMisCursos(container) {
       <div class="p-4 flex flex-col gap-3 flex-1">
         <div class="flex flex-col gap-1">
           <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
-          <p class="text-xs text-muted truncate">${p.complete ? '✓ Curso completado' : `Siguiente: ${esc(p.nextLesson.title)}`}</p>
+          <p class="text-xs text-muted truncate h-4 leading-4">${p.complete ? '✓ Curso completado' : `Siguiente: ${esc(p.nextLesson.title)}`}</p>
         </div>
-        <div class="flex items-center gap-3 text-[11px] font-mono text-muted">
+        <div class="h-5 flex items-center gap-3 text-[11px] font-mono text-muted">
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${p.lessonsDone.length}/${TOTAL_LESSONS}</span>
           <span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${LAB_STEPS.length} labs</span>
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>
@@ -159,8 +194,8 @@ export function renderMisCursos(container) {
           <h1 class="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">Hola, ${esc(firstName)} 👋</h1>
         </div>
         <div class="flex items-center gap-2 font-mono text-[11px]">
-          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong id="stat-courses" class="text-ink">${enrolled.length}</strong> <span class="text-muted">cursos</span></span>
-          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong id="stat-done" class="text-accent">${p.complete ? 1 : 0}</strong> <span class="text-muted">terminados</span></span>
+          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong id="stat-courses" class="text-ink">${enrolled.length + firstTiles.length}</strong> <span class="text-muted">cursos</span></span>
+          <span class="px-2.5 py-1 rounded-lg bg-surface border border-line"><strong id="stat-done" class="text-accent">${doneCount(firstTiles.filter(d => !d.placeholder))}</strong> <span class="text-muted">terminados</span></span>
           <span id="streak-chip" class="hidden px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900" title="Días seguidos con actividad"></span>
         </div>
       </section>
@@ -168,36 +203,44 @@ export function renderMisCursos(container) {
       <div id="resume-card" class="hidden"></div>
 
       <section id="my-courses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        ${enrolled.length ? enrolled.map(tile).join('') : `
-          <div class="p-6 bg-surface rounded-2xl border border-line text-center text-sm text-muted sm:col-span-2 lg:col-span-3">
+        ${enrolled.map(tile).join('')}${firstTiles.map(dbTile).join('')}
+        ${hasAny ? exploreTile : `
+          <div id="no-courses" class="p-6 bg-surface rounded-2xl border border-line text-center text-sm text-muted sm:col-span-2 lg:col-span-3">
             No tienes cursos habilitados. <a href="#/explorar-cursos" class="text-accent font-semibold hover:underline">Ver catálogo</a>
           </div>`}
-        ${enrolled.length ? exploreTile : ''}
       </section>
     </div>
   `;
   paintResume(document.getElementById('resume-card'));
   // Al entrar la vista se pinta más de una vez: cada carga solo escribe en SU rejilla (si ya se reemplazó, se descarta).
   const myGrid = document.getElementById('my-courses-grid');
-  // Cursos de pago (contenido en Supabase) a los que el alumno tiene acceso.
+  // Cursos de pago (contenido en Supabase) a los que el alumno tiene acceso: se sustituyen las tarjetas solo
+  // si cambió algo respecto a lo que ya se ve.
+  const shown = JSON.stringify(firstTiles);
   Promise.all([fetchCourses(), fetchCourseProgress().catch(() => [])]).then(([courses, progress]) => {
     rememberCourses(courses);
     if (!myGrid.isConnected) return null;
     const mine = courses.filter(c => c.has_content && !COURSES.some(l => l.id === c.id) && appState.enabledCourses.includes(c.id));
-    if (!mine.length) return null;
     return Promise.all(mine.map(c => dbContent.has(c.id)
       ? dbContent.get(c.id)
       : fetchCourseContent(c.id).then(ct => { if (ct) dbContent.set(c.id, ct); return ct; }).catch(() => null)
     )).then(contents => {
-      const grid2 = myGrid;
-      if (!grid2.isConnected || grid2.querySelector('[data-db-course]')) return;
-      const explore = grid2.querySelector('a[href="#/explorar-cursos"]');
-      const html = mine.map((c, i) => dbTile(c, (progress || []).find(r => r.course_id === c.id), contents[i])).join('');
+      if (!myGrid.isConnected) return;
+      const tiles = mine.map((c, i) => tileData(c, (progress || []).find(r => r.course_id === c.id), contents[i]));
+      writeViewCache('mis-cursos', user, tiles);
+      if (JSON.stringify(tiles) === shown) return;
+      myGrid.querySelectorAll('[data-db-course]').forEach(el => el.remove());
+      const html = tiles.map(dbTile).join('');
+      const explore = myGrid.querySelector('a[href="#/explorar-cursos"]');
       if (explore) explore.insertAdjacentHTML('beforebegin', html);
-      else grid2.insertAdjacentHTML('beforeend', html);
-      const add = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = String(Number(el.textContent) + n); };
-      add('stat-courses', mine.length);
-      add('stat-done', mine.filter(c => ((progress || []).find(r => r.course_id === c.id) || {}).completed_at).length);
+      else if (tiles.length) {
+        const empty = document.getElementById('no-courses');
+        if (empty) empty.remove();
+        myGrid.insertAdjacentHTML('beforeend', html + exploreTile);
+      }
+      const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = String(n); };
+      set('stat-courses', enrolled.length + tiles.length);
+      set('stat-done', doneCount(tiles));
     });
   }).catch(() => {});
   fetchStreak().then(streak => {

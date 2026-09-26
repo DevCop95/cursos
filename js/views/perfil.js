@@ -1,17 +1,19 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v71';
-import { appState, saveState } from '../state.js?v=dev101x-v71';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v71';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v71';
-import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v71';
-import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v71';
-import { isAdmin } from '../auth.js?v=dev101x-v71';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v71';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v71';
-import { COURSE } from '../content.js?v=dev101x-v71';
-import { paintResume } from './resume.js?v=dev101x-v71'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v72';
+import { appState, saveState } from '../state.js?v=dev101x-v72';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v72';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v72';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v72';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v72';
+import { isAdmin } from '../auth.js?v=dev101x-v72';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v72';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v72';
+import { COURSE } from '../content.js?v=dev101x-v72';
+import { paintResume } from './resume.js?v=dev101x-v72';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v72';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v72'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -58,13 +60,18 @@ function courseBadgesHtml(items, earned) {
     </div>`).join('');
 }
 
+// Hueco de la barra de rango mientras responde el servidor (misma altura que la real).
+const RANK_BAR_PLACEHOLDER = `
+    <div class="flex items-center justify-between gap-2 text-[11px] mb-1.5 h-[17px]"><span class="inline-block h-3 w-20 rounded bg-white/10 animate-pulse"></span><span class="inline-block h-3 w-28 rounded bg-white/10 animate-pulse"></span></div>
+    <div class="h-1.5 rounded-full bg-white/10"></div>`;
+
 // Rango (calculado en el servidor): chip en la cabecera y barra hasta el siguiente.
 function paintRank(stats) {
   const v = rankView(stats);
   const chip = document.getElementById('profile-rank');
   const bar = document.getElementById('profile-rank-bar');
   if (!v || !chip || !bar) return;
-  chip.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold border ${v.tone}`;
+  chip.className = `inline-flex items-center gap-1 h-[23px] px-2 leading-none rounded-md font-bold border ${v.tone}`;
   chip.innerHTML = `<span class="material-symbols-outlined text-[14px]" aria-hidden="true">${esc(v.icon)}</span>${esc(v.name)}`;
   bar.innerHTML = `
     <div class="flex items-center justify-between gap-2 text-[11px] font-mono mb-1.5">
@@ -111,8 +118,17 @@ export function renderPerfil(container) {
   const admin = isAdmin();
   const p = currentProgress();
   const steps = currentSteps();
-  // Hasta que responda el servidor solo se conoce el curso de Nmap (su progreso está en el navegador).
-  const initial = [{ id: COURSE.id, title: COURSE.title, percent: p.percent, done: p.complete }];
+  // Se pinta ya con lo último que se vio (o con los cursos habilitados y sus títulos públicos) y, cuando
+  // responde el servidor, solo cambian los números: sin saltos. El progreso de Nmap está en el navegador.
+  const cached = readViewCache('perfil', user);
+  const known = appState.enabledCourses
+    .map(id => id === COURSE.id ? { id, title: COURSE.title } : PUBLIC_COURSES.find(c => c.id === id))
+    .filter(Boolean)
+    .map(c => ({ id: c.id, title: c.title, percent: 0, done: false }));
+  const initial = ((cached && Array.isArray(cached.items) && cached.items.length) ? cached.items : known)
+    .map(c => (c.id === COURSE.id ? { ...c, percent: p.percent, done: p.complete } : c));
+  const cachedStats = cached && cached.stats;
+  const cachedBadges = cachedStats && Array.isArray(cachedStats.badges) ? cachedStats.badges : [];
 
   container.innerHTML = `
     <div class="flex flex-col w-full py-4 sm:py-6 gap-4 max-w-2xl mx-auto">
@@ -130,7 +146,7 @@ export function renderPerfil(container) {
             <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">${esc(user.email)}</p>
             <div class="flex items-center gap-x-3 gap-y-1.5 mt-2 font-mono text-[11px] flex-wrap">
               <span class="px-2 py-0.5 rounded-md font-bold ${admin ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/30'}">${admin ? 'ADMIN' : 'ESTUDIANTE'}</span>
-              <span id="profile-rank" class="hidden"></span>
+              <span id="profile-rank" class="${user.mode === 'cloud' && !cachedStats ? 'inline-block h-[23px] w-[74px] rounded-md bg-white/10 animate-pulse' : 'hidden'}"></span>
               <span id="profile-summary" class="text-slate-400">${summaryHtml(initial)}</span>
               <span id="profile-streak" class="text-slate-400 hidden" title="Días seguidos con actividad"></span>
             </div>
@@ -143,7 +159,7 @@ export function renderPerfil(container) {
             <span id="profile-pct" class="absolute inset-0 flex items-center justify-center text-base font-extrabold text-white">${average(initial)}%</span>
           </div>
         </div>
-        <div id="profile-rank-bar" class="hidden relative px-5 pb-4" title="Cada curso vale 150 puntos: tu % de avance, o 150 al terminarlo. Cada rango equivale a 3 cursos terminados."></div>
+        <div id="profile-rank-bar" class="${user.mode === 'cloud' ? '' : 'hidden '}relative px-5 pb-4" title="Cada curso vale 150 puntos: tu % de avance, o 150 al terminarlo. Cada rango equivale a 3 cursos terminados.">${user.mode === 'cloud' ? RANK_BAR_PLACEHOLDER : ''}</div>
       </section>
 
       <div id="resume-card" class="hidden"></div>
@@ -158,10 +174,10 @@ export function renderPerfil(container) {
 
       <section class="bg-surface p-4 sm:p-5 rounded-2xl border border-line">
         <div class="flex items-center justify-between gap-2 mb-3">
-          <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias</h2>
+          <h2 id="badges-title" class="text-sm font-bold text-ink">Insignias${cachedStats ? ` · ${cachedBadges.length}` : ''}</h2>
           <span class="text-[11px] font-mono text-muted shrink-0">Una por curso terminado</span>
         </div>
-        <div id="course-badges" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">${courseBadgesHtml(initial, [])}</div>
+        <div id="course-badges" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">${courseBadgesHtml(initial, cachedBadges)}</div>
         <div class="mt-4 pt-3 border-t border-line/60">
           <p class="text-[11px] font-mono text-muted mb-2">Logros del laboratorio de Nmap</p>
           <div id="achievements" class="flex flex-wrap gap-1.5">${achievementsHtml(steps, 0)}</div>
@@ -189,6 +205,7 @@ export function renderPerfil(container) {
     </div>
   `;
   paintResume(document.getElementById('resume-card'));
+  if (cachedStats) paintRank(cachedStats);
   // La racha llega del servidor: se pinta cuando responde.
   fetchStreak().then(streak => {
     const el = document.getElementById('profile-streak');
@@ -208,6 +225,7 @@ export function renderPerfil(container) {
       const r = (rows || []).find(x => x.course_id === c.id);
       return { id: c.id, title: c.title, percent: r ? Number(r.progress_percentage) || 0 : 0, done: Boolean(r && r.completed_at), draft: !c.published };
     });
+    writeViewCache('perfil', user, { items, stats });
     list.innerHTML = myCoursesHtml(items);
     paintSummary(items);
     const earned = (stats && Array.isArray(stats.badges)) ? stats.badges : [];
@@ -216,6 +234,7 @@ export function renderPerfil(container) {
     const title = document.getElementById('badges-title');
     if (title) title.textContent = `Insignias · ${earned.length}`;
     paintRank(stats);
+    if (!stats) ['profile-rank-bar', 'profile-rank'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
   }).catch(() => {});
 }
 

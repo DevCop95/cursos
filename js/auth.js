@@ -5,11 +5,12 @@
  *  - Modo local: solo se comprueban los claims para mostrar el perfil; el rol es siempre
  *    'student' y no existe acceso de administración.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v71';
-import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v71';
-import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v71';
-import * as cloud from './cloud.js?v=dev101x-v71';
-import { pullProgressFromCloud } from './progress.js?v=dev101x-v71';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v72';
+import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v72';
+import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v72';
+import * as cloud from './cloud.js?v=dev101x-v72';
+import { pullProgressFromCloud } from './progress.js?v=dev101x-v72';
+import { clearViewCaches } from './lib/view-cache.js?v=dev101x-v72';
 
 let pendingNonce = null;
 
@@ -233,6 +234,7 @@ export async function revalidateSession() {
 export async function logout() {
   const wasCloud = appState.session && appState.session.mode === 'cloud';
   resetState(clearSession(appState));
+  clearViewCaches(); // lo último que se vio en Mis cursos y Perfil (ordenadores compartidos)
   if (wasCloud) await cloud.signOut();
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try { window.google.accounts.id.disableAutoSelect(); } catch (e) { /* noop */ }

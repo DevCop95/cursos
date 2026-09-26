@@ -2,12 +2,13 @@
  * "Continuar donde lo dejaste": último curso abierto por el alumno (en este navegador) y su siguiente lección.
  * Se muestra arriba de Mis cursos y del perfil; no aparece si no hay curso, ya no tiene acceso o lo terminó.
  */
-import { esc } from '../lib/html.js?v=dev101x-v71';
-import { appState } from '../state.js?v=dev101x-v71';
-import { COURSE } from '../content.js?v=dev101x-v71';
-import { currentProgress } from '../progress.js?v=dev101x-v71';
-import { fetchCourseContent, fetchCourseProgress } from '../cloud.js?v=dev101x-v71';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v71';
+import { esc } from '../lib/html.js?v=dev101x-v72';
+import { appState } from '../state.js?v=dev101x-v72';
+import { COURSE } from '../content.js?v=dev101x-v72';
+import { currentProgress } from '../progress.js?v=dev101x-v72';
+import { fetchCourseContent, fetchCourseProgress } from '../cloud.js?v=dev101x-v72';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v72';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v72';
 
 const lastCourseKey = () => {
   const s = appState.session || {};
@@ -18,9 +19,12 @@ export function rememberLastCourse(id) {
   try { localStorage.setItem(lastCourseKey(), String(id).slice(0, 80)); } catch (e) { /* almacenamiento bloqueado */ }
 }
 
+function lastCourseId() {
+  try { return localStorage.getItem(lastCourseKey()); } catch (e) { return null; }
+}
+
 async function resumeInfo() {
-  let id = null;
-  try { id = localStorage.getItem(lastCourseKey()); } catch (e) { /* sin datos */ }
+  const id = lastCourseId();
   if (!id || !appState.enabledCourses.includes(id)) return null;
   if (id === COURSE.id) {
     const p = currentProgress();
@@ -32,11 +36,8 @@ async function resumeInfo() {
   return { id, title: content.title, percent: p.percent, next: p.nextLesson && p.nextLesson.title, complete: p.complete };
 }
 
-export async function paintResume(el) {
-  if (!el) return;
-  const info = await resumeInfo().catch(() => null);
-  if (!info || info.complete || !document.body.contains(el)) return;
-  el.innerHTML = `
+function cardHtml(info) {
+  return `
     <a href="#/aula-interactiva/${encodeURIComponent(info.id)}" class="group flex items-center gap-4 p-4 rounded-2xl bg-term border border-term-line text-left hover:border-emerald-500/60 transition-colors relative overflow-hidden">
       <span class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></span>
       <span class="relative w-11 h-11 rounded-xl bg-accent flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-white text-[26px]" aria-hidden="true">play_arrow</span></span>
@@ -51,5 +52,28 @@ export async function paintResume(el) {
       </span>
       <span class="relative material-symbols-outlined text-slate-300 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-transform shrink-0" aria-hidden="true">arrow_forward</span>
     </a>`;
+}
+
+// Se pinta al instante con lo último que se vio (sin saltos al responder el servidor) y solo se retoca si cambia.
+export async function paintResume(el) {
+  if (!el) return;
+  const user = appState.session;
+  const cached = readViewCache('resume', user);
+  let shown = null;
+  if (cached && !cached.complete && cached.id === lastCourseId() && appState.enabledCourses.includes(cached.id)) {
+    el.innerHTML = cardHtml(cached);
+    el.classList.remove('hidden');
+    shown = JSON.stringify(cached);
+  }
+  let info;
+  try { info = await resumeInfo(); } catch (e) { return; } // sin red: se queda lo que había
+  if (!document.body.contains(el)) return;
+  writeViewCache('resume', user, info);
+  if (!info || info.complete) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+  if (JSON.stringify(info) !== shown) el.innerHTML = cardHtml(info);
   el.classList.remove('hidden');
 }
