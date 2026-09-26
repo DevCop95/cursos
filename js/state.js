@@ -3,9 +3,9 @@
  * No se guarda ningún token: solo el perfil visible, el rol en caché y la fecha de caducidad.
  * El rol en caché solo decide qué UI se muestra; los datos protegidos los filtra RLS en Supabase.
  */
-import { CONFIG } from './config.js?v=dev101x-v76';
-import { MAX_TERMINAL_LINES } from './lab.js?v=dev101x-v76';
-import { LAB_TARGET } from './content.js?v=dev101x-v76';
+import { CONFIG } from './config.js?v=dev101x-v77';
+import { MAX_TERMINAL_LINES } from './lab.js?v=dev101x-v77';
+import { LAB_TARGET } from './content.js?v=dev101x-v77';
 
 const STATE_KEY = 'dev101x_state';
 const LEGACY_LAB_STEPS = { 'lab-1': ['nmap-basic', 'nmap-sv'], 'lab-2': ['ipconfig', 'ping'], 'lab-3': ['whoami', 'netstat'] };

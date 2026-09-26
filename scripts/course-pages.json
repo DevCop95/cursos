@@ -89,6 +89,47 @@
       "videoAuthor": "Contando Bits",
       "logo": "assets/shodan.png",
       "short": "Shodan"
+    },
+    {
+      "slug": "osint",
+      "id": "osint-101",
+      "seoTitle": "Curso de OSINT defensivo en español: audita tu huella digital | Dev101x",
+      "seoDescription": "Aprende OSINT defensivo en español: metadatos de fotos y PDF con ExifTool, alias con Sherlock y correos con Holehe, practicando en un Linux real dentro del navegador con un caso ficticio.",
+      "free": false,
+      "workload": "PT16H",
+      "title": "OSINT defensivo: audita tu huella digital",
+      "category": "CIBERSEGURIDAD",
+      "duration": "2 Semanas",
+      "description": "Aprende a descubrir qué revela de ti o de tu organización la información pública: metadatos de fotos y documentos, alias en redes y correos registrados. Practicas con ExifTool, Sherlock y Holehe en un Linux real dentro del navegador, sobre un caso ficticio autorizado, y aprendes a reducir esa huella.",
+      "objectives": [
+        "Trabajar con método: alcance autorizado, copia de las pruebas e informe de hallazgos.",
+        "Leer y borrar metadatos de fotos y documentos con ExifTool (autor, dispositivo, fechas y GPS).",
+        "Encontrar un alias con Sherlock y un correo con Holehe, y descartar falsos positivos.",
+        "Revisar tu propia huella digital y aplicar medidas para reducirla."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Método y ética",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 2: Metadatos con ExifTool",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 3: Alias y correos",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 4: Reducir la huella",
+          "lessons": 3
+        }
+      ],
+      "labs": 4,
+      "videoAuthor": "Elurk Informática",
+      "logo": "assets/logos/osint.svg",
+      "short": "OSINT",
+      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo."
     }
   ]
 }

@@ -35,5 +35,17 @@ export const PUBLIC_COURSES = [
     "labs": 5,
     "free": false,
     "logo": "assets/shodan.png"
+  },
+  {
+    "id": "osint-101",
+    "slug": "osint",
+    "title": "OSINT defensivo: audita tu huella digital",
+    "short": "OSINT",
+    "category": "CIBERSEGURIDAD",
+    "duration": "2 Semanas",
+    "lessons": 11,
+    "labs": 4,
+    "free": false,
+    "logo": "assets/logos/osint.svg"
   }
 ];

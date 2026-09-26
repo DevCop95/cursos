@@ -1,19 +1,19 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v76';
-import { appState, saveState } from '../state.js?v=dev101x-v76';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v76';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v76';
-import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v76';
-import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v76';
-import { isAdmin } from '../auth.js?v=dev101x-v76';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v76';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v76';
-import { COURSE } from '../content.js?v=dev101x-v76';
-import { paintResume } from './resume.js?v=dev101x-v76';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v76';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v76'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v77';
+import { appState, saveState } from '../state.js?v=dev101x-v77';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v77';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v77';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v77';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v77';
+import { isAdmin } from '../auth.js?v=dev101x-v77';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v77';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v77';
+import { COURSE } from '../content.js?v=dev101x-v77';
+import { paintResume } from './resume.js?v=dev101x-v77';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v77';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v77'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';

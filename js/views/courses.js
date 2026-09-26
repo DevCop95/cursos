@@ -1,19 +1,19 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v76';
-import { appState } from '../state.js?v=dev101x-v76';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v76';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v76';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v76';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v76';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v76';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v76';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v76';
-import { paintResume } from './resume.js?v=dev101x-v76';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v76';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v76';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v76';
+import { esc } from '../lib/html.js?v=dev101x-v77';
+import { appState } from '../state.js?v=dev101x-v77';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v77';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v77';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v77';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v77';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v77';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v77';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v77';
+import { paintResume } from './resume.js?v=dev101x-v77';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v77';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v77';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v77';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {
@@ -366,8 +366,8 @@ export function renderExplorar(container) {
       <p class="mt-auto text-xs text-muted">Próximamente</p>
     </article>`;
 
-  // Próximo lanzamiento: misma tarjeta que los demás, con el icono de la herramienta y sin botón de acceso.
-  const soonTile = `
+  // Próximo lanzamiento (si lo hay): misma tarjeta que los demás, con el icono de la herramienta y sin botón de acceso.
+  const soonTile = !UPCOMING ? '' : `
     <article class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden flex flex-col">
       <div class="relative bg-term px-4 py-4 flex items-start justify-between gap-3 overflow-hidden">
         <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>

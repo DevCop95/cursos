@@ -136,7 +136,7 @@ function page(c, other) {
         <section class="bg-surface rounded-2xl border border-line p-5 sm:p-6 flex flex-col gap-3">
           <h2 class="text-sm font-bold">Cómo se aprende</h2>
           <ul class="flex flex-col gap-2 text-[13px] text-ink2">
-            <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">terminal</span><span>Practicas cada comando en una terminal simulada dentro del navegador, sin instalar nada.</span></li>
+            <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">terminal</span><span>${esc(c.practice || 'Practicas cada comando en una terminal simulada dentro del navegador, sin instalar nada.')}</span></li>
             <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">quiz</span><span>Cada lección termina con una pregunta; el curso cierra con un reto final.</span></li>
             <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">science</span><span>${c.labs} laboratorios${c.labTitles ? `: ${esc(c.labTitles.join(', ').toLowerCase())}` : ''}.</span></li>
             <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-rose-500 mt-px shrink-0" aria-hidden="true">smart_display</span><span>Video en español de ${esc(c.videoAuthor)}, enlazado por capítulos en cada lección.</span></li>
