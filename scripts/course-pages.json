@@ -8,7 +8,8 @@
       "seoTitle": "Curso de Nmap desde Windows gratis: Pentesting 101 | Dev101x",
       "seoDescription": "Curso gratis en español de pentesting con Nmap desde Windows: ipconfig, netstat, escaneo de puertos, detección de servicios y enumeración de HTTP, SMB y RDP en una consola simulada en el navegador.",
       "free": true,
-      "workload": "PT32H"
+      "workload": "PT32H",
+      "short": "Nmap"
     },
     {
       "slug": "git-github",
@@ -46,7 +47,8 @@
         }
       ],
       "labs": 3,
-      "videoAuthor": "MoureDev"
+      "videoAuthor": "MoureDev",
+      "short": "Git y GitHub"
     },
     {
       "slug": "shodan",
@@ -85,7 +87,8 @@
       ],
       "labs": 5,
       "videoAuthor": "Contando Bits",
-      "logo": "assets/shodan.png"
+      "logo": "assets/shodan.png",
+      "short": "Shodan"
     }
   ]
 }

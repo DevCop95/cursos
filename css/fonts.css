@@ -20,13 +20,13 @@
   font-display: swap;
   src: url(/assets/fonts/dm-mono-500-latin.woff2) format('woff2');
 }
-/* Material Symbols: 130 iconos */
+/* Material Symbols: 131 iconos */
 @font-face {
   font-family: 'Material Symbols Outlined';
   font-style: normal;
   font-weight: 400;
   font-display: block;
-  src: url(/assets/fonts/material-symbols-9d9ccdfe.woff2) format('woff2');
+  src: url(/assets/fonts/material-symbols-5a524dc7.woff2) format('woff2');
 }
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';

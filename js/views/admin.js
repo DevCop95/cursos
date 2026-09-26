@@ -5,16 +5,19 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v72';
-import { isCloudEnabled } from '../config.js?v=dev101x-v72';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v72';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v72';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v72';
-import { rankView } from '../lib/ranks.js?v=dev101x-v72';
-import { openAdminThread } from './messages.js?v=dev101x-v72';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v72';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v72';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v72';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v73';
+import { isCloudEnabled } from '../config.js?v=dev101x-v73';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v73';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v73';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v73';
+import { rankView } from '../lib/ranks.js?v=dev101x-v73';
+import { groupRequests } from '../lib/requests.js?v=dev101x-v73';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v73';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v73';
+import { openAdminThread } from './messages.js?v=dev101x-v73';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v73';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v73';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v73';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -339,35 +342,109 @@ export async function confirmRevoke(form) {
   openUserDetails(user);
 }
 
-// Solicitudes de acceso pendientes (el alumno pulsó "Solicitar acceso" en el catálogo).
+// Solicitudes de acceso pendientes (el alumno pulsó "Solicitar acceso" en el catálogo). Una fila por alumno con sus
+// cursos como chips (✓ / ✕), las más antiguas primero; se ven REQ_VISIBLE y el resto en un panel con buscador.
+const REQ_VISIBLE = 5;
+const REQ_OPEN_KEY = 'dev101x_admin_requests_open';
+function requestsOpen() {
+  try { return localStorage.getItem(REQ_OPEN_KEY) !== '0'; } catch (e) { return true; }
+}
+
+function courseChip(g, item) {
+  const c = lastCourses.find(x => x.id === item.courseId) || { title: item.courseId };
+  const short = (PUBLIC_COURSES.find(x => x.id === item.courseId) || {}).short || String(c.title).split(':')[0];
+  const logo = courseLogo(item.courseId);
+  const who = g.name || g.email;
+  return `
+    <span class="inline-flex items-center gap-1 h-8 pl-1 pr-0.5 rounded-lg bg-white border border-amber-200 max-w-full shrink-0" title="${esc(c.title)} · ${esc(relativeTime(Date.parse(item.createdAt), Date.now()))}">
+      <span class="w-6 h-6 rounded-md bg-term flex items-center justify-center shrink-0">${logo ? `<img src="${esc(logo)}" alt="" class="w-4 h-4 object-contain" />` : '<span class="material-symbols-outlined text-emerald-400 text-[14px]" aria-hidden="true">school</span>'}</span>
+      <span class="text-[12px] font-semibold text-ink truncate px-0.5">${esc(short)}</span>
+      <button type="button" data-action="admin-grant-request" data-user="${esc(g.userId)}" data-course="${esc(item.courseId)}" class="w-6 h-6 rounded-md text-accent hover:bg-emerald-50 flex items-center justify-center shrink-0" title="Conceder" aria-label="Conceder ${esc(short)} a ${esc(who)}"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">check</span></button>
+      <button type="button" data-action="admin-reject-request" data-user="${esc(g.userId)}" data-course="${esc(item.courseId)}" class="w-6 h-6 rounded-md text-rose-600 hover:bg-rose-50 flex items-center justify-center shrink-0" title="Rechazar" aria-label="Rechazar ${esc(short)} a ${esc(who)}"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">close</span></button>
+    </span>`;
+}
+
+const REQ_VISIBLE_MOBILE = 3;
+function requestRowHtml(g, index = 0) {
+  return `
+    <li class="px-4 py-2.5 ${index >= REQ_VISIBLE_MOBILE ? 'hidden sm:flex' : 'flex'} flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2">
+      <img src="${esc(avatarFor({ avatar: g.avatar, name: g.name, email: g.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
+      <div class="min-w-0 flex-1 sm:flex-none sm:w-52">
+        <p class="text-[13px] font-semibold text-ink truncate">${esc(g.name || g.email || 'Alumno')}</p>
+        <p class="text-[11px] font-mono text-muted truncate">${esc(relativeTime(Date.parse(g.oldest), Date.now()))}${g.email ? ` · ${esc(g.email)}` : ''}</p>
+      </div>
+      ${g.items.length > 1 ? `<button type="button" data-action="admin-grant-all" data-user="${esc(g.userId)}" class="sm:order-last h-8 px-3 rounded-lg bg-accent hover:bg-accent2 text-white text-xs font-semibold shrink-0 inline-flex items-center gap-1" aria-label="Conceder todo a ${esc(g.name || g.email)}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">done_all</span><span class="sm:hidden">Todo</span><span class="hidden sm:inline">Conceder todo</span></button>` : ''}
+      <div class="flex flex-wrap items-center gap-1.5 min-w-0 flex-1 basis-full sm:basis-auto">${g.items.map(i => courseChip(g, i)).join('')}</div>
+    </li>`;
+}
+
 function requestsHtml() {
-  if (!lastRequests.length) return '';
-  const now = Date.now();
+  const groups = groupRequests(lastRequests, { rows: lastRows });
+  if (!groups.length) return '';
+  const open = requestsOpen();
   return `
     <section class="min-w-0 bg-amber-50/70 rounded-2xl border border-amber-200 overflow-hidden">
-      <h2 class="px-4 py-3 border-b border-amber-200 text-sm font-bold text-amber-950 flex items-center gap-2">
+      <button type="button" data-action="admin-req-toggle" aria-expanded="${open}" class="w-full px-4 py-3 ${open ? 'border-b border-amber-200' : ''} text-sm font-bold text-amber-950 flex items-center gap-2 text-left hover:bg-amber-100/50 transition-colors">
         <span class="material-symbols-outlined text-[18px] text-amber-600" aria-hidden="true">key</span>Solicitudes de acceso
         <span class="px-1.5 py-px rounded-md bg-amber-500 text-white text-[10px] font-mono">${lastRequests.length}</span>
-      </h2>
-      <ul class="divide-y divide-amber-200/70">
-        ${lastRequests.map(q => {
-          const r = lastRows.find(x => x.id === q.user_id) || { email: 'Alumno', full_name: '' };
-          const c = lastCourses.find(x => x.id === q.course_id) || { title: q.course_id };
-          return `
-            <li class="px-4 py-2.5 flex items-center gap-3 flex-wrap">
-              <img src="${esc(avatarFor({ avatar: r.avatar_url, name: r.full_name, email: r.email }))}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-lg object-cover border border-line shrink-0" />
-              <div class="min-w-0 flex-1">
-                <p class="text-[13px] font-semibold text-ink truncate">${esc(r.full_name || r.email)} <span class="font-normal text-ink2">pide</span> ${esc(c.title)}</p>
-                <p class="text-[11px] font-mono text-muted truncate">${esc(r.email)} · ${esc(relativeTime(Date.parse(q.created_at), now))}</p>
-              </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <button type="button" data-action="admin-grant-request" data-user="${esc(q.user_id)}" data-course="${esc(q.course_id)}" class="h-8 px-3 rounded-lg bg-accent hover:bg-accent2 text-white text-xs font-semibold">Conceder</button>
-                <button type="button" data-action="admin-reject-request" data-user="${esc(q.user_id)}" data-course="${esc(q.course_id)}" class="h-8 px-3 rounded-lg bg-white border border-line hover:border-rose-300 text-rose-600 text-xs font-semibold">Rechazar</button>
-              </div>
-            </li>`;
-        }).join('')}
-      </ul>
+        <span class="text-[11px] font-mono font-normal text-amber-800/80">${groups.length} ${groups.length === 1 ? 'alumno' : 'alumnos'}</span>
+        <span class="material-symbols-outlined ml-auto text-amber-700 transition-transform ${open ? 'rotate-180' : ''}" aria-hidden="true">expand_more</span>
+      </button>
+      ${open ? `
+      <ul class="divide-y divide-amber-200/70">${groups.slice(0, REQ_VISIBLE).map((g, i) => requestRowHtml(g, i)).join('')}</ul>
+      ${groups.length > REQ_VISIBLE_MOBILE ? `<button type="button" data-action="admin-req-all" class="${groups.length > REQ_VISIBLE ? '' : 'sm:hidden '}w-full px-4 py-2.5 border-t border-amber-200 text-[12px] font-semibold text-amber-900 hover:bg-amber-100/60 transition-colors">Ver todas · ${groups.length} alumnos, ${lastRequests.length} solicitudes</button>` : ''}` : ''}
     </section>`;
+}
+
+export function toggleRequests() {
+  try { localStorage.setItem(REQ_OPEN_KEY, requestsOpen() ? '0' : '1'); } catch (e) { /* noop */ }
+  repaint();
+}
+
+// Todas las solicitudes en un panel con scroll propio, buscador y filtro por curso.
+export function openAllRequests() {
+  const courses = [...new Set(lastRequests.map(q => q.course_id))];
+  openDialog({
+    title: 'Solicitudes de acceso',
+    kicker: `${lastRequests.length} PENDIENTES`,
+    size: 'lg',
+    body: `
+      <div class="flex flex-col gap-3" data-req-dialog>
+        <div class="flex flex-wrap gap-2">
+          <input id="req-q" type="search" placeholder="Buscar por nombre o correo" autocomplete="off" class="flex-1 min-w-[180px] h-10 px-3 rounded-xl bg-white border border-line focus:border-accent outline-none text-sm" />
+          <select id="req-course" class="h-10 px-3 rounded-xl bg-white border border-line text-sm">
+            <option value="">Todos los cursos</option>
+            ${courses.map(id => `<option value="${esc(id)}">${esc(String((lastCourses.find(x => x.id === id) || { title: id }).title).split(':')[0])}</option>`).join('')}
+          </select>
+        </div>
+        <ul id="req-list" class="divide-y divide-amber-200/70 rounded-xl border border-amber-200 bg-amber-50/70 overflow-hidden"></ul>
+      </div>`
+  });
+  const q = document.getElementById('req-q');
+  const sel = document.getElementById('req-course');
+  if (q) q.addEventListener('input', refreshRequestsDialog);
+  if (sel) sel.addEventListener('change', refreshRequestsDialog);
+  refreshRequestsDialog();
+}
+
+function refreshRequestsDialog() {
+  const list = document.getElementById('req-list');
+  if (!list) return;
+  const q = document.getElementById('req-q');
+  const sel = document.getElementById('req-course');
+  const groups = groupRequests(lastRequests, { rows: lastRows, query: q ? q.value : '', course: sel ? sel.value : '' });
+  list.innerHTML = groups.length
+    ? groups.map(g => requestRowHtml(g)).join('')
+    : `<li class="px-4 py-6 text-center text-sm text-muted">${lastRequests.length ? 'Ninguna solicitud coincide con la búsqueda.' : 'No quedan solicitudes pendientes.'}</li>`;
+}
+
+function markGranted(user, course) {
+  lastRequests = lastRequests.filter(q => !(q.user_id === user && q.course_id === course));
+  const r = lastRows.find(x => x.id === user);
+  if (r) {
+    r.access = r.access.filter(a => a.course_id !== course);
+    r.access.push({ course_id: course, enabled: true });
+  }
 }
 
 export async function answerAccessRequest(btn, grant) {
@@ -375,13 +452,26 @@ export async function answerAccessRequest(btn, grant) {
   const ok = await saving(btn, () => (grant ? adminSetCourseOverride(user, course, 'grant') : adminRejectAccessRequest(user, course)),
     grant ? 'Acceso concedido' : 'Solicitud rechazada');
   if (!ok) return;
-  lastRequests = lastRequests.filter(q => !(q.user_id === user && q.course_id === course));
-  const r = lastRows.find(x => x.id === user);
-  if (grant && r) {
-    r.access = r.access.filter(a => a.course_id !== course);
-    r.access.push({ course_id: course, enabled: true });
-  }
+  if (grant) markGranted(user, course);
+  else lastRequests = lastRequests.filter(q => !(q.user_id === user && q.course_id === course));
   repaint();
+  refreshRequestsDialog();
+}
+
+// "Conceder todo": todos los cursos que pide ese alumno, uno tras otro.
+export async function grantAllRequests(btn) {
+  const { user } = btn.dataset;
+  const courses = lastRequests.filter(q => q.user_id === user).map(q => q.course_id);
+  if (!courses.length) return;
+  const ok = await saving(btn, async () => {
+    for (const course of courses) {
+      await adminSetCourseOverride(user, course, 'grant');
+      markGranted(user, course);
+    }
+  }, courses.length === 1 ? 'Acceso concedido' : `${courses.length} accesos concedidos`);
+  repaint();
+  refreshRequestsDialog();
+  if (!ok) btn.disabled = false;
 }
 
 async function loadRows(container, { quiet = false } = {}) {

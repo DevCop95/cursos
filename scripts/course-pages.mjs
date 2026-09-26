@@ -186,6 +186,7 @@ const cards = list.map(c => ({
   id: c.id,
   slug: c.slug,
   title: c.title,
+  short: c.short || String(c.title).split(":")[0],
   category: c.category || '',
   duration: c.duration || '',
   lessons: (c.modules || []).reduce((n, m) => n + (Number(m.lessons) || 0), 0),
