@@ -23,6 +23,44 @@ test('nmap -p filtra los puertos mostrados', () => {
   assert.doesNotMatch(out, /3389\/tcp/);
 });
 
+// Regresión: -Pn (y -p-) no deben tratarse como el flag -p, que dejaba la tabla de puertos vacía.
+test('los flags con puerto muestran siempre los puertos abiertos', () => {
+  for (const cmd of [`nmap -Pn ${LAB_TARGET}`, `nmap -sV -Pn ${LAB_TARGET}`, `nmap -p- ${LAB_TARGET}`, `nmap -sS ${LAB_TARGET}`]) {
+    const out = runCommand(cmd).lines.map(l => l.text).join('\n');
+    assert.match(out, /80\/tcp\s+open/, `sin puertos en: ${cmd}`);
+    assert.match(out, /445\/tcp\s+open/, `sin puertos en: ${cmd}`);
+  }
+  assert.match(runCommand(`nmap -p- ${LAB_TARGET}`).lines.map(l => l.text).join('\n'), /Not shown: 65530/);
+});
+
+test('cada modo de nmap da una salida distinta y cuenta los pasos correctos', () => {
+  assert.deepEqual(steps(`nmap -O ${LAB_TARGET}`), ['nmap-basic', 'nmap-os']);
+  assert.deepEqual(steps(`nmap -A ${LAB_TARGET}`), ['nmap-basic', 'nmap-sv', 'nmap-os']);
+  // -sn solo descubre el host: no cuenta como escaneo de puertos.
+  assert.deepEqual(steps(`nmap -sn ${LAB_TARGET}`), []);
+  // -O en mayúscula detecta el SO; -o en minúscula es un error, no detección de SO.
+  const minus_o = runCommand(`nmap -o ${LAB_TARGET}`);
+  assert.deepEqual(minus_o.steps, []);
+  assert.equal(minus_o.lines[minus_o.lines.length - 1].type, 'error');
+  // El barrido de subred descubre varios hosts, no escanea puertos del objetivo.
+  const sweep = runCommand('nmap 10.128.44.0/24').lines.map(l => l.text).join('\n');
+  assert.match(sweep, /3 hosts up/);
+  // -A incluye resultados de scripts NSE (build del objetivo) y traceroute.
+  const agg = runCommand(`nmap -A ${LAB_TARGET}`).lines.map(l => l.text).join('\n');
+  assert.match(agg, /20348/);
+  assert.match(agg, /TRACEROUTE/);
+});
+
+test('los comandos locales de reconocimiento responden', () => {
+  assert.match(runCommand('whoami /all').lines.map(l => l.text).join('\n'), /INFORMACIÓN DE GRUPO/);
+  assert.match(runCommand('netstat -r').lines.map(l => l.text).join('\n'), /Tabla de rutas/);
+  assert.match(runCommand('ipconfig /displaydns').lines.map(l => l.text).join('\n'), /Registro \(host\) A/);
+  assert.equal(runCommand('arp -a').lines[0].type, 'system');
+  assert.equal(runCommand('hostname').lines[0].text, 'win-analyst');
+  assert.match(runCommand('systeminfo').lines.map(l => l.text).join('\n'), /Windows 11 Pro/);
+  assert.deepEqual(steps(`curl -v http://${LAB_TARGET}`), ['curl']);
+});
+
 test('la salida usa la fecha actual, no una fija', () => {
   const now = new Date(2030, 0, 2, 3, 4);
   assert.match(runCommand(`nmap ${LAB_TARGET}`, { now }).lines[0].text, /2030-01-02 03:04/);

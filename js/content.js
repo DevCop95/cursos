@@ -166,11 +166,11 @@ export const QUIZZES = {
     ['b', '-Pn'],
     ['c', '-O'],
     ['d', '-p-']] },
-  'p2-3': { step: 'q-p2-3', question: '¿Qué hace el modo agresivo -A de Nmap?', options: [
-    ['a', 'Solo acelera el escaneo.'],
-    ['b', 'Ataca al objetivo para explotarlo.'],
-    ['c', 'Oculta tu dirección IP.'],
-    ['d', 'Combina detección de versiones, sistema operativo, scripts y traceroute.']] },
+  'p2-3': { step: 'q-p2-3', question: '¿Qué flag pide a Nmap que detecte el sistema operativo y el build del objetivo?', options: [
+    ['a', '-sV (solo versiones de los servicios).'],
+    ['b', '-Pn (omite el descubrimiento por ping).'],
+    ['c', '-O (detección de sistema operativo); -A lo incluye junto a versiones, scripts y traceroute.'],
+    ['d', '-sn (solo comprueba si el host está vivo).']] },
   'p3-1': { step: 'q-p3-1', question: '¿Qué cabecera HTTP suele revelar el software del servidor web?', options: [
     ['a', 'Content-Type'],
     ['b', 'Server'],
@@ -513,7 +513,9 @@ export const PENTESTING_COMMANDS = {
       { flag: "-sS", name: "SYN Stealth Scan", desc: "Escaneo sigiloso medio abierto: envía paquetes SYN y responde con RST al recibir SYN-ACK, evitando la conexión completa y reduciendo registros en el host remoto." },
       { flag: "-sV", name: "Version Detection", desc: "Interroga activamente los puertos abiertos con firmas de aplicación para identificar versiones exactas (ej: Nginx 1.24.0, Windows SMB)." },
       { flag: "-Pn", name: "No Ping Probe", desc: "Asume que el host está activo y omite la verificación previa por ICMP, indispensable contra firewalls de Windows que descartan pings." },
-      { flag: "-p <puertos>", name: "Rango de Puertos", desc: "Especifica puertos objetivo concretos (ej: -p 80,443,445,3389) para ahorrar tiempo y ancho de banda en la auditoría." }
+      { flag: "-p <puertos>", name: "Rango de Puertos", desc: "Especifica puertos objetivo concretos (ej: -p 80,443,445,3389) o todos con -p-, para ajustar el alcance de la auditoría." },
+      { flag: "-O", name: "OS Detection", desc: "Compara las respuestas TCP/IP del objetivo con una base de huellas para deducir el sistema operativo y su número de build (ej: Windows Server 2022, build 20348). Es la opción que responde a la pregunta del reto sobre el build." },
+      { flag: "-A", name: "Modo Agresivo", desc: "Atajo que combina -sV (versiones), -O (sistema operativo), scripts NSE (-sC) y traceroute en un solo escaneo. Da mucha información, pero hace mucho ruido en la red." }
     ],
     officialLinks: [
       { label: "Portal de Descargas Windows (nmap.org)", url: "https://nmap.org/download.html#windows", icon: "download", badge: "PORTAL" },
@@ -521,6 +523,7 @@ export const PENTESTING_COMMANDS = {
       { label: "Libro Oficial: Escaneo SYN (-sS)", url: "https://nmap.org/book/man-port-scanning-techniques.html", icon: "menu_book", badge: "BOOK" },
       { label: "Libro Oficial: Detección Versiones (-sV)", url: "https://nmap.org/book/man-version-detection.html", icon: "menu_book", badge: "BOOK" },
       { label: "Libro Oficial: Omitir Ping (-Pn)", url: "https://nmap.org/book/man-bypass-firewalls-ids.html", icon: "menu_book", badge: "BOOK" },
+      { label: "Libro Oficial: Detección de SO (-O)", url: "https://nmap.org/book/man-os-detection.html", icon: "menu_book", badge: "BOOK" },
       { label: "Guía Instalación en Windows", url: "https://nmap.org/book/inst-windows.html", icon: "laptop_windows", badge: "DOC" },
       { label: "Directorio Oficial Scripts NSE (600+)", url: "https://nmap.org/nsedoc/", icon: "code", badge: "NSE" }
     ],
