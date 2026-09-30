@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const BASE_DIR = path.dirname(fileURLToPath(import.meta.url));
 // Lo mismo que publica GitHub Pages: la app, las páginas de cada curso, el laboratorio y .well-known.
 const COURSE_SLUGS = JSON.parse(fs.readFileSync(path.join(BASE_DIR, 'scripts/course-pages.json'), 'utf8')).courses.map(c => c.slug + '/');
-const PUBLIC_PREFIXES = ['index.html', '404.html', 'manifest.json', 'sw.js', 'robots.txt', 'sitemap.xml', 'assets/', 'css/', 'js/', 'lab-linux/', '.well-known/', ...COURSE_SLUGS];
+const PUBLIC_PREFIXES = ['index.html', '404.html', 'manifest.json', 'sw.js', 'robots.txt', 'sitemap.xml', 'assets/', 'css/', 'js/', 'lab-linux/', '.well-known/', 'privacidad/', ...COURSE_SLUGS];
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

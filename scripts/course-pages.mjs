@@ -164,7 +164,7 @@ function page(c, other) {
     </main>
 
     <footer class="text-center text-[11px] text-muted pt-2 pb-4">
-      Cursos creados por <a href="https://dev101x.online/" rel="author noopener" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a>
+      Cursos creados por <a href="https://dev101x.online/" rel="author noopener" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a> · <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent">Privacidad</a>
     </footer>
   </div>
 </body>
