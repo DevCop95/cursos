@@ -47,5 +47,17 @@ export const PUBLIC_COURSES = [
     "labs": 4,
     "free": false,
     "logo": "assets/logos/osint.svg"
+  },
+  {
+    "id": "linux-101",
+    "slug": "linux",
+    "title": "Linux para ciberseguridad desde cero",
+    "short": "Linux",
+    "category": "CIBERSEGURIDAD",
+    "duration": "2 Semanas",
+    "lessons": 14,
+    "labs": 4,
+    "free": true,
+    "logo": "assets/logos/linux.svg"
   }
 ];

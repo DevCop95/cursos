@@ -130,6 +130,47 @@
       "logo": "assets/logos/osint.svg",
       "short": "OSINT",
       "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo."
+    },
+    {
+      "slug": "linux",
+      "id": "linux-101",
+      "seoTitle": "Curso de Linux gratis desde cero para ciberseguridad | Dev101x",
+      "seoDescription": "Curso gratis en español de Linux desde cero: terminal, rutas, permisos, usuarios, grep y tuberías, procesos, puertos y cron, investigando un servidor ficticio en un Linux real dentro del navegador.",
+      "free": true,
+      "workload": "PT16H",
+      "title": "Linux para ciberseguridad desde cero",
+      "category": "CIBERSEGURIDAD",
+      "duration": "2 Semanas",
+      "description": "Aprende a usar la terminal de Linux desde cero: moverte por el sistema, entender permisos y usuarios, filtrar logs con grep y tuberías, y revisar procesos, puertos y tareas programadas. Practicas en un Linux real dentro del navegador investigando un servidor ficticio que ha sufrido una intrusión.",
+      "objectives": [
+        "Moverte por el sistema de archivos y leer archivos desde la terminal, incluidos los ocultos.",
+        "Entender permisos y usuarios, y corregir un archivo que cualquiera podía leer.",
+        "Filtrar y contar en un log con grep, tuberías, sort y uniq para encontrar un ataque.",
+        "Revisar procesos, puertos abiertos y tareas programadas, y cortar un acceso no autorizado."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Moverse por el sistema",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 2: Permisos y usuarios",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 3: Buscar y filtrar",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 4: Procesos, red y tareas",
+          "lessons": 5
+        }
+      ],
+      "labs": 4,
+      "videoAuthor": "MoureDev",
+      "logo": "assets/logos/linux.svg",
+      "short": "Linux",
+      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo."
     }
   ]
 }
