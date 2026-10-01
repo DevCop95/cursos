@@ -1,10 +1,10 @@
 /**
  * Registro del progreso del alumno: guarda en localStorage y, en modo nube, sincroniza con Supabase.
  */
-import { appState, saveState, getProgressRecord } from './state.js?v=dev101x-v79';
-import { computeProgress, mergeSteps, isCommandStep, applyProgressReset } from './lab.js?v=dev101x-v79';
-import * as cloud from './cloud.js?v=dev101x-v79';
-import { computeStreak } from './lib/activity.js?v=dev101x-v79';
+import { appState, saveState, getProgressRecord } from './state.js?v=dev101x-v80';
+import { computeProgress, mergeSteps, isCommandStep, applyProgressReset } from './lab.js?v=dev101x-v80';
+import * as cloud from './cloud.js?v=dev101x-v80';
+import { computeStreak } from './lib/activity.js?v=dev101x-v80';
 
 // Señal de presencia para el panel de admin: cada minuto mientras la pestaña está visible.
 const PRESENCE_INTERVAL_MS = 60 * 1000;
@@ -98,10 +98,11 @@ function applyReset(remote) {
 }
 
 // Al iniciar sesión en modo nube: une el progreso remoto con el local (no se pierde nada de ninguno).
-export async function pullProgressFromCloud() {
+// `prefetched`: progreso ya pedido en paralelo durante el login (así no se vuelve a pedir).
+export async function pullProgressFromCloud(prefetched) {
   const userId = cloudUserId();
   if (!userId) return;
-  const remote = await cloud.fetchOwnProgress(userId).catch(() => null);
+  const remote = prefetched !== undefined ? prefetched : await cloud.fetchOwnProgress(userId).catch(() => null);
   applyReset(remote);
   const record = getProgressRecord();
   const remoteSteps = (remote && remote.steps) || {};

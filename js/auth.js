@@ -5,12 +5,12 @@
  *  - Modo local: solo se comprueban los claims para mostrar el perfil; el rol es siempre
  *    'student' y no existe acceso de administración.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v79';
-import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v79';
-import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v79';
-import * as cloud from './cloud.js?v=dev101x-v79';
-import { pullProgressFromCloud } from './progress.js?v=dev101x-v79';
-import { clearViewCaches } from './lib/view-cache.js?v=dev101x-v79';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v80';
+import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v80';
+import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v80';
+import * as cloud from './cloud.js?v=dev101x-v80';
+import { pullProgressFromCloud } from './progress.js?v=dev101x-v80';
+import { clearViewCaches } from './lib/view-cache.js?v=dev101x-v80';
 
 let pendingNonce = null;
 
@@ -83,8 +83,13 @@ export function forgetLastAccount() {
 // Abre la sesión local a partir del usuario ya verificado por Supabase.
 async function establishCloudSession(user, info) {
   const now = Date.now();
-  const profile = await cloud.fetchOwnProfile(user.id);
-  await cloud.touchLastLogin(user.id, info.name, info.avatar).catch(() => {});
+  // Cada petición a Supabase tarda ~0,3 s: van a la vez, y la fecha de último acceso se guarda sin esperar.
+  cloud.touchLastLogin(user.id, info.name, info.avatar).catch(() => {});
+  const [profile, enabledCourses, remoteProgress] = await Promise.all([
+    cloud.fetchOwnProfile(user.id),
+    loadCourseAccess(),
+    cloud.fetchOwnProgress(user.id).catch(() => null)
+  ]);
   appState.session = {
     mode: 'cloud',
     userId: user.id,
@@ -98,10 +103,15 @@ async function establishCloudSession(user, info) {
     // La sesión real la mantiene Supabase; esto solo acota la caché local.
     expiresAt: now + CONFIG.localSessionTtlMs
   };
-  appState.enabledCourses = await loadCourseAccess();
+  appState.enabledCourses = enabledCourses;
   saveState(appState);
   rememberAccount(info);
-  await pullProgressFromCloud();
+  await pullProgressFromCloud(remoteProgress);
+}
+
+// Descarga el SDK de Supabase antes de que haga falta (al abrir el acceso), para que el botón de Google responda al momento.
+export function preloadCloud() {
+  if (isCloudEnabled()) cloud.getClient();
 }
 
 // Datos del perfil de Google tal como los guarda Supabase en user_metadata.

@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v79';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v80';
 
 let clientPromise = null;
 
@@ -44,19 +44,6 @@ export async function startGoogleOAuth({ loginHint, selectAccount } = {}) {
     options: { redirectTo: window.location.origin + window.location.pathname, queryParams, skipBrowserRedirect: true }
   });
   if (error) throw error;
-
-  // Comprobación previa: si el proveedor está mal configurado, Supabase responde 400 con JSON
-  // en vez de redirigir; así lo mostramos en la tarjeta y no como una página de error cruda.
-  let check = null;
-  try {
-    check = await fetch(data.url, { redirect: 'manual', credentials: 'omit' });
-  } catch (e) { /* sin red o CORS: se intenta igualmente */ }
-  if (check && check.type !== 'opaqueredirect' && check.status >= 400) {
-    const body = await check.json().catch(() => ({}));
-    const err = new Error(body.msg || `HTTP ${check.status}`);
-    err.code = 'oauth_not_configured';
-    throw err;
-  }
   window.location.assign(data.url);
 }
 

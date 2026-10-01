@@ -4,16 +4,16 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v79';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v79';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount } from '../auth.js?v=dev101x-v79';
-import { esc } from '../lib/html.js?v=dev101x-v79';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v79';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v79';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v79';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v79';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v79';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v79';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v80';
+import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v80';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v80';
+import { esc } from '../lib/html.js?v=dev101x-v80';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v80';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v80';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v80';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v80';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v80';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v80';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -114,9 +114,7 @@ export async function loginWithGoogle(button) {
     box.removeAttribute('aria-busy');
     setLoginStatus({
       type: 'error',
-      text: err && err.code === 'oauth_not_configured'
-        ? 'El acceso con Google no está disponible en este momento. Inténtalo más tarde.'
-        : 'No se pudo conectar con Google. Revisa tu conexión e inténtalo de nuevo.'
+      text: 'No se pudo conectar con Google. Revisa tu conexión e inténtalo de nuevo.'
     });
   }
 }
@@ -310,6 +308,7 @@ export function renderLogin(container, onSuccess) {
 function openLoginModal() {
   const m = document.getElementById('login-modal');
   if (!m || !m.classList.contains('hidden')) return;
+  preloadCloud();
   openModal('login-modal');
   const main = m.querySelector('#login-actions button');
   if (main) main.focus();
