@@ -12,7 +12,8 @@ FROM docker.io/i386/alpine:3.21.0
 
 RUN apk add --no-cache openrc alpine-base agetty alpine-conf linux-virt linux-firmware-none \
     git bash nano less ncurses-terminfo-base \
-    exiftool jq file
+    exiftool jq file \
+    procps-ng iproute2-ss netcat-openbsd
 
 RUN setup-hostname dev101x-lab \
  && adduser -D -s /bin/bash alumno \
@@ -35,6 +36,10 @@ RUN sh /tmp/setup-lab.sh && rm /tmp/setup-lab.sh
 COPY --from=caso /srv/osint /srv/osint
 COPY osint-tools/sherlock osint-tools/holehe /usr/local/bin/
 RUN chmod 755 /usr/local/bin/sherlock /usr/local/bin/holehe
+
+# Curso de Linux: servidor web ficticio con un incidente (usuarios, permisos, log SSH, proceso y tarea).
+COPY setup-linux.sh /tmp/setup-linux.sh
+RUN sh /tmp/setup-linux.sh && rm /tmp/setup-linux.sh
 
 COPY bashrc /home/alumno/.bashrc
 COPY motd /etc/motd

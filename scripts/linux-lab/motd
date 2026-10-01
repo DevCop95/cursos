@@ -4,4 +4,5 @@
 
   Curso de Git:    git --version  ·  cd hola-git && git init
   Curso de OSINT:  cp -r /srv/osint/caso ~/caso && cd ~/caso
+  Curso de Linux:  whoami  ·  pwd  ·  cd /var/www/ejemplo-lab
 

@@ -1,4 +1,5 @@
-// Arranca el Linux del laboratorio en v86 (Node), comprueba git y guarda el estado ya arrancado.
+// Arranca el Linux del laboratorio en v86 (Node), comprueba git y el proceso del curso de Linux, y guarda
+// el estado ya arrancado.
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import fs from 'node:fs';
@@ -27,9 +28,9 @@ emulator.add_listener('serial0-output-byte', b => {
   const tail = clean(out.slice(-120));
   if (step === 0 && PROMPT.test(tail)) {
     step = 1; console.log('prompt a los', secs(), 's'); out = '';
-    emulator.serial0_send('git --version; echo MARCA_$((40+2))\n');
+    emulator.serial0_send('git --version; pgrep -f kworkerd >/dev/null && echo KWORKERD_OK; echo MARCA_$((40+2))\n');
   } else if (step === 1 && out.includes('MARCA_42')) {
-    step = 2; console.log('salida:', clean(out).split('\n').filter(l => /git version/.test(l)).join(' | '));
+    step = 2; console.log('salida:', clean(out).split('\n').filter(l => /git version|^KWORKERD_OK/.test(l)).join(' | '));
     out = '';
     emulator.serial0_send('sync; clear\n');
   } else if (step === 2 && PROMPT.test(tail)) {
