@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v85';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v85';
-import { esc } from '../lib/html.js?v=dev101x-v85';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v85';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v85';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v85';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v85';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v85';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v85';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v86';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v86';
+import { esc } from '../lib/html.js?v=dev101x-v86';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v86';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v86';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v86';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v86';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v86';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v86';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -309,7 +309,7 @@ function courseLogoHtml(c, size = 26) {
   const logo = courseLogo(c.id) || c.logo;
   return logo
     ? `<img src="${esc(logo)}" alt="" width="${size}" height="${size}" decoding="async" class="object-contain" style="width:${size}px;height:${size}px" />`
-    : `<span class="material-symbols-outlined text-emerald-400 text-[22px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
+    : `<span class="material-symbols-outlined text-white text-[22px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
 }
 
 function catalogHtml() {

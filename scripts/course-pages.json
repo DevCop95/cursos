@@ -89,7 +89,7 @@
       ],
       "labs": 5,
       "videoAuthor": "Contando Bits",
-      "logo": "assets/shodan.png",
+      "logo": "assets/logos/shodan-bn.png",
       "short": "Shodan",
       "pitch": "Descubre qué expone una organización en internet."
     },
@@ -130,7 +130,7 @@
       ],
       "labs": 4,
       "videoAuthor": "Elurk Informática",
-      "logo": "assets/logos/osint.svg",
+      "logo": "assets/logos/osint-huella.svg",
       "short": "OSINT",
       "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
       "pitch": "Audita la huella que dejan tus fotos, alias y correos."
@@ -172,7 +172,7 @@
       ],
       "labs": 4,
       "videoAuthor": "MoureDev",
-      "logo": "assets/logos/linux.svg",
+      "logo": "assets/logos/linux-bn.svg",
       "short": "Linux",
       "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
       "pitch": "Usa la terminal investigando un servidor que ha sufrido una intrusión."

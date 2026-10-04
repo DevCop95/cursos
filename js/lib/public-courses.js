@@ -36,7 +36,7 @@ export const PUBLIC_COURSES = [
     "lessons": 10,
     "labs": 5,
     "free": false,
-    "logo": "assets/shodan.png",
+    "logo": "assets/logos/shodan-bn.png",
     "pitch": "Descubre qué expone una organización en internet."
   },
   {
@@ -49,7 +49,7 @@ export const PUBLIC_COURSES = [
     "lessons": 11,
     "labs": 4,
     "free": false,
-    "logo": "assets/logos/osint.svg",
+    "logo": "assets/logos/osint-huella.svg",
     "pitch": "Audita la huella que dejan tus fotos, alias y correos."
   },
   {
@@ -62,7 +62,7 @@ export const PUBLIC_COURSES = [
     "lessons": 14,
     "labs": 4,
     "free": true,
-    "logo": "assets/logos/linux.svg",
+    "logo": "assets/logos/linux-bn.svg",
     "pitch": "Usa la terminal investigando un servidor que ha sufrido una intrusión."
   }
 ];
