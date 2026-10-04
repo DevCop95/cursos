@@ -10,7 +10,8 @@ export const PUBLIC_COURSES = [
     "lessons": 11,
     "labs": 3,
     "free": true,
-    "logo": ""
+    "logo": "",
+    "pitch": "Escanea una red y sus servicios con Nmap desde Windows."
   },
   {
     "id": "git-github-101",
@@ -22,7 +23,8 @@ export const PUBLIC_COURSES = [
     "lessons": 14,
     "labs": 3,
     "free": false,
-    "logo": ""
+    "logo": "",
+    "pitch": "Versiona tus proyectos, trabaja con ramas y colabora con Pull Requests."
   },
   {
     "id": "shodan-101",
@@ -34,7 +36,8 @@ export const PUBLIC_COURSES = [
     "lessons": 10,
     "labs": 5,
     "free": false,
-    "logo": "assets/shodan.png"
+    "logo": "assets/shodan.png",
+    "pitch": "Descubre qué expone una organización en internet."
   },
   {
     "id": "osint-101",
@@ -46,7 +49,8 @@ export const PUBLIC_COURSES = [
     "lessons": 11,
     "labs": 4,
     "free": false,
-    "logo": "assets/logos/osint.svg"
+    "logo": "assets/logos/osint.svg",
+    "pitch": "Audita la huella que dejan tus fotos, alias y correos."
   },
   {
     "id": "linux-101",
@@ -58,6 +62,7 @@ export const PUBLIC_COURSES = [
     "lessons": 14,
     "labs": 4,
     "free": true,
-    "logo": "assets/logos/linux.svg"
+    "logo": "assets/logos/linux.svg",
+    "pitch": "Usa la terminal investigando un servidor que ha sufrido una intrusión."
   }
 ];

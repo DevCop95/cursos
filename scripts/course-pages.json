@@ -9,7 +9,8 @@
       "seoDescription": "Curso gratis en español de pentesting con Nmap desde Windows: ipconfig, netstat, escaneo de puertos, detección de servicios y enumeración de HTTP, SMB y RDP en una consola simulada en el navegador.",
       "free": true,
       "workload": "PT32H",
-      "short": "Nmap"
+      "short": "Nmap",
+      "pitch": "Escanea una red y sus servicios con Nmap desde Windows."
     },
     {
       "slug": "git-github",
@@ -48,7 +49,8 @@
       ],
       "labs": 3,
       "videoAuthor": "MoureDev",
-      "short": "Git y GitHub"
+      "short": "Git y GitHub",
+      "pitch": "Versiona tus proyectos, trabaja con ramas y colabora con Pull Requests."
     },
     {
       "slug": "shodan",
@@ -88,7 +90,8 @@
       "labs": 5,
       "videoAuthor": "Contando Bits",
       "logo": "assets/shodan.png",
-      "short": "Shodan"
+      "short": "Shodan",
+      "pitch": "Descubre qué expone una organización en internet."
     },
     {
       "slug": "osint",
@@ -129,7 +132,8 @@
       "videoAuthor": "Elurk Informática",
       "logo": "assets/logos/osint.svg",
       "short": "OSINT",
-      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo."
+      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
+      "pitch": "Audita la huella que dejan tus fotos, alias y correos."
     },
     {
       "slug": "linux",
@@ -170,7 +174,8 @@
       "videoAuthor": "MoureDev",
       "logo": "assets/logos/linux.svg",
       "short": "Linux",
-      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo."
+      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
+      "pitch": "Usa la terminal investigando un servidor que ha sufrido una intrusión."
     }
   ]
 }

@@ -1,19 +1,18 @@
 /**
- * Vista: página pública del curso + login con Google.
+ * Vista: portada pública (consola de muestra, catálogo, móvil) + login con Google.
  *  - Modo nube: botón propio → redirección OAuth de Supabase. Si este navegador recuerda la
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v83';
-import { COURSE, COURSE_VIDEO } from '../content.js?v=dev101x-v83';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v83';
-import { esc } from '../lib/html.js?v=dev101x-v83';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v83';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v83';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v83';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v83';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v83';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v83';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v84';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v84';
+import { esc } from '../lib/html.js?v=dev101x-v84';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v84';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v84';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v84';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v84';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v84';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v84';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -198,7 +197,6 @@ async function mountGoogleButton() {
 // ---------------------------------------------------------------------------
 export function renderLogin(container, onSuccess) {
   onLoginSuccess = onSuccess;
-  const lessons = COURSE.syllabus.reduce((n, m) => n + m.lessons.length, 0);
 
   container.innerHTML = `
     <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col gap-5">
@@ -212,12 +210,30 @@ export function renderLogin(container, onSuccess) {
         </button>
       </div>
 
-      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-12 items-center modal-enter">
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-8 md:gap-10 items-center modal-enter">
         <div class="flex flex-col gap-5 min-w-0">
           <div class="flex flex-col gap-3">
             <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
-            <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Practica donde estés</h1>
-            <p class="text-[15px] text-ink2 leading-relaxed">Aprende pentesting con una consola dentro del navegador. La consola, las lecciones y tu avance funcionan igual en el móvil y en el ordenador, sin instalar nada.</p>
+            <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Aprende escribiendo comandos</h1>
+            <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan y OSINT. Sin instalar nada, en el móvil o en el ordenador.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button type="button" data-open-login class="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
+              Empezar gratis<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+            </button>
+            <span class="text-xs text-muted">Con tu cuenta de Google</span>
+          </div>
+        </div>
+        ${demoTermHtml()}
+      </section>
+
+      ${catalogHtml()}
+
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-12 items-center">
+        <div class="flex flex-col gap-5 min-w-0">
+          <div class="flex flex-col gap-2">
+            <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Igual en el móvil</h2>
+            <p class="text-[15px] text-ink2 leading-relaxed">La consola, las lecciones y tu avance funcionan igual en el móvil y en el ordenador. Sigues donde lo dejaste.</p>
           </div>
           <div class="flex flex-col gap-1.5" role="tablist" aria-label="Pantallas de la app">
             ${PHONE_SCREENS.map((s, i) => `
@@ -229,53 +245,13 @@ export function renderLogin(container, onSuccess) {
                 </span>
               </button>`).join('')}
           </div>
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <button type="button" data-open-login class="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
-              Empezar gratis<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
-            </button>
-            <span class="text-xs text-muted">Con tu cuenta de Google</span>
-          </div>
         </div>
         <button type="button" class="phone-frame justify-self-center" data-phone-next aria-label="Ver la siguiente pantalla">
           <span class="phone-screen">
-            ${PHONE_SCREENS.map((s, i) => `<img src="${s.img}" alt="${esc(s.alt)}" width="488" height="1055" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" class="phone-shot${i === 0 ? ' is-active' : ''}" data-phone-shot="${i}" />`).join('')}
+            ${PHONE_SCREENS.map((s, i) => `<img src="${s.img}" alt="${esc(s.alt)}" width="488" height="1055" ${i === 0 ? '' : 'loading="lazy" '}decoding="async" class="phone-shot${i === 0 ? ' is-active' : ''}" data-phone-shot="${i}" />`).join('')}
           </span>
         </button>
       </section>
-
-      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        <div class="flex flex-col gap-4 min-w-0">
-          <div class="flex flex-col gap-2">
-            <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Curso gratis</p>
-            <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Pentesting 101</h2>
-            <p class="text-[15px] text-ink2 leading-relaxed">Aprende a reconocer una red y a escanear puertos con Nmap desde Windows, lección a lección y con laboratorios.</p>
-            <p class="text-xs font-mono text-muted">${esc(COURSE.duration.toLowerCase())} · ${lessons} lecciones · en español</p>
-          </div>
-          <button type="button" data-open-login class="self-start inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-white border border-line hover:border-accent/60 hover:text-accent text-sm font-semibold text-ink transition-colors">
-            Empezar el curso<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
-          </button>
-        </div>
-        <button type="button" data-action="open-video" data-start="0" class="group relative w-full aspect-video rounded-2xl overflow-hidden bg-term text-left" aria-label="Ver el video de la clase">
-          <img src="https://i.ytimg.com/vi/${COURSE_VIDEO.id}/hqdefault.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
-          <span class="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors"></span>
-          <span class="absolute inset-0 flex items-center justify-center">
-            <span class="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-accent text-4xl" aria-hidden="true">play_arrow</span></span>
-          </span>
-        </button>
-      </section>
-
-      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8">
-        <h2 class="text-base font-bold text-ink mb-3">Temario</h2>
-        <ol class="flex flex-col divide-y divide-line/70">
-          ${COURSE.syllabus.map((m, i) => `
-            <li class="flex items-baseline justify-between gap-4 py-2.5 text-sm">
-              <span class="text-ink2"><span class="font-mono text-muted mr-2">${i + 1}.</span>${esc(m.module.replace(/^Módulo \d+:\s*/, ''))}</span>
-              <span class="text-xs text-muted shrink-0">${m.lessons.length} lecciones</span>
-            </li>`).join('')}
-        </ol>
-      </section>
-
-      ${moreCoursesHtml()}
 
       <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a> · <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent">Privacidad</a></p>
     </div>
@@ -301,6 +277,7 @@ export function renderLogin(container, onSuccess) {
   if (isCloudEnabled()) paintActions();
   else mountGoogleButton();
   initPhoneShowcase(container);
+  initDemoTerm(container);
   container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
   if (loginStatus) openLoginModal();
 }
@@ -315,43 +292,205 @@ function openLoginModal() {
 }
 
 // ---------------------------------------------------------------------------
-// "Más cursos": el resto del catálogo (datos públicos generados por npm run pages) y el próximo lanzamiento.
-// Cada ficha lleva a la página pública del curso.
+// Catálogo: todos los cursos (datos públicos generados por npm run pages) y el próximo lanzamiento.
+// Cada ficha lleva a la página pública del curso. Un color sobrio por curso, solo en el borde superior.
 // ---------------------------------------------------------------------------
-function moreCourseIcon(c) {
+const COURSE_TINT = {
+  'pentesting-101': '#005c38',
+  'linux-101': '#8a5a00',
+  'git-github-101': '#a8432a',
+  'shodan-101': '#8c2f39',
+  'osint-101': '#2b5278'
+};
+
+function courseLogoHtml(c, size = 26) {
   const logo = courseLogo(c.id) || c.logo;
   return logo
-    ? `<img src="${esc(logo)}" alt="" width="28" height="28" loading="lazy" class="w-7 h-7 object-contain" />`
-    : `<span class="material-symbols-outlined text-emerald-400 text-[24px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
+    ? `<img src="${esc(logo)}" alt="" width="${size}" height="${size}" decoding="async" class="object-contain" style="width:${size}px;height:${size}px" />`
+    : `<span class="material-symbols-outlined text-emerald-400 text-[22px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
 }
 
-function moreCoursesHtml() {
-  const others = PUBLIC_COURSES.filter(c => c.id !== COURSE.id);
-  if (!others.length && !UPCOMING) return '';
-  const tile = c => `
-    <a href="/${esc(c.slug)}/" class="group flex items-center gap-3 p-3 rounded-2xl border border-line bg-white/60 hover:border-accent/60 hover:bg-white transition-colors min-w-0">
-      <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0">${moreCourseIcon(c)}</span>
-      <span class="flex flex-col min-w-0">
-        <span class="text-sm font-semibold text-ink leading-snug line-clamp-2 group-hover:text-accent">${esc(c.title)}</span>
-        <span class="text-[11px] font-mono text-muted truncate"><strong class="${c.free ? 'text-accent' : 'text-amber-700'} font-bold">${c.free ? 'GRATIS' : 'PREMIUM'}</strong> · ${c.lessons} lecciones · ${c.labs} labs</span>
+function catalogHtml() {
+  if (!PUBLIC_COURSES.length) return '';
+  const card = c => `
+    <a href="/${esc(c.slug)}/" class="catalog-card group" style="--tint:${COURSE_TINT[c.id] || 'var(--accent)'}">
+      <span class="flex items-center gap-3 min-w-0">
+        <span class="w-10 h-10 rounded-xl bg-term flex items-center justify-center shrink-0">${courseLogoHtml(c)}</span>
+        <span class="flex flex-col min-w-0">
+          <span class="text-[15px] font-bold text-ink leading-snug group-hover:text-accent">${esc(c.short)}</span>
+          <span class="text-[11px] font-mono font-bold ${c.free ? 'text-accent' : 'text-amber-700'}">${c.free ? 'GRATIS' : 'PREMIUM'}</span>
+        </span>
+      </span>
+      ${c.pitch ? `<span class="text-sm text-ink2 leading-relaxed">${esc(c.pitch)}</span>` : ''}
+      <span class="mt-auto flex items-center justify-between gap-3 pt-1">
+        <span class="text-[11px] font-mono text-muted truncate">${c.lessons} lecciones · ${c.labs} labs</span>
+        <span class="material-symbols-outlined text-[18px] text-muted group-hover:text-accent transition-colors" aria-hidden="true">arrow_forward</span>
       </span>
     </a>`;
   const soon = UPCOMING ? `
-    <div class="flex items-center gap-3 p-3 rounded-2xl border border-dashed border-line min-w-0" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
-      <span class="w-11 h-11 rounded-xl bg-white border border-line flex items-center justify-center shrink-0"><img src="${esc(UPCOMING.icon)}" alt="" width="26" height="26" loading="lazy" class="w-[26px] h-[26px] object-contain" /></span>
+    <div class="flex items-center gap-3 p-4 rounded-2xl border border-dashed border-line min-w-0" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
+      <span class="w-10 h-10 rounded-xl bg-white border border-line flex items-center justify-center shrink-0"><img src="${esc(UPCOMING.icon)}" alt="" width="24" height="24" loading="lazy" class="w-6 h-6 object-contain" /></span>
       <span class="flex flex-col min-w-0">
         <span class="text-sm font-semibold text-ink2 leading-snug line-clamp-2">${esc(UPCOMING.short || UPCOMING.title)}</span>
         <span class="text-[11px] font-mono text-muted truncate">PRÓXIMAMENTE</span>
       </span>
     </div>` : '';
+  const group = (title, note, list, cols) => list.length ? `
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">${title}</h3>
+            ${note ? `<span class="text-[11px] text-muted">${note}</span>` : ''}
+          </div>
+          <div class="grid grid-cols-1 ${cols} gap-3">${list.map(card).join('')}</div>
+        </div>` : '';
   return `
-      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-4">
-          <h2 class="text-base font-bold text-ink">Más cursos</h2>
-          <span class="text-[11px] text-muted">Los premium se solicitan desde tu cuenta</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">${others.map(tile).join('')}${soon}</div>
+      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8 flex flex-col gap-6">
+        <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Cursos</h2>
+        ${group('Gratis', '', PUBLIC_COURSES.filter(c => c.free), 'sm:grid-cols-2')}
+        ${group('Premium', 'Se solicitan desde tu cuenta', PUBLIC_COURSES.filter(c => !c.free), 'sm:grid-cols-3')}
+        ${soon}
       </section>`;
+}
+
+// ---------------------------------------------------------------------------
+// Consola de muestra: escribe sola un comando de cada curso. Se para fuera de la pantalla o con la pestaña
+// oculta; con "reducir movimiento" muestra la escena completa y no avanza. Los botones eligen el curso.
+// Salidas inventadas para la portada: nada de las respuestas de los retos.
+// ---------------------------------------------------------------------------
+const DEMO_SCENES = [
+  { id: 'pentesting-101', pick: 'Nmap', title: 'Pentesting 101 · Nmap', prompt: 'PS>', steps: [
+    { cmd: 'nmap -sV 10.128.44.12' },
+    { out: 'PORT     STATE SERVICE       VERSION', tone: 'muted' },
+    { out: '80/tcp   open  http          nginx 1.24' },
+    { out: '445/tcp  open  microsoft-ds  Win 2022' },
+    { out: '3389/tcp open  ms-wbt-server RDP' },
+    { out: 'Nmap done: 1 host up', tone: 'muted' },
+    { out: '✓ Lección completada', tone: 'ok' }
+  ] },
+  { id: 'linux-101', pick: 'Linux', title: 'Linux para ciberseguridad', prompt: '$', steps: [
+    { cmd: 'ls -l notas.txt' },
+    { out: '-rw-r--r-- 1 ana ana 312 notas.txt' },
+    { cmd: 'chmod 600 notas.txt' },
+    { cmd: 'ls -l notas.txt' },
+    { out: '-rw------- 1 ana ana 312 notas.txt' },
+    { out: '✓ Solo ana puede leerlo', tone: 'ok' }
+  ] },
+  { id: 'git-github-101', pick: 'Git', title: 'Git y GitHub', prompt: '$', steps: [
+    { cmd: 'git switch -c mi-rama' },
+    { out: "Switched to a new branch 'mi-rama'", tone: 'muted' },
+    { cmd: 'git commit -m "Añade el README"' },
+    { out: '[mi-rama 4e1b2c7] Añade el README' },
+    { out: ' 1 file changed, 12 insertions(+)', tone: 'muted' },
+    { out: '✓ Primer commit en tu rama', tone: 'ok' }
+  ] },
+  { id: 'shodan-101', pick: 'Shodan', title: 'Shodan', prompt: '$', steps: [
+    { cmd: 'shodan host 198.51.100.23' },
+    { out: '198.51.100.23', tone: 'info' },
+    { out: 'Ports: 22, 80, 443', tone: 'muted' },
+    { out: '22/tcp   OpenSSH 8.9' },
+    { out: '80/tcp   nginx 1.22.1' },
+    { out: '✓ Servicios expuestos encontrados', tone: 'ok' }
+  ] },
+  { id: 'osint-101', pick: 'OSINT', title: 'OSINT defensivo', prompt: '$', steps: [
+    { cmd: 'exiftool -Model -GPSPosition foto.jpg' },
+    { out: 'Camera Model Name : Galaxy A54' },
+    { out: 'GPS Position      : 40.4172, -3.7027' },
+    { cmd: 'exiftool -all= foto.jpg' },
+    { out: '    1 image files updated', tone: 'muted' },
+    { out: '✓ Metadatos borrados', tone: 'ok' }
+  ] }
+];
+
+function demoTermHtml() {
+  const byId = Object.fromEntries(PUBLIC_COURSES.map(c => [c.id, c]));
+  return `
+        <div class="flex flex-col gap-3 min-w-0">
+          <div class="demo-term" aria-hidden="true">
+            <div class="demo-term-bar"><span data-demo-title>${esc(DEMO_SCENES[0].title)}</span><span class="demo-term-tag">laboratorio</span></div>
+            <pre class="demo-term-body" data-demo-body></pre>
+          </div>
+          <div class="flex flex-wrap gap-1.5" role="group" aria-label="Ver un comando de cada curso">
+            ${DEMO_SCENES.map((d, i) => `
+              <button type="button" data-demo-scene="${i}" aria-pressed="${i === 0}" class="demo-pick" aria-label="${esc(d.title)}">
+                <span class="w-6 h-6 rounded-md bg-term flex items-center justify-center shrink-0">${byId[d.id] ? courseLogoHtml(byId[d.id], 16) : ''}</span>
+                <span class="hidden sm:inline">${esc(d.pick)}</span>
+              </button>`).join('')}
+          </div>
+        </div>`;
+}
+
+function initDemoTerm(container) {
+  const body = container.querySelector('[data-demo-body]');
+  const title = container.querySelector('[data-demo-title]');
+  const picks = [...container.querySelectorAll('[data-demo-scene]')];
+  if (!body) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let run = 0; // cada escena nueva invalida la anterior
+  let visible = true;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  // Espera mientras la consola no se ve; false si ya hay otra escena o la vista se fue.
+  const ready = async token => {
+    while (token === run && body.isConnected && (!visible || document.hidden)) await wait(400);
+    return token === run && body.isConnected;
+  };
+  const line = (cls, text) => {
+    const el = document.createElement('div');
+    if (cls) el.className = cls;
+    el.textContent = text;
+    body.appendChild(el);
+    return el;
+  };
+  const promptLine = scene => {
+    const el = line('', '');
+    const p = document.createElement('span');
+    p.className = 'demo-prompt';
+    p.textContent = scene.prompt + ' ';
+    const t = document.createElement('span');
+    el.append(p, t);
+    return t;
+  };
+  async function play(i) {
+    const token = ++run;
+    const scene = DEMO_SCENES[i];
+    picks.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+    title.textContent = scene.title;
+    body.replaceChildren();
+    if (reduce) {
+      for (const s of scene.steps) {
+        if (s.cmd) promptLine(scene).textContent = s.cmd;
+        else line(`demo-${s.tone || 'out'}`, s.out);
+      }
+      return;
+    }
+    for (const s of scene.steps) {
+      if (!(await ready(token))) return;
+      if (s.cmd) {
+        const t = promptLine(scene);
+        t.classList.add('demo-typing');
+        for (const ch of s.cmd) {
+          if (!(await ready(token))) return;
+          t.textContent += ch;
+          await wait(30 + Math.random() * 40);
+        }
+        t.classList.remove('demo-typing');
+        await wait(350);
+      } else {
+        line(`demo-${s.tone || 'out'}`, s.out);
+        await wait(s.tone === 'ok' ? 500 : 110);
+      }
+    }
+    await wait(2800);
+    if (await ready(token)) play((i + 1) % DEMO_SCENES.length);
+  }
+  picks.forEach(b => b.addEventListener('click', () => play(Number(b.dataset.demoScene))));
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(([e]) => {
+      if (!body.isConnected) { io.disconnect(); return; }
+      visible = e.isIntersecting;
+    });
+    io.observe(body);
+  }
+  play(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -359,7 +498,7 @@ function moreCoursesHtml() {
 // mientras se ve la sección, hasta que el usuario toca algo (y nunca con "reducir movimiento").
 // ---------------------------------------------------------------------------
 const PHONE_SCREENS = [
-  { icon: 'terminal', title: 'La consola', text: 'Escribe comandos de Nmap y ve el resultado al momento.', img: 'assets/landing/movil-consola-cd45d631.webp', alt: 'Consola del laboratorio en el móvil con un escaneo de Nmap' },
+  { icon: 'terminal', title: 'La consola', text: 'Escribe comandos y ve el resultado al momento.', img: 'assets/landing/movil-consola-cd45d631.webp', alt: 'Consola del laboratorio en el móvil con un escaneo de Nmap' },
   { icon: 'menu_book', title: 'Las lecciones', text: 'Cada lección con su objetivo, práctica y pregunta.', img: 'assets/landing/movil-leccion-fcfb8006.webp', alt: 'Ficha de una lección en el móvil' },
   { icon: 'school', title: 'Tu avance', text: 'Continúa donde lo dejaste, en cualquier dispositivo.', img: 'assets/landing/movil-cursos-8ee15f7d.webp', alt: 'Pantalla Mis cursos en el móvil con el avance del curso' }
 ];

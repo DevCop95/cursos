@@ -180,7 +180,7 @@ list.forEach((c, i) => {
   console.log(`/${c.slug}/ generada`);
 });
 
-// Datos públicos de los cursos para la portada (tarjeta "Más cursos"). Mismo origen que las páginas de arriba:
+// Datos públicos de los cursos para la portada (catálogo). Mismo origen que las páginas de arriba:
 // al añadir un curso a course-pages.json aparece solo. Nada de contenido de pago.
 const cards = list.map(c => ({
   id: c.id,
@@ -192,7 +192,8 @@ const cards = list.map(c => ({
   lessons: (c.modules || []).reduce((n, m) => n + (Number(m.lessons) || 0), 0),
   labs: Number(c.labs) || 0,
   free: Boolean(c.free),
-  logo: c.logo || ''
+  logo: c.logo || '',
+  pitch: c.pitch || ''
 }));
 writeFileSync(join(ROOT, 'js/lib/public-courses.js'),
   `// Generado por scripts/course-pages.mjs (npm run pages) desde scripts/course-pages.json. No editar a mano.\n` +
