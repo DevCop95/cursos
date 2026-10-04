@@ -2,13 +2,13 @@
  * "Continuar donde lo dejaste": último curso abierto por el alumno (en este navegador) y su siguiente lección.
  * Se muestra arriba de Mis cursos y del perfil; no aparece si no hay curso, ya no tiene acceso o lo terminó.
  */
-import { esc } from '../lib/html.js?v=dev101x-v88';
-import { appState } from '../state.js?v=dev101x-v88';
-import { COURSE } from '../content.js?v=dev101x-v88';
-import { currentProgress } from '../progress.js?v=dev101x-v88';
-import { fetchCourseContent, fetchCourseProgress } from '../cloud.js?v=dev101x-v88';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v88';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v88';
+import { esc } from '../lib/html.js?v=dev101x-v89';
+import { appState } from '../state.js?v=dev101x-v89';
+import { COURSE } from '../content.js?v=dev101x-v89';
+import { currentProgress } from '../progress.js?v=dev101x-v89';
+import { fetchCourseContent, fetchCourseProgress } from '../cloud.js?v=dev101x-v89';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v89';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v89';
 
 const lastCourseKey = () => {
   const s = appState.session || {};
@@ -39,7 +39,6 @@ async function resumeInfo() {
 function cardHtml(info) {
   return `
     <a href="#/aula-interactiva/${encodeURIComponent(info.id)}" class="group flex items-center gap-4 p-4 rounded-2xl bg-term border border-term-line text-left hover:border-emerald-500/60 transition-colors relative overflow-hidden">
-      <span class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></span>
       <span class="relative w-11 h-11 rounded-xl bg-accent flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-white text-[26px]" aria-hidden="true">play_arrow</span></span>
       <span class="relative min-w-0 flex-1 flex flex-col gap-1">
         <span class="text-[10px] font-mono font-bold text-emerald-300">CONTINUAR DONDE LO DEJASTE</span>

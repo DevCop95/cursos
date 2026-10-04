@@ -1,26 +1,26 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v88';
-import { appState } from '../state.js?v=dev101x-v88';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v88';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v88';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v88';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v88';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v88';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v88';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v88';
-import { paintResume } from './resume.js?v=dev101x-v88';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v88';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v88';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v88';
+import { esc } from '../lib/html.js?v=dev101x-v89';
+import { appState } from '../state.js?v=dev101x-v89';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v89';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v89';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v89';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v89';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v89';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v89';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v89';
+import { paintResume } from './resume.js?v=dev101x-v89';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v89';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v89';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v89';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {
   const src = courseLogo(id);
   return src
     ? `<img src="${esc(src)}" alt="" height="36" loading="lazy" decoding="async" class="h-9 w-auto max-w-[64px] object-contain object-left" />`
-    : `<span class="material-symbols-outlined text-emerald-400 text-3xl" aria-hidden="true">${esc(icon)}</span>`;
+    : `<span class="material-symbols-outlined text-white text-3xl" aria-hidden="true">${esc(icon)}</span>`;
 }
 
 const COURSES = [COURSE];
@@ -105,11 +105,10 @@ function dbTile(d) {
   return `
     <article data-db-course="${esc(d.id)}" class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
       <div class="relative bg-term px-4 py-4 flex items-center justify-between gap-3 overflow-hidden">
-        <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
           <span class="flex items-center gap-1.5 flex-wrap">
-            ${d.category ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(d.category)}</span>` : ''}
-            <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${d.free ? 'GRATIS' : 'PREMIUM'}</span>
+            ${d.category ? `<span class="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">${esc(d.category)}</span>` : ''}
+            <span class="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">${d.free ? 'GRATIS' : 'PREMIUM'}</span>
           </span>
           ${cardLogo(d.id, 'code')}
         </div>
@@ -125,7 +124,7 @@ function dbTile(d) {
         <div class="h-5 flex items-center gap-3 text-[11px] font-mono text-muted">
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${d.lessonsDone}/${d.lessonsTotal}</span>
           ${d.labsTotal ? `<span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${d.labsDone}/${d.labsTotal} labs</span>` : ''}
-          ${d.video ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
+          ${d.video ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-ink2" aria-hidden="true">smart_display</span>Video</span>' : ''}
         </div>` : ''}
         <div class="mt-auto flex items-center gap-2">
           <a href="#/aula-interactiva/${esc(d.id)}" class="flex-1 h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
@@ -153,9 +152,8 @@ export function renderMisCursos(container) {
   const tile = c => `
     <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
       <div class="relative bg-term px-4 py-4 flex items-center justify-between gap-3 overflow-hidden">
-        <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
-          <span class="self-start px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(c.categoryLabel)}</span>
+          <span class="self-start px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">${esc(c.categoryLabel)}</span>
           ${cardLogo(c.id, 'terminal')}
         </div>
         <div class="relative">${ringHtml(p.percent)}</div>
@@ -168,7 +166,7 @@ export function renderMisCursos(container) {
         <div class="h-5 flex items-center gap-3 text-[11px] font-mono text-muted">
           <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${p.lessonsDone.length}/${TOTAL_LESSONS}</span>
           <span class="inline-flex items-center gap-1" title="Laboratorios superados"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${p.labsDone.length}/${LAB_STEPS.length} labs</span>
-          <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>
+          <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-ink2" aria-hidden="true">smart_display</span>Video</span>
         </div>
         <div class="mt-auto flex items-center gap-2">
           <a href="#/aula-interactiva/${esc(c.id)}" class="flex-1 h-10 bg-accent hover:bg-accent2 text-white rounded-xl text-[13px] font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
@@ -289,9 +287,8 @@ export function renderExplorar(container) {
     return `
       <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
         <div class="relative bg-term px-4 py-4 flex items-start justify-between gap-3 overflow-hidden">
-          <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
           <div class="relative flex flex-col gap-2 min-w-0">
-            <span class="self-start px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(c.categoryLabel)}</span>
+            <span class="self-start px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">${esc(c.categoryLabel)}</span>
             ${cardLogo(c.id, 'terminal')}
           </div>
           <span class="relative px-2 py-0.5 rounded-md bg-white/10 text-slate-200 font-mono text-[10px] shrink-0">${esc(c.duration)}</span>
@@ -304,7 +301,7 @@ export function renderExplorar(container) {
           <div class="flex items-center gap-3 text-[11px] font-mono text-muted flex-wrap">
             <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${lessons} lecciones</span>
             <span class="inline-flex items-center gap-1" title="Laboratorios prácticos"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${LAB_STEPS.length} labs</span>
-            <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>
+            <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-ink2" aria-hidden="true">smart_display</span>Video</span>
           </div>
           <div class="mt-auto flex items-center gap-2">
             ${enrolled
@@ -327,11 +324,10 @@ export function renderExplorar(container) {
     return `
       <article class="min-w-0 bg-surface rounded-2xl border border-line hover:border-accent/60 overflow-hidden flex flex-col card-lift">
         <div class="relative bg-term px-4 py-4 flex items-start justify-between gap-3 overflow-hidden">
-          <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
           <div class="relative flex flex-col gap-2 min-w-0">
             <span class="flex items-center gap-1.5 flex-wrap">
-              ${info.category ? `<span class="px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 font-mono text-[10px] font-bold">${esc(info.category)}</span>` : ''}
-              <span class="px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
+              ${info.category ? `<span class="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">${esc(info.category)}</span>` : ''}
+              <span class="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">${c.is_free ? 'GRATIS' : 'PREMIUM'}</span>
             </span>
             ${cardLogo(c.id, 'code')}
           </div>
@@ -345,7 +341,7 @@ export function renderExplorar(container) {
           <div class="flex items-center gap-3 text-[11px] font-mono text-muted flex-wrap">
             ${info.lessons ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">menu_book</span>${info.lessons} lecciones</span>` : ''}
             ${info.labs ? `<span class="inline-flex items-center gap-1" title="Laboratorios prácticos"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">science</span>${info.labs} labs</span>` : ''}
-            ${info.videoAuthor ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-rose-500" aria-hidden="true">smart_display</span>Video</span>' : ''}
+            ${info.videoAuthor ? '<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-ink2" aria-hidden="true">smart_display</span>Video</span>' : ''}
           </div>
           <div class="mt-auto flex items-center gap-2">
             ${ok
@@ -359,7 +355,7 @@ export function renderExplorar(container) {
   const soonDbTile = c => `
     <article class="min-w-0 rounded-2xl border border-line bg-surface/70 flex flex-col gap-3 p-4 min-h-[220px]">
       <div class="flex items-center justify-between gap-2">
-        <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${c.is_free ? 'bg-emerald-50 text-accent border border-emerald-200' : 'bg-amber-50 text-amber-900 border border-amber-200'}">${c.is_free ? 'GRATIS' : 'ACCESO TOTAL'}</span>
+        <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-bg2 text-ink2 border border-line">${c.is_free ? 'GRATIS' : 'ACCESO TOTAL'}</span>
         <span class="material-symbols-outlined text-[20px] text-muted" aria-hidden="true">hourglass_top</span>
       </div>
       <h3 class="text-[15px] font-bold text-ink leading-snug line-clamp-2">${esc(c.title)}</h3>
@@ -370,9 +366,8 @@ export function renderExplorar(container) {
   const soonTile = !UPCOMING ? '' : `
     <article class="min-w-0 bg-surface rounded-2xl border border-line overflow-hidden flex flex-col">
       <div class="relative bg-term px-4 py-4 flex items-start justify-between gap-3 overflow-hidden">
-        <div class="absolute inset-0 opacity-[0.22] pointer-events-none profile-glow" aria-hidden="true"></div>
         <div class="relative flex flex-col gap-2 min-w-0">
-          <span class="self-start px-2 py-0.5 rounded-md bg-rose-400/15 text-rose-300 border border-rose-400/30 font-mono text-[10px] font-bold">PRÓXIMO LANZAMIENTO</span>
+          <span class="self-start px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/20 font-mono text-[10px] font-bold">PRÓXIMO LANZAMIENTO</span>
           <img src="${UPCOMING.icon}" alt="" width="30" height="30" class="w-[30px] h-[30px] rounded-md" loading="lazy" />
         </div>
       </div>

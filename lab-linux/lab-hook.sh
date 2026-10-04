@@ -12,8 +12,15 @@
 [ -f /tmp/.dev101x-scenario ] && . /tmp/.dev101x-scenario
 
 # Gitleaks pesa 15 MB y leerlo por 9p la primera vez cuesta casi un minuto: el curso que lo usa pide leerlo en
-# segundo plano al arrancar, mientras el alumno lee la lección (los demás cursos no lo descargan).
-[ "$DEV101X_PRELOAD" = gitleaks ] && ( cat /usr/local/bin/gitleaks >/dev/null 2>&1 & )
+# segundo plano al arrancar, mientras el alumno lee la lección (los demás cursos no lo descargan). Después lo
+# ejecuta dos veces sobre una carpeta vacía: el emulador compila ese código y los escaneos del alumno van más rápido.
+if [ "$DEV101X_PRELOAD" = gitleaks ]; then
+  ( (
+    cat /usr/local/bin/gitleaks >/dev/null 2>&1
+    mkdir -p /tmp/.dev101x-vacia
+    for _ in 1 2; do nice -n 19 gitleaks dir /tmp/.dev101x-vacia --no-banner -l error >/dev/null 2>&1; done
+  ) & )
+fi
 
 # La copia (tar de ~/ y del "GitHub" local) cuesta ~2 s de CPU emulada: se hace en segundo plano, 3 s después
 # del último comando (si mientras tanto se escribe otro, espera a ese) y nunca dos a la vez.

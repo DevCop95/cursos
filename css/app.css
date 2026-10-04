@@ -599,10 +599,6 @@ input:focus-visible,
 }
 
 /* Cabecera del perfil y anillo de progreso */
-.profile-glow {
-  background-image: radial-gradient(circle at 12% 0%, #0a7a4d 0, transparent 42%),
-                    radial-gradient(circle at 95% 110%, #005c38 0, transparent 45%);
-}
 .progress-ring {
   transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
