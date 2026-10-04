@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v84';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v84';
-import { esc } from '../lib/html.js?v=dev101x-v84';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v84';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v84';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v84';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v84';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v84';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v84';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v85';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v85';
+import { esc } from '../lib/html.js?v=dev101x-v85';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v85';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v85';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v85';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v85';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v85';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v85';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -278,6 +278,7 @@ export function renderLogin(container, onSuccess) {
   else mountGoogleButton();
   initPhoneShowcase(container);
   initDemoTerm(container);
+  initCatalogStrip(container);
   container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
   if (loginStatus) openLoginModal();
 }
@@ -293,14 +294,15 @@ function openLoginModal() {
 
 // ---------------------------------------------------------------------------
 // Catálogo: todos los cursos (datos públicos generados por npm run pages) y el próximo lanzamiento.
-// Cada ficha lleva a la página pública del curso. Un color sobrio por curso, solo en el borde superior.
+// Una fila de casillas cuadradas que se desliza: el catálogo puede crecer sin alargar la página. Las flechas
+// solo aparecen si no caben todas. Cada casilla lleva a la página pública del curso (la frase va en el title).
 // ---------------------------------------------------------------------------
-const COURSE_TINT = {
-  'pentesting-101': '#005c38',
-  'linux-101': '#8a5a00',
-  'git-github-101': '#a8432a',
-  'shodan-101': '#8c2f39',
-  'osint-101': '#2b5278'
+const COURSE_TOOLS = {
+  'pentesting-101': 'nmap · PowerShell',
+  'linux-101': 'ls · chmod · grep',
+  'git-github-101': 'git · ssh · gh',
+  'shodan-101': 'shodan · filtros',
+  'osint-101': 'exiftool · sherlock'
 };
 
 function courseLogoHtml(c, size = 26) {
@@ -312,44 +314,60 @@ function courseLogoHtml(c, size = 26) {
 
 function catalogHtml() {
   if (!PUBLIC_COURSES.length) return '';
-  const card = c => `
-    <a href="/${esc(c.slug)}/" class="catalog-card group" style="--tint:${COURSE_TINT[c.id] || 'var(--accent)'}">
-      <span class="flex items-center gap-3 min-w-0">
-        <span class="w-10 h-10 rounded-xl bg-term flex items-center justify-center shrink-0">${courseLogoHtml(c)}</span>
-        <span class="flex flex-col min-w-0">
-          <span class="text-[15px] font-bold text-ink leading-snug group-hover:text-accent">${esc(c.short)}</span>
-          <span class="text-[11px] font-mono font-bold ${c.free ? 'text-accent' : 'text-amber-700'}">${c.free ? 'GRATIS' : 'PREMIUM'}</span>
-        </span>
+  const courses = [...PUBLIC_COURSES.filter(c => c.free), ...PUBLIC_COURSES.filter(c => !c.free)];
+  const meta = c => `${c.lessons} lecciones · ${c.labs} labs`;
+  const tile = c => `
+    <a href="/${esc(c.slug)}/" class="catalog-tile group"${c.pitch ? ` title="${esc(c.pitch)}"` : ''}>
+      <span class="flex items-start justify-between gap-2">
+        <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0">${courseLogoHtml(c)}</span>
+        <span class="text-[10px] font-mono font-bold uppercase tracking-wide ${c.free ? 'text-accent' : 'text-muted'}">${c.free ? 'Gratis' : 'Premium'}</span>
       </span>
-      ${c.pitch ? `<span class="text-sm text-ink2 leading-relaxed">${esc(c.pitch)}</span>` : ''}
-      <span class="mt-auto flex items-center justify-between gap-3 pt-1">
-        <span class="text-[11px] font-mono text-muted truncate">${c.lessons} lecciones · ${c.labs} labs</span>
-        <span class="material-symbols-outlined text-[18px] text-muted group-hover:text-accent transition-colors" aria-hidden="true">arrow_forward</span>
+      <span class="mt-auto flex flex-col gap-1 min-w-0">
+        <span class="text-base font-bold text-ink leading-tight group-hover:text-accent transition-colors">${esc(c.short)}</span>
+        ${COURSE_TOOLS[c.id] ? `<span class="text-[11px] font-mono text-muted truncate">${esc(COURSE_TOOLS[c.id])}</span>` : ''}
+        <span class="text-[10px] sm:text-[11px] font-mono text-ink2 whitespace-nowrap">${meta(c)}</span>
       </span>
     </a>`;
   const soon = UPCOMING ? `
-    <div class="flex items-center gap-3 p-4 rounded-2xl border border-dashed border-line min-w-0" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
-      <span class="w-10 h-10 rounded-xl bg-white border border-line flex items-center justify-center shrink-0"><img src="${esc(UPCOMING.icon)}" alt="" width="24" height="24" loading="lazy" class="w-6 h-6 object-contain" /></span>
-      <span class="flex flex-col min-w-0">
-        <span class="text-sm font-semibold text-ink2 leading-snug line-clamp-2">${esc(UPCOMING.short || UPCOMING.title)}</span>
-        <span class="text-[11px] font-mono text-muted truncate">PRÓXIMAMENTE</span>
+    <div class="catalog-tile border-dashed" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
+      <span class="w-11 h-11 rounded-xl bg-white border border-line flex items-center justify-center"><img src="${esc(UPCOMING.icon)}" alt="" width="24" height="24" loading="lazy" class="w-6 h-6 object-contain" /></span>
+      <span class="mt-auto flex flex-col gap-1 min-w-0">
+        <span class="text-base font-bold text-ink2 leading-tight">${esc(UPCOMING.short || UPCOMING.title)}</span>
+        <span class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Próximamente</span>
       </span>
     </div>` : '';
-  const group = (title, note, list, cols) => list.length ? `
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">${title}</h3>
-            ${note ? `<span class="text-[11px] text-muted">${note}</span>` : ''}
-          </div>
-          <div class="grid grid-cols-1 ${cols} gap-3">${list.map(card).join('')}</div>
-        </div>` : '';
   return `
-      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8 flex flex-col gap-6">
-        <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Cursos</h2>
-        ${group('Gratis', '', PUBLIC_COURSES.filter(c => c.free), 'sm:grid-cols-2')}
-        ${group('Premium', 'Se solicitan desde tu cuenta', PUBLIC_COURSES.filter(c => !c.free), 'sm:grid-cols-3')}
-        ${soon}
+      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8 flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Cursos</h2>
+          <div class="hidden gap-1.5 shrink-0" data-catalog-nav>
+            <button type="button" data-catalog-step="-1" class="catalog-nav" aria-label="Cursos anteriores"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_back</span></button>
+            <button type="button" data-catalog-step="1" class="catalog-nav" aria-label="Más cursos"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_forward</span></button>
+          </div>
+        </div>
+        <div class="catalog-strip" data-catalog-strip>${courses.map(tile).join('')}${soon}</div>
+        <p class="text-xs text-muted">Los premium se solicitan desde tu cuenta.</p>
       </section>`;
+}
+
+function initCatalogStrip(container) {
+  const strip = container.querySelector('[data-catalog-strip]');
+  const nav = container.querySelector('[data-catalog-nav]');
+  if (!strip || !nav) return;
+  const [prev, next] = nav.querySelectorAll('[data-catalog-step]');
+  const update = () => {
+    const overflow = strip.scrollWidth > strip.clientWidth + 1;
+    nav.classList.toggle('hidden', !overflow);
+    nav.classList.toggle('flex', overflow);
+    prev.disabled = strip.scrollLeft <= 1;
+    next.disabled = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 1;
+  };
+  nav.querySelectorAll('[data-catalog-step]').forEach(b => b.addEventListener('click', () => {
+    strip.scrollBy({ left: Number(b.dataset.catalogStep) * strip.clientWidth * 0.8, behavior: 'smooth' });
+  }));
+  strip.addEventListener('scroll', update, { passive: true });
+  if ('ResizeObserver' in window) new ResizeObserver(update).observe(strip);
+  update();
 }
 
 // ---------------------------------------------------------------------------
