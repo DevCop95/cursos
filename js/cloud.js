@@ -2,9 +2,30 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v82';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v83';
 
 let clientPromise = null;
+
+// Almacenamiento del SDK: la sesión en localStorage (compartida entre pestañas) y las claves PKCE del login
+// (terminan en "-code-verifier") en sessionStorage, que es de esta pestaña y sobrevive al viaje a Google.
+// Si no, otra pestaña con la sesión caducada las borra al fallar su renovación y el código ya no se puede canjear.
+const isPkceKey = key => String(key).endsWith('-code-verifier');
+const authStorage = {
+  getItem(key) {
+    try {
+      if (isPkceKey(key)) return sessionStorage.getItem(key) ?? localStorage.getItem(key); // login empezado con la versión anterior
+      return localStorage.getItem(key);
+    } catch (e) { return null; }
+  },
+  setItem(key, value) {
+    try { (isPkceKey(key) ? sessionStorage : localStorage).setItem(key, value); } catch (e) { /* almacenamiento bloqueado */ }
+  },
+  removeItem(key) {
+    try {
+      if (isPkceKey(key)) { sessionStorage.removeItem(key); localStorage.removeItem(key); } else localStorage.removeItem(key);
+    } catch (e) { /* noop */ }
+  }
+};
 
 export function getClient() {
   if (!isCloudEnabled()) return Promise.resolve(null);
@@ -12,7 +33,7 @@ export function getClient() {
     clientPromise = import(CONFIG.supabaseSdkUrl)
       .then(mod => mod.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {
         // PKCE: Google devuelve ?code=… y lo canjeamos nosotros (el router usa el hash de la URL).
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' }
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce', storage: authStorage }
       }))
       .catch(err => {
         console.warn('No se pudo cargar Supabase:', err);

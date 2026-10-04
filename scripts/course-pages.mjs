@@ -56,7 +56,7 @@ function page(c, other) {
         isAccessibleForFree: c.free,
         provider: { '@id': `${SITE}/#organization` },
         creator: { '@id': PERSON },
-        image: `${SITE}/assets/og-image.jpg?v=2`,
+        image: `${SITE}/assets/og-image.jpg?v=3`,
         teaches: c.objectives,
         syllabusSections: c.modules.map(m => ({ '@type': 'Syllabus', name: stripModule(m.title), description: `${m.lessons} lecciones` })),
         hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: c.workload },
@@ -92,7 +92,7 @@ function page(c, other) {
   <meta property="og:locale" content="es_ES" />
   <meta property="og:title" content="${esc(c.seoTitle)}" />
   <meta property="og:description" content="${esc(c.seoDescription)}" />
-  <meta property="og:image" content="${SITE}/assets/og-image.jpg?v=2" />
+  <meta property="og:image" content="${SITE}/assets/og-image.jpg?v=3" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />

@@ -5,12 +5,12 @@
  *  - Modo local: solo se comprueban los claims para mostrar el perfil; el rol es siempre
  *    'student' y no existe acceso de administración.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v82';
-import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v82';
-import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v82';
-import * as cloud from './cloud.js?v=dev101x-v82';
-import { pullProgressFromCloud } from './progress.js?v=dev101x-v82';
-import { clearViewCaches } from './lib/view-cache.js?v=dev101x-v82';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v83';
+import { checkGoogleClaims } from './lib/jwt.js?v=dev101x-v83';
+import { appState, saveState, resetState, clearSession, isSessionValid } from './state.js?v=dev101x-v83';
+import * as cloud from './cloud.js?v=dev101x-v83';
+import { pullProgressFromCloud } from './progress.js?v=dev101x-v83';
+import { clearViewCaches } from './lib/view-cache.js?v=dev101x-v83';
 
 let pendingNonce = null;
 
@@ -126,16 +126,38 @@ function infoFromSupabaseUser(user) {
   };
 }
 
+// Login con Google en marcha (desde que se sale hacia Google hasta que se canjea el código): mientras dure,
+// main.js no recarga la página por una versión nueva del service worker (se perdería el código).
+export const authFlow = { busy: false };
+// Un solo reintento automático por pestaña si el canje del código falla (p. ej. otra pestaña borró la clave PKCE).
+const RETRY_KEY = 'dev101x_oauth_retry';
+const retried = () => { try { return sessionStorage.getItem(RETRY_KEY) === '1'; } catch (e) { return true; } };
+const ATTEMPT_KEY = 'dev101x_oauth_attempt'; // opciones del último viaje a Google (para el reintento)
+const setRetried = on => { try { if (on) sessionStorage.setItem(RETRY_KEY, '1'); else sessionStorage.removeItem(RETRY_KEY); } catch (e) { /* noop */ } };
+
 /**
  * Modo nube: redirige a Google a través de Supabase. La página se abandona si todo va bien.
- * mode: 'continue' (cuenta recordada), 'other' (elegir otra) o 'new'.
+ * mode: 'continue' (cuenta recordada), 'other' (elegir otra) o 'new'. auto: reintento automático.
  */
-export async function startGoogleLogin(mode = 'new') {
-  const last = getLastAccount();
-  await cloud.startGoogleOAuth({
-    loginHint: mode === 'continue' && last ? last.email : undefined,
-    selectAccount: mode !== 'continue'
-  });
+export async function startGoogleLogin(mode = 'new', { auto = false } = {}) {
+  let opts;
+  if (auto) {
+    // El reintento repite exactamente el intento anterior: con la cuenta recordada podría entrar otra persona.
+    try { opts = JSON.parse(sessionStorage.getItem(ATTEMPT_KEY) || 'null'); } catch (e) { opts = null; }
+    if (!opts) opts = { loginHint: undefined, selectAccount: true };
+  } else {
+    setRetried(false);
+    const last = getLastAccount();
+    opts = { loginHint: mode === 'continue' && last ? last.email : undefined, selectAccount: mode !== 'continue' };
+    try { sessionStorage.setItem(ATTEMPT_KEY, JSON.stringify(opts)); } catch (e) { /* noop */ }
+  }
+  authFlow.busy = true;
+  try {
+    await cloud.startGoogleOAuth(opts);
+  } catch (err) {
+    authFlow.busy = false;
+    throw err;
+  }
 }
 
 /**
@@ -160,13 +182,18 @@ export async function completeOAuthRedirect(redirect) {
     const cancelled = /access_denied/i.test(redirect.error);
     return { ok: false, error: cancelled ? 'Cancelaste el inicio de sesión con Google.' : 'Google no pudo completar el inicio de sesión. Inténtalo de nuevo.' };
   }
+  authFlow.busy = true;
   try {
     const user = await cloud.exchangeOAuthCode(redirect.code);
     await establishCloudSession(user, infoFromSupabaseUser(user));
+    setRetried(false);
     return { ok: true };
   } catch (err) {
     console.error('Fallo al completar el login con Google:', err);
-    return { ok: false, error: 'No se pudo verificar tu sesión con el servidor. Inténtalo de nuevo.' };
+    // Google ya conoce al alumno: un segundo viaje suele entrar sin pedirle nada. Solo una vez.
+    const retry = !retried();
+    if (retry) setRetried(true);
+    return { ok: false, retry, error: 'No se pudo verificar tu sesión con el servidor. Inténtalo de nuevo.' };
   }
 }
 
@@ -227,7 +254,9 @@ export async function revalidateSession() {
   }
   const user = await cloud.getCurrentUser().catch(() => null);
   if (!user || user.id !== appState.session.userId) {
-    await logout();
+    // La sesión de Supabase ya no es la nuestra (caducó o otra pestaña entró con otra cuenta): solo se limpia lo
+    // local. signOut() borraría además la clave PKCE de un login en curso en otra pestaña.
+    await logout({ remote: false });
     return true;
   }
   const before = JSON.stringify([appState.session.role, appState.enabledCourses, appState.session.name]);
@@ -241,11 +270,11 @@ export async function revalidateSession() {
   return before !== JSON.stringify([appState.session.role, appState.enabledCourses, appState.session.name]);
 }
 
-export async function logout() {
+export async function logout({ remote = true } = {}) {
   const wasCloud = appState.session && appState.session.mode === 'cloud';
   resetState(clearSession(appState));
   clearViewCaches(); // lo último que se vio en Mis cursos y Perfil (ordenadores compartidos)
-  if (wasCloud) await cloud.signOut();
+  if (wasCloud && remote) await cloud.signOut();
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try { window.google.accounts.id.disableAutoSelect(); } catch (e) { /* noop */ }
   }
