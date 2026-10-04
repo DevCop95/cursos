@@ -20,3 +20,6 @@ e2e/
 scripts/linux-lab/setup-osint.sh
 scripts/linux-lab/osint-tools/
 scripts/linux-lab/caso-propuesta.pdf
+
+# Escenario del curso de seguridad para desarrolladores (contiene las respuestas del reto): solo local
+scripts/linux-lab/setup-devsec.sh

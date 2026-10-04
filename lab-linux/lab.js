@@ -8,8 +8,8 @@
  */
 (function () {
   'use strict';
-  const IMG = 'img-v3/';
-  const HOOK_URL = 'lab-hook.sh?v=dev101x-v86';
+  const IMG = 'img-v4/';
+  const HOOK_URL = 'lab-hook.sh?v=dev101x-v87';
   const HOOK_PATH = '/tmp/.dev101x-lab.sh';
   const $ = id => document.getElementById(id);
   let emulator = null;
@@ -58,6 +58,7 @@
   function scenarioText(sc) {
     const lines = [];
     if (sc && /^\d{1,6}$/.test(String(sc.prNumber ?? ''))) lines.push('DEV101X_PR=' + sc.prNumber);
+    if (sc && sc.preload === 'gitleaks') lines.push('DEV101X_PRELOAD=gitleaks');
     return lines.join('\n') + '\n';
   }
 

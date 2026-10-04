@@ -11,6 +11,10 @@
 # Escenario del curso (lo escribe el aula con datos del contenido, p. ej. DEV101X_PR=7).
 [ -f /tmp/.dev101x-scenario ] && . /tmp/.dev101x-scenario
 
+# Gitleaks pesa 15 MB y leerlo por 9p la primera vez cuesta casi un minuto: el curso que lo usa pide leerlo en
+# segundo plano al arrancar, mientras el alumno lee la lección (los demás cursos no lo descargan).
+[ "$DEV101X_PRELOAD" = gitleaks ] && ( cat /usr/local/bin/gitleaks >/dev/null 2>&1 & )
+
 # La copia (tar de ~/ y del "GitHub" local) cuesta ~2 s de CPU emulada: se hace en segundo plano, 3 s después
 # del último comando (si mientras tanto se escribe otro, espera a ese) y nunca dos a la vez.
 __dev101x_gen=0

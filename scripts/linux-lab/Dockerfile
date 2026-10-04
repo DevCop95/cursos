@@ -8,6 +8,14 @@ RUN apk add --no-cache imagemagick imagemagick-jpeg exiftool
 COPY setup-osint.sh caso-propuesta.pdf /tmp/
 RUN sh /tmp/setup-osint.sh
 
+# Fase "gitleaks": compila Gitleaks para 32 bits con las expresiones regulares de Go. Los binarios oficiales
+# usan go-re2 (WebAssembly), que en 32 bits se interpreta y tarda ~15 s en arrancar; así arranca en 0,15 s.
+FROM docker.io/library/golang:1.24-alpine AS gitleaks
+RUN apk add --no-cache git \
+ && git clone -q --depth 1 --branch v8.30.1 https://github.com/gitleaks/gitleaks /src \
+ && cd /src && CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -trimpath \
+    -ldflags "-s -w -X github.com/zricethezav/gitleaks/v8/version.Version=8.30.1" -o /gitleaks .
+
 FROM docker.io/i386/alpine:3.21.0
 
 RUN apk add --no-cache openrc alpine-base agetty alpine-conf linux-virt linux-firmware-none \
@@ -40,6 +48,12 @@ RUN chmod 755 /usr/local/bin/sherlock /usr/local/bin/holehe
 # Curso de Linux: servidor web ficticio con un incidente (usuarios, permisos, log SSH, proceso y tarea).
 COPY setup-linux.sh /tmp/setup-linux.sh
 RUN sh /tmp/setup-linux.sh && rm /tmp/setup-linux.sh
+
+# Curso de seguridad para desarrolladores: Gitleaks y el repositorio ejemplo-lab/tienda-api en el "GitHub" local.
+COPY --from=gitleaks /gitleaks /usr/local/bin/gitleaks
+COPY gitleaks-lab.toml /etc/gitleaks/laboratorio.toml
+COPY setup-devsec.sh /tmp/setup-devsec.sh
+RUN sh /tmp/setup-devsec.sh && rm /tmp/setup-devsec.sh
 
 COPY bashrc /home/alumno/.bashrc
 COPY motd /etc/motd

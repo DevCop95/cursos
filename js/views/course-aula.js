@@ -3,13 +3,13 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v86';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v86';
-import { isCloudEnabled } from '../config.js?v=dev101x-v86';
-import * as cloud from '../cloud.js?v=dev101x-v86';
-import { appState } from '../state.js?v=dev101x-v86';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v86';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v86';
+import { esc } from '../lib/html.js?v=dev101x-v87';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v87';
+import { isCloudEnabled } from '../config.js?v=dev101x-v87';
+import * as cloud from '../cloud.js?v=dev101x-v87';
+import { appState } from '../state.js?v=dev101x-v87';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v87';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v87';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -23,7 +23,7 @@ const TAB_IDLE = 'font-semibold bg-white hover:bg-bg2 text-ink border border-lin
 const TAB_BTN = 'h-9 px-3 rounded-xl bg-white border border-line hover:border-accent/60 text-xs font-semibold text-ink flex items-center gap-1.5 transition-colors';
 // Cursos que también se pueden practicar en Linux real (v86 en /lab-linux/embed.html, dentro de un iframe
 // para no relajar el CSP del sitio). Al salir del aula el iframe desaparece y la máquina con él.
-const LINUX_LAB_COURSES = new Set(['git-github-101', 'osint-101', 'linux-101']);
+const LINUX_LAB_COURSES = new Set(['git-github-101', 'osint-101', 'linux-101', 'devsec-101']);
 const LINUX_LAB_URL = '/lab-linux/embed.html';
 const MODE_ON = 'bg-accent text-white font-bold';
 const MODE_OFF = 'text-slate-300 hover:text-white';
@@ -532,7 +532,10 @@ function clearSnapshot() {
 // Datos del escenario del curso que necesita la máquina (vienen del contenido, solo con acceso al curso).
 function linuxScenario() {
   const sc = S.content.terminal.scenario || {};
-  return /^\d{1,6}$/.test(String(sc.prNumber ?? '')) ? { prNumber: Number(sc.prNumber) } : {};
+  const out = {};
+  if (/^\d{1,6}$/.test(String(sc.prNumber ?? ''))) out.prNumber = Number(sc.prNumber);
+  if (sc.preload === 'gitleaks') out.preload = 'gitleaks'; // programa grande que la máquina lee en segundo plano
+  return out;
 }
 
 // Mensajes de la terminal Linux real (lab-hook.sh → lab.js → aquí). Solo se aceptan del iframe del

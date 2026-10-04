@@ -4,7 +4,8 @@
  *    { match, when?, set?, steps?, output, fail? }: se usa el primero cuyo patrón encaje y cuyas
  *    condiciones (when) se cumplan con el estado actual; si ninguno las cumple, se muestra el `fail`
  *    del primero que encajó. `set` modifica el estado ('+1' incrementa, '$N' o '{N}' usa un grupo).
- *    En los textos, {N} es un grupo capturado y {nombre} una variable del estado.
+ *    En los textos, {N} es un grupo capturado y {nombre} una variable del estado; una línea que es solo
+ *    {nombre} y queda vacía se omite.
  *  - computeCourseProgress(): misma regla que private.rebuild_course_progress() en Supabase.
  */
 export const isCheckStep = step => /^(q|f)-/.test(step);
@@ -32,7 +33,11 @@ function patterns(terminal) {
   return compiled.get(terminal);
 }
 
-const toLines = (rows, groups, state) => (rows || []).map(([text, type]) => ({ text: fill(text, groups, state), type: type || 'out' }));
+// Una línea que es solo una variable ("{nombre}") y queda vacía no se muestra: así una salida puede tener
+// líneas que aparecen o desaparecen según el estado (p. ej. un archivo que el alumno edita).
+const toLines = (rows, groups, state) => (rows || [])
+  .filter(([text]) => !(/^\{[a-zA-Z_]\w*\}$/.test(String(text)) && fill(text, groups, state) === ''))
+  .map(([text, type]) => ({ text: fill(text, groups, state), type: type || 'out' }));
 
 export function initialCourseState(terminal) {
   return { ...(terminal.initialState || {}) };
@@ -113,9 +118,31 @@ function compare(actual, expected) {
   return op === '>=' ? a >= b : op === '<=' ? a <= b : op === '>' ? a > b : a < b;
 }
 
+// Parte "a && b; c" en comandos como la shell: los && || ; dentro de comillas son texto (p. ej. en un sed).
+function splitCommands(cmd) {
+  const parts = [];
+  let cur = '';
+  let quote = '';
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (quote) { if (ch === quote) quote = ''; cur += ch; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
+    const two = cmd.slice(i, i + 2);
+    if (two === '&&' || two === '||' || ch === ';') {
+      parts.push(cur.trim());
+      cur = '';
+      if (ch !== ';') i++;
+      continue;
+    }
+    cur += ch;
+  }
+  parts.push(cur.trim());
+  return parts.filter(Boolean);
+}
+
 export function realCourseSteps(rules, state, steps = {}) {
   if (!Array.isArray(rules) || !state || typeof state.cmd !== 'string') return [];
-  const parts = normalize(state.cmd).split(/\s*(?:&&|\|\||;)\s*/).filter(Boolean);
+  const parts = splitCommands(normalize(state.cmd));
   const found = [];
   const done = s => Boolean(steps[s]) || found.includes(s);
   for (const r of rules) {

@@ -7,7 +7,8 @@ export const COURSE_LOGOS = {
   'git-github-101': 'assets/logos/github.svg',
   'shodan-101': 'assets/logos/shodan-bn.png',
   'osint-101': 'assets/logos/osint-huella.svg',
-  'linux-101': 'assets/logos/linux-bn.svg'
+  'linux-101': 'assets/logos/linux-bn.svg',
+  'devsec-101': 'assets/logos/devsec-escudo.svg'
 };
 
 export const courseLogo = id => COURSE_LOGOS[id] || '';

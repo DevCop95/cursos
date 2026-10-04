@@ -98,3 +98,18 @@ test('Linux real: valores propios del alumno (p. ej. un hash) solo si el estado 
   assert.deepEqual(realCourseValues(defs, st('tool save', { root: '' })), []);
   assert.deepEqual(realCourseValues(null, st('x')), []);
 });
+
+test('una línea que es solo una variable vacía no se muestra; las líneas en blanco sí', () => {
+  const terminal = { commands: [{ match: '^cat Dockerfile$', output: [['FROM node:22', 'out'], ['{user}', 'out'], ['', 'out'], ['CMD {cmd}', 'out']] }] };
+  const off = runCourseCommand(terminal, 'cat Dockerfile', { user: '', cmd: '' }).lines.map(l => l.text);
+  assert.deepEqual(off, ['FROM node:22', '', 'CMD ']);
+  const on = runCourseCommand(terminal, 'cat Dockerfile', { user: 'USER node', cmd: 'start' }).lines.map(l => l.text);
+  assert.deepEqual(on, ['FROM node:22', 'USER node', '', 'CMD start']);
+});
+
+test('realCourseSteps separa por && || ; como la shell, pero no dentro de comillas', () => {
+  const rules = [{ step: 'fix', cmd: '^sed -i .*pagos\\.js$' }, { step: 'scan', cmd: '^gitleaks dir\\b' }];
+  assert.deepEqual(realCourseSteps(rules, { cmd: `sed -i "s/ || 'sk_live_.*'//" src/pagos.js && gitleaks dir .`, rc: 0 }), ['fix', 'scan']);
+  assert.deepEqual(realCourseSteps(rules, { cmd: "sed -i 's/a;b/c/' src/pagos.js; gitleaks dir .", rc: 0 }), ['fix', 'scan']);
+  assert.deepEqual(realCourseSteps(rules, { cmd: 'false || gitleaks dir .', rc: 0 }), ['scan']);
+});

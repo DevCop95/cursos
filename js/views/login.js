@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v86';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v86';
-import { esc } from '../lib/html.js?v=dev101x-v86';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v86';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v86';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v86';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v86';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v86';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v86';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v87';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v87';
+import { esc } from '../lib/html.js?v=dev101x-v87';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v87';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v87';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v87';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v87';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v87';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v87';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -302,7 +302,8 @@ const COURSE_TOOLS = {
   'linux-101': 'ls · chmod · grep',
   'git-github-101': 'git · ssh · gh',
   'shodan-101': 'shodan · filtros',
-  'osint-101': 'exiftool · sherlock'
+  'osint-101': 'exiftool · sherlock',
+  'devsec-101': 'gitleaks · sed · jq'
 };
 
 function courseLogoHtml(c, size = 26) {
@@ -330,10 +331,13 @@ function catalogHtml() {
     </a>`;
   const soon = UPCOMING ? `
     <div class="catalog-tile border-dashed" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
-      <span class="w-11 h-11 rounded-xl bg-white border border-line flex items-center justify-center"><img src="${esc(UPCOMING.icon)}" alt="" width="24" height="24" loading="lazy" class="w-6 h-6 object-contain" /></span>
+      <span class="flex items-start justify-between gap-2">
+        <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0"><img src="${esc(UPCOMING.icon)}" alt="" width="26" height="26" loading="lazy" class="object-contain" style="width:26px;height:26px" /></span>
+        <span class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Pronto</span>
+      </span>
       <span class="mt-auto flex flex-col gap-1 min-w-0">
         <span class="text-base font-bold text-ink2 leading-tight">${esc(UPCOMING.short || UPCOMING.title)}</span>
-        <span class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Próximamente</span>
+        <span class="text-[11px] font-mono text-muted leading-snug">Próximamente</span>
       </span>
     </div>` : '';
   return `
