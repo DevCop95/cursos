@@ -5,20 +5,20 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v89';
-import { isCloudEnabled } from '../config.js?v=dev101x-v89';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v89';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v89';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v89';
-import { rankView } from '../lib/ranks.js?v=dev101x-v89';
-import { groupRequests } from '../lib/requests.js?v=dev101x-v89';
-import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v89';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v89';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v89';
-import { openAdminThread } from './messages.js?v=dev101x-v89';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v89';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v89';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v89';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v90';
+import { isCloudEnabled } from '../config.js?v=dev101x-v90';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v90';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v90';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v90';
+import { rankView } from '../lib/ranks.js?v=dev101x-v90';
+import { groupRequests } from '../lib/requests.js?v=dev101x-v90';
+import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v90';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v90';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v90';
+import { openAdminThread } from './messages.js?v=dev101x-v90';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v90';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v90';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v90';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [

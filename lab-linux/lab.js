@@ -8,8 +8,8 @@
  */
 (function () {
   'use strict';
-  const IMG = 'img-v4/';
-  const HOOK_URL = 'lab-hook.sh?v=dev101x-v89';
+  const IMG = 'img-v5/';
+  const HOOK_URL = 'lab-hook.sh?v=dev101x-v90';
   const HOOK_PATH = '/tmp/.dev101x-lab.sh';
   const $ = id => document.getElementById(id);
   let emulator = null;
