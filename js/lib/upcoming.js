@@ -4,10 +4,4 @@
  * null = no hay ninguno anunciado (la portada y el catálogo no muestran la tarjeta).
  * Forma: { id, title, short, description, icon }
  */
-export const UPCOMING = {
-  id: 'devsec-101',
-  title: 'Seguridad para desarrolladores: revisa tu código antes de desplegar',
-  short: 'Código seguro',
-  description: 'Encuentra secretos en tu código y en el historial de Git, bloquéalos con un hook y revisa Dockerfile, configuración y dependencias antes de desplegar, en un Linux real dentro del navegador.',
-  icon: 'assets/logos/devsec-escudo.svg'
-};
+export const UPCOMING = null;

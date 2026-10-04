@@ -64,5 +64,18 @@ export const PUBLIC_COURSES = [
     "free": true,
     "logo": "assets/logos/linux-bn.svg",
     "pitch": "Usa la terminal investigando un servidor que ha sufrido una intrusión."
+  },
+  {
+    "id": "devsec-101",
+    "slug": "seguridad-desarrolladores",
+    "title": "Seguridad para desarrolladores: revisa tu código antes de desplegar",
+    "short": "Código seguro",
+    "category": "CIBERSEGURIDAD",
+    "duration": "2 Semanas",
+    "lessons": 15,
+    "labs": 4,
+    "free": false,
+    "logo": "assets/logos/devsec-escudo.svg",
+    "pitch": "Caza secretos y malas configuraciones antes de desplegar."
   }
 ];

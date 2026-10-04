@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v87';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v87';
-import { esc } from '../lib/html.js?v=dev101x-v87';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v87';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v87';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v87';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v87';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v87';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v87';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v88';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v88';
+import { esc } from '../lib/html.js?v=dev101x-v88';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v88';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v88';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v88';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v88';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v88';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v88';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -210,12 +210,12 @@ export function renderLogin(container, onSuccess) {
         </button>
       </div>
 
-      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-8 md:gap-10 items-center modal-enter">
+      <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-8 md:gap-10 items-center modal-enter">
         <div class="flex flex-col gap-5 min-w-0">
           <div class="flex flex-col gap-3">
             <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
             <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Aprende escribiendo comandos</h1>
-            <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan y OSINT. Sin instalar nada, en el móvil o en el ordenador.</p>
+            <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan, OSINT y código seguro. Sin instalar nada, en el móvil o en el ordenador.</p>
           </div>
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <button type="button" data-open-login class="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
@@ -420,6 +420,14 @@ const DEMO_SCENES = [
     { cmd: 'exiftool -all= foto.jpg' },
     { out: '    1 image files updated', tone: 'muted' },
     { out: '✓ Metadatos borrados', tone: 'ok' }
+  ] },
+  { id: 'devsec-101', pick: 'Código', title: 'Código seguro', prompt: '$', steps: [
+    { cmd: 'gitleaks dir . --redact -v' },
+    { out: "Finding: ...API_KEY || 'REDACTED'" },
+    { out: 'RuleID:  stripe-access-token', tone: 'muted' },
+    { out: 'File:    src/pagos.js', tone: 'info' },
+    { out: 'WRN leaks found: 2', tone: 'muted' },
+    { out: '✓ Claves localizadas antes del commit', tone: 'ok' }
   ] }
 ];
 
@@ -431,11 +439,11 @@ function demoTermHtml() {
             <div class="demo-term-bar"><span data-demo-title>${esc(DEMO_SCENES[0].title)}</span><span class="demo-term-tag">laboratorio</span></div>
             <pre class="demo-term-body" data-demo-body></pre>
           </div>
-          <div class="flex flex-wrap gap-1.5" role="group" aria-label="Ver un comando de cada curso">
+          <div class="flex flex-wrap gap-1" role="group" aria-label="Ver un comando de cada curso">
             ${DEMO_SCENES.map((d, i) => `
               <button type="button" data-demo-scene="${i}" aria-pressed="${i === 0}" class="demo-pick" aria-label="${esc(d.title)}">
                 <span class="w-6 h-6 rounded-md bg-term flex items-center justify-center shrink-0">${byId[d.id] ? courseLogoHtml(byId[d.id], 16) : ''}</span>
-                <span class="hidden sm:inline">${esc(d.pick)}</span>
+                <span class="hidden xl:inline">${esc(d.pick)}</span>
               </button>`).join('')}
           </div>
         </div>`;

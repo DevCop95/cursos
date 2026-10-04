@@ -679,21 +679,22 @@ input:focus-visible,
 .demo-pick {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   height: 36px;
-  padding: 0 12px 0 6px;
+  padding: 0 8px 0 4px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.6);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink2);
   transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 .demo-pick:hover { border-color: rgba(0, 92, 56, 0.5); color: var(--accent); }
 .demo-pick[aria-pressed="true"] { border-color: var(--accent); background: #fff; color: var(--accent); }
+/* Sin espacio para los nombres (hasta 1280 px), los botones de la consola son solo el logo */
+@media (max-width: 1279px) { .demo-pick { padding: 0 5px; } }
 @media (max-width: 639px) {
-  .demo-pick { padding: 0 5px; }
   .demo-term-body { padding: 12px; font-size: 11px; line-height: 22px; white-space: pre-wrap; }
 }
 @media (min-width: 640px) { .demo-term-body { font-size: 13px; } }

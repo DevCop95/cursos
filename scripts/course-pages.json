@@ -176,6 +176,48 @@
       "short": "Linux",
       "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
       "pitch": "Usa la terminal investigando un servidor que ha sufrido una intrusión."
+    },
+    {
+      "slug": "seguridad-desarrolladores",
+      "id": "devsec-101",
+      "seoTitle": "Curso de seguridad para desarrolladores en español: secretos y despliegue seguro | Dev101x",
+      "seoDescription": "Aprende a encontrar secretos en tu código y en el historial de Git con Gitleaks, a bloquearlos con un hook pre-commit y a revisar Dockerfile, configuración y dependencias antes de desplegar, en un Linux real dentro del navegador.",
+      "free": false,
+      "workload": "PT16H",
+      "title": "Seguridad para desarrolladores: revisa tu código antes de desplegar",
+      "category": "CIBERSEGURIDAD",
+      "duration": "2 Semanas",
+      "description": "Aprende a encontrar y quitar secretos de tu código y de su historial, a frenar nuevas filtraciones con un hook de Git y a revisar el Dockerfile, la configuración de producción y las dependencias antes de desplegar. Practicas con Gitleaks en un Linux real dentro del navegador, sobre el repositorio ficticio de una tienda online.",
+      "objectives": [
+        "Encontrar secretos en los archivos y en todo el historial de Git con Gitleaks, y saber qué se le escapa.",
+        "Sacar las claves del código, rotarlas y bloquear nuevas filtraciones con un hook pre-commit.",
+        "Revisar un Dockerfile y la configuración de producción: versión fija, usuario sin privilegios, debug y CORS.",
+        "Detectar dependencias con avisos de seguridad y automatizar la revisión en GitHub Actions."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Secretos en el código",
+          "lessons": 4
+        },
+        {
+          "title": "Módulo 2: Que no vuelva a pasar",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 3: Configuración antes de desplegar",
+          "lessons": 4
+        },
+        {
+          "title": "Módulo 4: Dependencias y despliegue",
+          "lessons": 4
+        }
+      ],
+      "labs": 4,
+      "videoAuthor": "return(GiS)",
+      "logo": "assets/logos/devsec-escudo.svg",
+      "short": "Código seguro",
+      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
+      "pitch": "Caza secretos y malas configuraciones antes de desplegar."
     }
   ]
 }
