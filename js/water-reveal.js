@@ -25,8 +25,25 @@
     const MAX_STAMPS = 160;
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
+    const motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    const isReduced = () => Boolean(motionQuery && motionQuery.matches);
+
     let w = 0;
     let h = 0;
+    const stamps = [];
+    let lastX = null;
+    let lastY = null;
+    let running = false;
+
+    function resetSolid() {
+      stamps.length = 0;
+      lastX = null;
+      lastY = null;
+      running = false;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgb(' + MASK + ')';
+      ctx.fillRect(0, 0, w, h);
+    }
 
     function resize() {
       w = window.innerWidth;
@@ -37,17 +54,21 @@
       canvas.style.height = h + 'px';
 
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgb(' + MASK + ')';
-      ctx.fillRect(0, 0, w, h);
+      resetSolid();
     }
 
     resize();
     window.addEventListener('resize', resize, { passive: true });
 
-    const stamps = [];
-    let lastX = null;
-    let lastY = null;
+    if (motionQuery && motionQuery.addEventListener) {
+      motionQuery.addEventListener('change', function (e) {
+        if (e.matches) resetSolid();
+      });
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) resetSolid();
+    });
 
     function addStamp(x, y) {
       if (stamps.length >= MAX_STAMPS) stamps.shift();
@@ -60,14 +81,15 @@
       });
     }
 
-    function stampAlong(x, y) {
+    function stampAlong(x, y, isTouch = false) {
+      const step = isTouch ? 22 : STAMP_STEP;
       if (lastX === null) {
         addStamp(x, y);
       } else {
         const dx = x - lastX;
         const dy = y - lastY;
         const dist = Math.hypot(dx, dy);
-        const steps = Math.max(1, Math.ceil(dist / STAMP_STEP));
+        const steps = Math.max(1, Math.ceil(dist / step));
         for (let i = 1; i <= steps; i++) {
           addStamp(lastX + (dx * i) / steps, lastY + (dy * i) / steps);
         }
@@ -76,7 +98,7 @@
       lastY = y;
     }
 
-    // Carve orgánico suave y natural idéntico a MiMo Code
+    // Carve orgánico suave y natural idéntico a MiMo Code (22 segmentos optimizados)
     function carveInk(x, y, r, alpha, seed) {
       const g = ctx.createRadialGradient(x, y, r * 0.25, x, y, r);
       g.addColorStop(0, 'rgba(0, 0, 0, ' + 0.95 * alpha + ')');
@@ -85,7 +107,7 @@
       ctx.fillStyle = g;
 
       ctx.beginPath();
-      const segs = 32;
+      const segs = 22;
       for (let i = 0; i <= segs; i++) {
         const a = (i / segs) * Math.PI * 2;
         const wob =
@@ -102,8 +124,6 @@
       ctx.closePath();
       ctx.fill();
     }
-
-    let running = false;
 
     function loop() {
       const now = performance.now();
@@ -142,8 +162,8 @@
     }
 
     window.addEventListener('mousemove', function (e) {
-      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
-      stampAlong(e.clientX, e.clientY);
+      if (isReduced() || wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
+      stampAlong(e.clientX, e.clientY, false);
       start();
     }, { passive: true });
 
@@ -153,19 +173,19 @@
     });
 
     window.addEventListener('touchstart', function (e) {
-      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
+      if (isReduced() || wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
       if (e.touches && e.touches[0]) {
         lastX = null;
         lastY = null;
-        stampAlong(e.touches[0].clientX, e.touches[0].clientY);
+        stampAlong(e.touches[0].clientX, e.touches[0].clientY, true);
         start();
       }
     }, { passive: true });
 
     window.addEventListener('touchmove', function (e) {
-      if (wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
+      if (isReduced() || wrapper.classList.contains('hidden') || wrapper.style.display === 'none') return;
       if (e.touches && e.touches[0]) {
-        stampAlong(e.touches[0].clientX, e.touches[0].clientY);
+        stampAlong(e.touches[0].clientX, e.touches[0].clientY, true);
         start();
       }
     }, { passive: true });

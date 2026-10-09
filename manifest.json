@@ -1,7 +1,7 @@
 {
-  "name": "Dev101x — Plataforma de Ciberseguridad & Inteligencia Artificial",
+  "name": "Dev101x — Plataforma de Ciberseguridad y Terminal Interactiva",
   "short_name": "Dev101x",
-  "description": "Plataforma de aprendizaje en Ciberseguridad, Pentesting e Inteligencia Artificial",
+  "description": "Cursos prácticos en español de ciberseguridad, hacking ético y desarrollo seguro con laboratorios interactivos en el navegador.",
   "id": "./",
   "start_url": "./#/mis-cursos",
   "scope": "./",
@@ -10,9 +10,53 @@
   "background_color": "#f3f0ea",
   "theme_color": "#005c38",
   "lang": "es",
+  "categories": [
+    "education",
+    "security",
+    "utilities"
+  ],
   "icons": [
     { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pentesting con Nmap",
+      "short_name": "Nmap",
+      "description": "Escaneo de redes y puertos en consola simulada",
+      "url": "./#/aula-interactiva/pentesting-101",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Linux desde cero",
+      "short_name": "Linux",
+      "description": "Terminal Linux real dentro del navegador",
+      "url": "./#/aula-interactiva/linux-101",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mis Cursos",
+      "short_name": "Mis Cursos",
+      "description": "Tu progreso y cursos activos",
+      "url": "./#/mis-cursos",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Catálogo de cursos",
+      "short_name": "Catálogo",
+      "description": "Explora todos los cursos de Dev101x",
+      "url": "./#/explorar-cursos",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Consola interactiva y catálogo de cursos de Dev101x"
+    }
   ]
 }

@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v90';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v90';
-import { esc } from '../lib/html.js?v=dev101x-v90';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v90';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v90';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v90';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v90';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v90';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v90';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v91';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v91';
+import { esc } from '../lib/html.js?v=dev101x-v91';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v91';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v91';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v91';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v91';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v91';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v91';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">

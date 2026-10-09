@@ -3,12 +3,12 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://cursos.dev101x.online/</loc>
-    <lastmod>2026-09-24</lastmod>
+    <lastmod>2026-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://cursos.dev101x.online/assets/og-image.jpg?v=4</image:loc>
-      <image:title>Dev101x Cursos — Pentesting con Nmap y Git desde cero</image:title>
+      <image:title>Dev101x Cursos — Pentesting, Linux, Git, Shodan, OSINT y Código seguro</image:title>
     </image:image>
   </url>
   <url>
