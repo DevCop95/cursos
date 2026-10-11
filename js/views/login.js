@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v91';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v91';
-import { esc } from '../lib/html.js?v=dev101x-v91';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v91';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v91';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v91';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v91';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v91';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v91';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v92';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v92';
+import { esc } from '../lib/html.js?v=dev101x-v92';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v92';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v92';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v92';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v92';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v92';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v92';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -278,8 +278,9 @@ export function renderLogin(container, onSuccess) {
   else mountGoogleButton();
   initPhoneShowcase(container);
   initDemoTerm(container);
-  initCatalogStrip(container);
   container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
+  const scrollBtn = container.querySelector('[data-action="scroll-catalog"]');
+  if (scrollBtn) scrollBtn.addEventListener('click', () => container.querySelector('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   if (loginStatus) openLoginModal();
 }
 
@@ -303,7 +304,8 @@ const COURSE_TOOLS = {
   'git-github-101': 'git · ssh · gh',
   'shodan-101': 'shodan · filtros',
   'osint-101': 'exiftool · sherlock',
-  'devsec-101': 'gitleaks · sed · jq'
+  'devsec-101': 'gitleaks · sed · jq',
+  'webhacking-101': 'curl · jwt · scope'
 };
 
 function courseLogoHtml(c, size = 26) {
@@ -341,38 +343,13 @@ function catalogHtml() {
       </span>
     </div>` : '';
   return `
-      <section class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8 flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Cursos</h2>
-          <div class="hidden gap-1.5 shrink-0" data-catalog-nav>
-            <button type="button" data-catalog-step="-1" class="catalog-nav" aria-label="Cursos anteriores"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_back</span></button>
-            <button type="button" data-catalog-step="1" class="catalog-nav" aria-label="Más cursos"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_forward</span></button>
-          </div>
-        </div>
-        <div class="catalog-strip" data-catalog-strip>${courses.map(tile).join('')}${soon}</div>
+      <section id="catalogo" class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8 flex flex-col gap-4">
+        <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Cursos</h2>
+        <div class="catalog-grid">${courses.map(tile).join('')}${soon}</div>
         <p class="text-xs text-muted">Los premium se solicitan desde tu cuenta.</p>
       </section>`;
 }
 
-function initCatalogStrip(container) {
-  const strip = container.querySelector('[data-catalog-strip]');
-  const nav = container.querySelector('[data-catalog-nav]');
-  if (!strip || !nav) return;
-  const [prev, next] = nav.querySelectorAll('[data-catalog-step]');
-  const update = () => {
-    const overflow = strip.scrollWidth > strip.clientWidth + 1;
-    nav.classList.toggle('hidden', !overflow);
-    nav.classList.toggle('flex', overflow);
-    prev.disabled = strip.scrollLeft <= 1;
-    next.disabled = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 1;
-  };
-  nav.querySelectorAll('[data-catalog-step]').forEach(b => b.addEventListener('click', () => {
-    strip.scrollBy({ left: Number(b.dataset.catalogStep) * strip.clientWidth * 0.8, behavior: 'smooth' });
-  }));
-  strip.addEventListener('scroll', update, { passive: true });
-  if ('ResizeObserver' in window) new ResizeObserver(update).observe(strip);
-  update();
-}
 
 // ---------------------------------------------------------------------------
 // Consola de muestra: escribe sola un comando de cada curso. Se para fuera de la pantalla o con la pestaña
@@ -432,27 +409,21 @@ const DEMO_SCENES = [
 ];
 
 function demoTermHtml() {
-  const byId = Object.fromEntries(PUBLIC_COURSES.map(c => [c.id, c]));
   return `
         <div class="flex flex-col gap-3 min-w-0">
           <div class="demo-term" aria-hidden="true">
             <div class="demo-term-bar"><span data-demo-title>${esc(DEMO_SCENES[0].title)}</span><span class="demo-term-tag">laboratorio</span></div>
             <pre class="demo-term-body" data-demo-body></pre>
           </div>
-          <div class="flex flex-wrap gap-1" role="group" aria-label="Ver un comando de cada curso">
-            ${DEMO_SCENES.map((d, i) => `
-              <button type="button" data-demo-scene="${i}" aria-pressed="${i === 0}" class="demo-pick" aria-label="${esc(d.title)}">
-                <span class="w-6 h-6 rounded-md bg-term flex items-center justify-center shrink-0">${byId[d.id] ? courseLogoHtml(byId[d.id], 16) : ''}</span>
-                <span class="hidden xl:inline">${esc(d.pick)}</span>
-              </button>`).join('')}
-          </div>
+          <button type="button" data-action="scroll-catalog" class="self-start inline-flex items-center gap-1 text-xs font-semibold text-ink2 hover:text-accent transition-colors">
+            Ver todos los cursos<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_downward</span>
+          </button>
         </div>`;
 }
 
 function initDemoTerm(container) {
   const body = container.querySelector('[data-demo-body]');
   const title = container.querySelector('[data-demo-title]');
-  const picks = [...container.querySelectorAll('[data-demo-scene]')];
   if (!body) return;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let run = 0; // cada escena nueva invalida la anterior
@@ -482,7 +453,6 @@ function initDemoTerm(container) {
   async function play(i) {
     const token = ++run;
     const scene = DEMO_SCENES[i];
-    picks.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
     title.textContent = scene.title;
     body.replaceChildren();
     if (reduce) {
@@ -512,7 +482,6 @@ function initDemoTerm(container) {
     await wait(2800);
     if (await ready(token)) play((i + 1) % DEMO_SCENES.length);
   }
-  picks.forEach(b => b.addEventListener('click', () => play(Number(b.dataset.demoScene))));
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver(([e]) => {
       if (!body.isConnected) { io.disconnect(); return; }

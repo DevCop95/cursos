@@ -8,7 +8,8 @@ export const COURSE_LOGOS = {
   'shodan-101': 'assets/logos/shodan-bn.png',
   'osint-101': 'assets/logos/osint-huella.svg',
   'linux-101': 'assets/logos/linux-bn.svg',
-  'devsec-101': 'assets/logos/devsec-escudo.svg'
+  'devsec-101': 'assets/logos/devsec-escudo.svg',
+  'webhacking-101': 'assets/logos/owasp-bn.svg'
 };
 
 export const courseLogo = id => COURSE_LOGOS[id] || '';

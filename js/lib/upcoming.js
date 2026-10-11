@@ -4,4 +4,10 @@
  * null = no hay ninguno anunciado (la portada y el catálogo no muestran la tarjeta).
  * Forma: { id, title, short, description, icon }
  */
-export const UPCOMING = null;
+export const UPCOMING = {
+  id: 'webhacking-101',
+  title: 'Web Hacking y Bug Bounty: OWASP Top 10 con ética',
+  short: 'Web Hacking',
+  description: 'Encuentra y reporta control de acceso roto, inyección SQL, XSS, SSRF y JWT débil siguiendo el OWASP Top 10, con la línea ética de un programa de bug bounty real.',
+  icon: 'assets/logos/owasp-bn.svg'
+};
