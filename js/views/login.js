@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v93';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v93';
-import { esc } from '../lib/html.js?v=dev101x-v93';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v93';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v93';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v93';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v93';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v93';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v93';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v94';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v94';
+import { esc } from '../lib/html.js?v=dev101x-v94';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v94';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v94';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v94';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v94';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v94';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v94';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -215,7 +215,7 @@ export function renderLogin(container, onSuccess) {
           <div class="flex flex-col gap-3">
             <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
             <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Aprende escribiendo comandos</h1>
-            <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan, OSINT y código seguro. Sin instalar nada, en el móvil o en el ordenador.</p>
+            <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan, OSINT, código seguro y web hacking. Sin instalar nada, en el móvil o en el ordenador.</p>
           </div>
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <button type="button" data-open-login class="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
@@ -405,6 +405,12 @@ const DEMO_SCENES = [
     { out: 'File:    src/pagos.js', tone: 'info' },
     { out: 'WRN leaks found: 2', tone: 'muted' },
     { out: '✓ Claves localizadas antes del commit', tone: 'ok' }
+  ] },
+  { id: 'webhacking-101', pick: 'Web Hacking', title: 'Web Hacking · OWASP Top 10', prompt: '$', steps: [
+    { cmd: 'curl -s -H "Authorization: Bearer TOKEN" .../api/pedidos/4821' },
+    { out: '{"id":4821,"cliente":"carla", ...}', tone: 'info' },
+    { out: '[LAB] Mismo token, otro número: IDOR', tone: 'muted' },
+    { out: '✓ Control de acceso roto encontrado', tone: 'ok' }
   ] }
 ];
 

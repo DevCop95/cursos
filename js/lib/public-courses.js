@@ -77,5 +77,18 @@ export const PUBLIC_COURSES = [
     "free": false,
     "logo": "assets/logos/devsec-escudo.svg",
     "pitch": "Caza secretos y malas configuraciones antes de desplegar."
+  },
+  {
+    "id": "webhacking-101",
+    "slug": "web-hacking",
+    "title": "Web Hacking y Bug Bounty: OWASP Top 10 con ética",
+    "short": "Web Hacking",
+    "category": "CIBERSEGURIDAD",
+    "duration": "3 Semanas",
+    "lessons": 16,
+    "labs": 7,
+    "free": false,
+    "logo": "assets/logos/owasp-bn.svg",
+    "pitch": "Encuentra y reporta fallos del OWASP Top 10 con una línea ética clara."
   }
 ];

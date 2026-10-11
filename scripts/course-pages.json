@@ -218,6 +218,61 @@
       "short": "Código seguro",
       "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
       "pitch": "Caza secretos y malas configuraciones antes de desplegar."
+    },
+    {
+      "slug": "web-hacking",
+      "id": "webhacking-101",
+      "seoTitle": "Curso de Web Hacking y Bug Bounty en español: OWASP Top 10 | Dev101x",
+      "seoDescription": "Aprende a encontrar y reportar los fallos más comunes de las aplicaciones web según el OWASP Top 10 (control de acceso roto, inyección SQL, XSS, SSRF y JWT débil), con la línea ética de un programa de bug bounty real, practicando con curl en una terminal simulada en el navegador.",
+      "free": false,
+      "workload": "PT24H",
+      "title": "Web Hacking y Bug Bounty: OWASP Top 10 con ética",
+      "category": "CIBERSEGURIDAD",
+      "duration": "3 Semanas",
+      "description": "Aprende a encontrar y reportar los fallos más comunes de las aplicaciones web (control de acceso roto, inyección SQL, XSS, SSRF y autenticación débil) siguiendo el OWASP Top 10, con la línea ética de un programa de bug bounty real: alcance, reglas que nunca se rompen y divulgación responsable. Practicas con curl contra la API de una tienda ficticia en una terminal simulada en el navegador.",
+      "objectives": [
+        "Entender qué autoriza un programa de bug bounty y qué queda siempre fuera de línea.",
+        "Encontrar control de acceso roto (IDOR) y entender por qué es tan frecuente y tan grave.",
+        "Confirmar y explotar una inyección SQL con una prueba de concepto mínima.",
+        "Detectar XSS reflejado y almacenado, y SSRF contra servicios internos.",
+        "Leer un JWT, entender qué lo hace débil y escribir un reporte de hallazgo correcto."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Alcance y ética",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 2: Reconocimiento pasivo",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 3: Control de acceso roto (IDOR)",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 4: Inyección SQL",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 5: XSS",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 6: SSRF",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 7: Autenticación, JWT y reto final",
+          "lessons": 3
+        }
+      ],
+      "labs": 7,
+      "videoAuthor": "Luis Felipe Peralta B",
+      "logo": "assets/logos/owasp-bn.svg",
+      "short": "Web Hacking",
+      "practice": "Practicas con curl contra la API de una tienda ficticia en una terminal simulada en el navegador, siguiendo las reglas de un programa de bug bounty real.",
+      "pitch": "Encuentra y reporta fallos del OWASP Top 10 con una línea ética clara."
     }
   ]
 }
