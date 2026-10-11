@@ -33,7 +33,9 @@ html, body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none !important;
+  /* Solo el eje horizontal (gesto de "volver atrás" al deslizar): "none" en los dos ejes, en una página alta,
+     hacía que Chrome dejara de desplazar con la rueda del ratón (bug confirmado, no solo en el "overscroll"). */
+  overscroll-behavior-x: none !important;
   -webkit-overflow-scrolling: touch;
 }
 
