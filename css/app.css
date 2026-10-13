@@ -707,3 +707,54 @@ input:focus-visible,
 }
 @media (max-width: 639px) { .catalog-tile { padding: 12px; gap: 10px; border-radius: 16px; } }
 a.catalog-tile:hover { border-color: rgba(0, 92, 56, 0.45); background: #fff; }
+
+/* ---- Toque de Halloween en la portada (finales de octubre; se apaga solo tras el 1 de noviembre) ----
+   Mismo tono sobrio del sitio: naranja calabaza apagado, sin neón ni gradientes. */
+.hw-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(154, 52, 18, 0.28);
+  background: rgba(194, 65, 12, 0.08);
+  color: #9a3412;
+  font-family: var(--fm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.hw-pumpkin { font-size: 13px; line-height: 1; }
+
+/* Araña que cuelga de un hilo fino en la esquina de la tarjeta; balanceo muy leve. Solo en escritorio,
+   donde hay sitio en el margen superior, para no cruzarse con el texto en móvil. */
+.hw-spider {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 54px;
+  width: 1px;
+  height: 38px;
+  background: rgba(104, 109, 102, 0.5);
+  transform-origin: top center;
+  pointer-events: none;
+  z-index: 2;
+  animation: hw-dangle 5.5s ease-in-out infinite;
+}
+.hw-spider::after {
+  content: '🕷';
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  margin-left: -8px;
+  font-size: 15px;
+  line-height: 1;
+}
+@keyframes hw-dangle {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@media (min-width: 768px) { .hw-spider { display: block; } }
+@media (prefers-reduced-motion: reduce) { .hw-spider { animation: none; } }

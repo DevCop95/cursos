@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v94';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v94';
-import { esc } from '../lib/html.js?v=dev101x-v94';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v94';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v94';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v94';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v94';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v94';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v94';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v95';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v95';
+import { esc } from '../lib/html.js?v=dev101x-v95';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v95';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v95';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v95';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v95';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v95';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v95';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -23,6 +23,14 @@ const GOOGLE_LOGO = `
   </svg>`;
 
 const SPINNER = '<span class="w-5 h-5 rounded-full border-2 border-accent/25 border-t-accent animate-spin shrink-0" aria-hidden="true"></span>';
+
+// Toque de Halloween en la portada: activo a finales de octubre y se apaga solo pasado el 1 de noviembre
+// (no hace falta otro deploy). Mismo criterio que el resto del sitio: sobrio, sin neón ni gradientes.
+function isHalloweenSeason(d = new Date()) {
+  const m = d.getMonth(); // 9 = octubre, 10 = noviembre
+  const day = d.getDate();
+  return (m === 9 && day >= 10) || (m === 10 && day <= 1);
+}
 
 // Estado que sobrevive a un re-render: 'pending' mientras se verifica la vuelta de Google, o un error.
 let loginStatus = null;
@@ -197,6 +205,7 @@ async function mountGoogleButton() {
 // ---------------------------------------------------------------------------
 export function renderLogin(container, onSuccess) {
   onLoginSuccess = onSuccess;
+  const halloween = isHalloweenSeason();
 
   container.innerHTML = `
     <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col gap-5">
@@ -211,8 +220,10 @@ export function renderLogin(container, onSuccess) {
       </div>
 
       <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-8 md:gap-10 items-center modal-enter">
+        ${halloween ? '<span class="hw-spider" aria-hidden="true"></span>' : ''}
         <div class="flex flex-col gap-5 min-w-0">
           <div class="flex flex-col gap-3">
+            ${halloween ? '<span class="hw-badge"><span class="hw-pumpkin" aria-hidden="true">🎃</span>Especial Halloween</span>' : ''}
             <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
             <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Aprende escribiendo comandos</h1>
             <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan, OSINT, código seguro y web hacking. Sin instalar nada, en el móvil o en el ordenador.</p>
@@ -224,7 +235,7 @@ export function renderLogin(container, onSuccess) {
             <span class="text-xs text-muted">Con tu cuenta de Google</span>
           </div>
         </div>
-        ${demoTermHtml()}
+        ${demoTermHtml(halloween)}
       </section>
 
       ${catalogHtml()}
@@ -277,7 +288,7 @@ export function renderLogin(container, onSuccess) {
   if (isCloudEnabled()) paintActions();
   else mountGoogleButton();
   initPhoneShowcase(container);
-  initDemoTerm(container);
+  initDemoTerm(container, halloween);
   container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
   const scrollBtn = container.querySelector('[data-action="scroll-catalog"]');
   if (scrollBtn) scrollBtn.addEventListener('click', () => container.querySelector('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
@@ -414,11 +425,28 @@ const DEMO_SCENES = [
   ] }
 ];
 
-function demoTermHtml() {
+// Escena de temporada (truco o trato): salidas inventadas, en la voz del propio producto. Solo en octubre.
+// Máximo 7 líneas: la consola de muestra mide 200 px y en escritorio la octava queda cortada.
+const HALLOWEEN_SCENE = { id: 'halloween', pick: 'Halloween', title: '🎃 Especial Halloween', prompt: '$', steps: [
+  { cmd: 'nmap -p- mansion-embrujada.local' },
+  { out: 'PORT      STATE SERVICE', tone: 'muted' },
+  { out: '1031/tcp  open  truco-o-trato' },
+  { cmd: 'curl -s mansion-embrujada.local/puerta' },
+  { out: '{"estado":"abierta","sustos":13}', tone: 'info' },
+  { out: 'Boo! 👻 puerto embrujado', tone: 'muted' },
+  { out: '✓ Truco o trato: aprende a defenderte', tone: 'ok' }
+] };
+
+function scenesFor(halloween) {
+  return halloween ? [HALLOWEEN_SCENE, ...DEMO_SCENES] : DEMO_SCENES;
+}
+
+function demoTermHtml(halloween) {
+  const first = scenesFor(halloween)[0];
   return `
         <div class="flex flex-col gap-3 min-w-0">
           <div class="demo-term" aria-hidden="true">
-            <div class="demo-term-bar"><span data-demo-title>${esc(DEMO_SCENES[0].title)}</span><span class="demo-term-tag">laboratorio</span></div>
+            <div class="demo-term-bar"><span data-demo-title>${esc(first.title)}</span><span class="demo-term-tag">laboratorio</span></div>
             <pre class="demo-term-body" data-demo-body></pre>
           </div>
           <button type="button" data-action="scroll-catalog" class="self-start inline-flex items-center gap-1 text-xs font-semibold text-ink2 hover:text-accent transition-colors">
@@ -427,10 +455,11 @@ function demoTermHtml() {
         </div>`;
 }
 
-function initDemoTerm(container) {
+function initDemoTerm(container, halloween) {
   const body = container.querySelector('[data-demo-body]');
   const title = container.querySelector('[data-demo-title]');
   if (!body) return;
+  const scenes = scenesFor(halloween);
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let run = 0; // cada escena nueva invalida la anterior
   let visible = true;
@@ -458,7 +487,7 @@ function initDemoTerm(container) {
   };
   async function play(i) {
     const token = ++run;
-    const scene = DEMO_SCENES[i];
+    const scene = scenes[i];
     title.textContent = scene.title;
     body.replaceChildren();
     if (reduce) {
@@ -486,7 +515,7 @@ function initDemoTerm(container) {
       }
     }
     await wait(2800);
-    if (await ready(token)) play((i + 1) % DEMO_SCENES.length);
+    if (await ready(token)) play((i + 1) % scenes.length);
   }
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver(([e]) => {
