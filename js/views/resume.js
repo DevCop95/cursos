@@ -2,13 +2,13 @@
  * "Continuar donde lo dejaste": último curso abierto por el alumno (en este navegador) y su siguiente lección.
  * Se muestra arriba de Mis cursos y del perfil; no aparece si no hay curso, ya no tiene acceso o lo terminó.
  */
-import { esc } from '../lib/html.js?v=dev101x-v95';
-import { appState } from '../state.js?v=dev101x-v95';
-import { COURSE } from '../content.js?v=dev101x-v95';
-import { currentProgress } from '../progress.js?v=dev101x-v95';
-import { fetchCourseContent, fetchCourseProgress } from '../cloud.js?v=dev101x-v95';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v95';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v95';
+import { esc } from '../lib/html.js?v=dev101x-v96';
+import { appState } from '../state.js?v=dev101x-v96';
+import { COURSE } from '../content.js?v=dev101x-v96';
+import { currentProgress } from '../progress.js?v=dev101x-v96';
+import { fetchCourseContent, fetchCourseProgress } from '../cloud.js?v=dev101x-v96';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v96';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v96';
 
 const lastCourseKey = () => {
   const s = appState.session || {};

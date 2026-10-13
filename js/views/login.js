@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v95';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v95';
-import { esc } from '../lib/html.js?v=dev101x-v95';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v95';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v95';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v95';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v95';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v95';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v95';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v96';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v96';
+import { esc } from '../lib/html.js?v=dev101x-v96';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v96';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v96';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v96';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v96';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v96';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v96';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -30,6 +30,42 @@ function isHalloweenSeason(d = new Date()) {
   const m = d.getMonth(); // 9 = octubre, 10 = noviembre
   const day = d.getDate();
   return (m === 9 && day >= 10) || (m === 10 && day <= 1);
+}
+
+// Banner de Halloween: la calabaza se acerca desde el fondo y se le encienden los ojos y la boca.
+// Solo CSS (css/app.css, .hw-*): se repite cada vez que se entra en la portada; con "reducir movimiento"
+// aparece ya encendida. La cara se dibuja tres veces: tallada (oscura), el halo y la luz.
+const PUMPKIN_SVG = `
+  <svg class="hw-pumpkin-svg" viewBox="0 0 120 112" aria-hidden="true">
+    <defs>
+      <filter id="hw-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.5" /></filter>
+      <g id="hw-face">
+        <path d="M33 57 L51 57 L42 42 Z" />
+        <path d="M69 57 L87 57 L78 42 Z" />
+        <path d="M56 68 L64 68 L60 62 Z" />
+        <path d="M30 74 L39 79 L45 74 L52 80 L60 74 L68 80 L75 74 L81 79 L90 74 C82 95 38 95 30 74 Z" />
+      </g>
+    </defs>
+    <path d="M57 22 C56 14 59 8 66 5 L70 9 C65 11 63 15 64 22 Z" fill="#3f5a32" />
+    <ellipse cx="38" cy="66" rx="30" ry="40" fill="#b9581c" />
+    <ellipse cx="82" cy="66" rx="30" ry="40" fill="#b9581c" />
+    <ellipse cx="60" cy="66" rx="26" ry="43" fill="#cf6a24" stroke="#a24b13" stroke-width="1.5" />
+    <use href="#hw-face" class="hw-face-dark" />
+    <use href="#hw-face" class="hw-face-glow" filter="url(#hw-glow)" />
+    <use href="#hw-face" class="hw-face-lit" />
+  </svg>`;
+
+function halloweenBannerHtml() {
+  return `
+      <section class="hw-banner" aria-label="Especial Halloween">
+        <span class="hw-pumpkin-stage">${PUMPKIN_SVG}</span>
+        <div class="hw-banner-text">
+          <p class="hw-banner-eyebrow">Especial Halloween</p>
+          <h2 class="hw-banner-title">Truco o trato en la consola</h2>
+          <p class="hw-banner-line">Nmap y Linux son gratis: escanea la mansión antes de que caiga la noche.</p>
+        </div>
+        <button type="button" data-open-login class="hw-banner-cta">Entrar<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span></button>
+      </section>`;
 }
 
 // Estado que sobrevive a un re-render: 'pending' mientras se verifica la vuelta de Google, o un error.
@@ -219,11 +255,12 @@ export function renderLogin(container, onSuccess) {
         </button>
       </div>
 
+      ${halloween ? halloweenBannerHtml() : ''}
+
       <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-8 md:gap-10 items-center modal-enter">
         ${halloween ? '<span class="hw-spider" aria-hidden="true"></span>' : ''}
         <div class="flex flex-col gap-5 min-w-0">
           <div class="flex flex-col gap-3">
-            ${halloween ? '<span class="hw-badge"><span class="hw-pumpkin" aria-hidden="true">🎃</span>Especial Halloween</span>' : ''}
             <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
             <h1 class="text-[32px] sm:text-[44px] leading-[1.05] font-extrabold text-ink tracking-tight">Aprende escribiendo comandos</h1>
             <p class="text-[15px] text-ink2 leading-relaxed">Cada lección se practica en una consola dentro del navegador: Nmap, Linux, Git, Shodan, OSINT, código seguro y web hacking. Sin instalar nada, en el móvil o en el ordenador.</p>

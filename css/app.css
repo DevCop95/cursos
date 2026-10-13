@@ -710,23 +710,115 @@ a.catalog-tile:hover { border-color: rgba(0, 92, 56, 0.45); background: #fff; }
 
 /* ---- Toque de Halloween en la portada (finales de octubre; se apaga solo tras el 1 de noviembre) ----
    Mismo tono sobrio del sitio: naranja calabaza apagado, sin neón ni gradientes. */
-.hw-badge {
-  align-self: flex-start;
-  display: inline-flex;
+/* Banner: noche con los colores de la consola de muestra. La calabaza llega desde el fondo (1,5 s), se asienta
+   con un leve balanceo y se le encienden los ojos como una vela al prender. Los estilos sin animación son el
+   estado final: con "reducir movimiento" se quitan las animaciones y sale ya encendida. Total: ~2,3 s. */
+.hw-banner {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 11px 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(154, 52, 18, 0.28);
-  background: rgba(194, 65, 12, 0.08);
-  color: #9a3412;
+  gap: 18px;
+  padding: 16px 22px 16px 18px;
+  border-radius: 24px;
+  background: #0e1013;
+  border: 1px solid #30363d;
+  box-shadow: 0 18px 40px rgba(12, 13, 14, 0.14);
+  overflow: hidden;
+}
+.hw-pumpkin-stage {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 76px;
+}
+.hw-pumpkin-svg {
+  width: 80px;
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 70%;
+  animation: hw-approach 1.5s cubic-bezier(0.33, 0.7, 0.3, 1) both;
+}
+.hw-face-dark { fill: #3a1f0c; }
+.hw-face-glow { fill: #ffb444; fill-opacity: 0.85; }
+.hw-face-lit { fill: #ffd27a; }
+.hw-face-glow,
+.hw-face-lit { animation: hw-ignite 0.9s 1.4s linear both; }
+.hw-banner-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  animation: hw-text-in 0.6s 0.5s ease-out both;
+}
+.hw-banner-eyebrow {
+  margin: 0;
   font-family: var(--fm);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: #e8a24a;
 }
-.hw-pumpkin { font-size: 13px; line-height: 1; }
+.hw-banner-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #f3f0ea;
+}
+.hw-banner-line {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #aab3bc;
+}
+.hw-banner-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px 0 18px;
+  border-radius: 999px;
+  background: #f3f0ea;
+  color: #0c0d0e;
+  font-size: 14px;
+  font-weight: 600;
+}
+.hw-banner-cta:hover { background: #fff; }
+@keyframes hw-approach {
+  0% { opacity: 0; transform: scale(0.25) translateY(-24px); filter: blur(3px); }
+  45% { opacity: 1; filter: blur(0); }
+  70% { transform: scale(1.05) rotate(-3deg); }
+  85% { transform: scale(0.99) rotate(1.5deg); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes hw-ignite { /* chispazo, se apaga un momento y prende del todo */
+  0% { opacity: 0; }
+  18% { opacity: 0.9; }
+  30% { opacity: 0.2; }
+  52% { opacity: 1; }
+  64% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+@keyframes hw-text-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 639px) {
+  .hw-banner { gap: 14px; padding: 14px 16px 14px 14px; }
+  .hw-pumpkin-stage { width: 62px; height: 60px; }
+  .hw-pumpkin-svg { width: 62px; }
+  .hw-banner-title { font-size: 17px; }
+  .hw-banner-line { font-size: 12.5px; }
+  .hw-banner-cta { display: none; } /* el botón "Empezar gratis" del hero queda justo debajo */
+}
+@media (prefers-reduced-motion: reduce) {
+  .hw-pumpkin-svg, .hw-face-glow, .hw-face-lit, .hw-banner-text { animation: none; }
+}
 
 /* Araña que cuelga de un hilo fino en la esquina de la tarjeta; balanceo muy leve. Solo en escritorio,
    donde hay sitio en el margen superior, para no cruzarse con el texto en móvil. */
