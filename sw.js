@@ -1,13 +1,14 @@
 /**
  * Dev101x — Service Worker
  *  - HTML: red primero (siempre la versión más reciente) con copia offline.
- *  - CSS/JS/imágenes propios: también red primero (revalidando con el servidor) y caché solo sin
- *    conexión. Los módulos se importan sin ?v=, así que servirlos desde caché podía mezclar un
- *    main.js nuevo con módulos viejos tras un despliegue.
+ *  - CSS/JS con ?v=<versión> y archivos con hash en el nombre: caché primero. Esas URLs no cambian nunca
+ *    (npm run release pone la versión en todos los imports), así que no hace falta preguntar al servidor:
+ *    antes cada visita revalidaba ~50 archivos en cascada y la portada tardaba en aparecer.
+ *  - Resto de archivos propios (logos, fuentes sin hash): caché al momento y se actualiza en segundo plano.
  *  - Fuentes de Google: caché primero (sus URLs son inmutables).
  *  - Google Identity, Supabase y demás orígenes: no se interceptan.
  */
-const VERSION = 'dev101x-v96';
+const VERSION = 'dev101x-v97';
 const STATIC_CACHE = `${VERSION}-static`;
 // Cambiar el nombre borra las fuentes viejas (la fuente de iconos completa pesaba 3,9 MB).
 const FONT_CACHE = 'dev101x-fonts-v2';
@@ -16,54 +17,55 @@ const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
-  './css/tailwind.css?v=dev101x-v96',
-  './css/app.css?v=dev101x-v96',
-  './css/fonts.css?v=dev101x-v96',
+  './css/tailwind.css?v=dev101x-v97',
+  './css/app.css?v=dev101x-v97',
+  './css/fonts.css?v=dev101x-v97',
   './assets/fonts/bricolage-grotesque-latin.woff2',
-  './js/main.js?v=dev101x-v96',
-  './js/identicon.js?v=dev101x-v96',
-  './js/water-reveal.js?v=dev101x-v96',
-  './js/config.js?v=dev101x-v96',
-  './js/state.js?v=dev101x-v96',
-  './js/router.js?v=dev101x-v96',
-  './js/auth.js?v=dev101x-v96',
-  './js/cloud.js?v=dev101x-v96',
-  './js/progress.js?v=dev101x-v96',
-  './js/lab.js?v=dev101x-v96',
-  './js/content.js?v=dev101x-v96',
-  './js/search.js?v=dev101x-v96',
-  './js/ui.js?v=dev101x-v96',
-  './js/lib/html.js?v=dev101x-v96',
-  './js/lib/jwt.js?v=dev101x-v96',
-  './js/lib/activity.js?v=dev101x-v96',
-  './js/lib/badges.js?v=dev101x-v96',
-  './js/lib/access.js?v=dev101x-v96',
-  './js/lib/course-engine.js?v=dev101x-v96',
-  './js/lib/upcoming.js?v=dev101x-v96',
-  './js/lib/public-courses.js?v=dev101x-v96',
-  './js/lib/course-logos.js?v=dev101x-v96',
-  './js/lib/ranks.js?v=dev101x-v96',
-  './js/lib/display-name.js?v=dev101x-v96',
+  './js/main.js?v=dev101x-v97',
+  './js/identicon.js?v=dev101x-v97',
+  './js/water-reveal.js?v=dev101x-v97',
+  './js/config.js?v=dev101x-v97',
+  './js/state.js?v=dev101x-v97',
+  './js/router.js?v=dev101x-v97',
+  './js/auth.js?v=dev101x-v97',
+  './js/cloud.js?v=dev101x-v97',
+  './js/progress.js?v=dev101x-v97',
+  './js/lab.js?v=dev101x-v97',
+  './js/content.js?v=dev101x-v97',
+  './js/search.js?v=dev101x-v97',
+  './js/ui.js?v=dev101x-v97',
+  './js/lib/html.js?v=dev101x-v97',
+  './js/lib/jwt.js?v=dev101x-v97',
+  './js/lib/activity.js?v=dev101x-v97',
+  './js/lib/badges.js?v=dev101x-v97',
+  './js/lib/access.js?v=dev101x-v97',
+  './js/lib/course-engine.js?v=dev101x-v97',
+  './js/lib/upcoming.js?v=dev101x-v97',
+  './js/lib/public-courses.js?v=dev101x-v97',
+  './js/lib/course-logos.js?v=dev101x-v97',
+  './js/lib/ranks.js?v=dev101x-v97',
+  './js/lib/display-name.js?v=dev101x-v97',
   './assets/logos/nmap-bn.png',
   './assets/logos/shodan-bn.png',
   './assets/google.png',
   './assets/logos/osint-huella.svg',
   './assets/logos/linux-bn.svg',
   './assets/logos/devsec-escudo.svg',
-  './js/views/course-aula.js?v=dev101x-v96',
-  './js/views/resume.js?v=dev101x-v96',
-  './js/views/messages.js?v=dev101x-v96',
-  './js/views/rank-notice.js?v=dev101x-v96',
-  './js/views/loader.js?v=dev101x-v96',
-  './js/lib/view-cache.js?v=dev101x-v96',
-  './js/lib/requests.js?v=dev101x-v96',
-  './js/lib/admin-list.js?v=dev101x-v96',
-  './js/lib/cmd-history.js?v=dev101x-v96',
-  './js/views/login.js?v=dev101x-v96',
-  './js/views/courses.js?v=dev101x-v96',
-  './js/views/aula.js?v=dev101x-v96',
-  './js/views/perfil.js?v=dev101x-v96',
-  './js/views/admin.js?v=dev101x-v96',
+  './js/views/course-aula.js?v=dev101x-v97',
+  './js/views/resume.js?v=dev101x-v97',
+  './js/views/messages.js?v=dev101x-v97',
+  './js/views/rank-notice.js?v=dev101x-v97',
+  './js/views/loader.js?v=dev101x-v97',
+  './js/views/consent.js?v=dev101x-v97',
+  './js/lib/view-cache.js?v=dev101x-v97',
+  './js/lib/requests.js?v=dev101x-v97',
+  './js/lib/admin-list.js?v=dev101x-v97',
+  './js/lib/cmd-history.js?v=dev101x-v97',
+  './js/views/login.js?v=dev101x-v97',
+  './js/views/courses.js?v=dev101x-v97',
+  './js/views/aula.js?v=dev101x-v97',
+  './js/views/perfil.js?v=dev101x-v97',
+  './js/views/admin.js?v=dev101x-v97',
   './assets/icon-192.png',
   './assets/favicon.png',
   './assets/dev101x_identicon.svg',
@@ -113,6 +115,22 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
+// Responde con la copia guardada y la renueva por detrás; sin copia, espera a la red.
+async function staleWhileRevalidate(event) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cached = await cache.match(event.request);
+  const fresh = fetch(event.request).then(response => {
+    if (response.ok) cache.put(event.request, response.clone());
+    return response;
+  });
+  if (!cached) return fresh;
+  event.waitUntil(fresh.catch(() => {}));
+  return cached;
+}
+
+// URL que no cambia de contenido: versión del despliegue en la query o hash en el nombre del archivo.
+const isImmutable = url => url.searchParams.get('v') === VERSION || /-[0-9a-f]{8}\.\w+$/.test(url.pathname);
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -126,5 +144,11 @@ self.addEventListener('fetch', event => {
   // Laboratorio Linux (decenas de MB): lo guarda la caché HTTP del navegador, no el service worker.
   if (url.pathname.startsWith('/lab-linux/')) return;
 
-  event.respondWith(networkFirst(request));
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(networkFirst(request));
+  } else if (isImmutable(url)) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+  } else {
+    event.respondWith(staleWhileRevalidate(event));
+  }
 });

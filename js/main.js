@@ -2,22 +2,23 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v96';
-import { resolveRoute } from './router.js?v=dev101x-v96';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, startGoogleLogin, authFlow, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v96';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v96';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v96';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v96';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v96';
-import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v96';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v96';
-import { COURSE } from './content.js?v=dev101x-v96';
-import { fetchCourses } from './cloud.js?v=dev101x-v96';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v96';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v96';
-import { startPresence } from './progress.js?v=dev101x-v96';
-import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v96';
-import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v96';
+import { appState, isSessionValid } from './state.js?v=dev101x-v97';
+import { resolveRoute } from './router.js?v=dev101x-v97';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, startGoogleLogin, authFlow, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v97';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v97';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v97';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v97';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v97';
+import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v97';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v97';
+import { COURSE } from './content.js?v=dev101x-v97';
+import { fetchCourses } from './cloud.js?v=dev101x-v97';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v97';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v97';
+import { startPresence } from './progress.js?v=dev101x-v97';
+import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v97';
+import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v97';
+import { checkConsent, closeConsent, showCookieNotice, hideCookieNotice } from './views/consent.js?v=dev101x-v97';
 
 const $ = id => document.getElementById(id);
 
@@ -27,9 +28,9 @@ function lazy(load) {
   let p = null;
   return () => (p = p || load().catch(err => { p = null; throw err; }));
 }
-const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v96'));
-const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v96'));
-const adminView = lazy(() => import('./views/admin.js?v=dev101x-v96'));
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v97'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v97'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v97'));
 // Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
 const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
 function prefetchViews() {
@@ -108,8 +109,10 @@ function render() {
   if (route === 'login') {
     view.className = 'w-full flex-1 flex flex-col px-4 py-5 sm:py-8';
     renderLogin(view, onLoggedIn);
+    showCookieNotice();
     return;
   }
+  hideCookieNotice();
 
   view.className = 'w-full pt-[76px] pb-6 sm:pt-20 sm:pb-12 max-w-[1280px] mx-auto px-gutter flex-1 flex flex-col';
   // Vista que se descarga al abrirla: se pinta solo si el usuario no ha cambiado de ruta mientras tanto.
@@ -164,6 +167,7 @@ function onLoggedIn() {
   showToast(`Bienvenido, ${appState.session.name}`, 'success');
   window.location.hash = '#/mis-cursos';
   render();
+  checkConsent({ onDecline: doLogout });
 }
 
 function toggleProfile(force) {
@@ -187,6 +191,7 @@ function copyText(text) {
 }
 
 async function doLogout() {
+  closeConsent();
   await logout();
   showToast('Sesión cerrada correctamente', 'info');
   window.location.hash = '#/login';
@@ -402,7 +407,7 @@ if (oauthRedirect) {
 
 // Revalida la sesión contra el servidor (modo nube) sin bloquear el primer render.
 revalidateSession()
-  .then(changed => { if (changed) render(); announceNewAccess(takeNewCourseAccess()); refreshUnreadMessages({ notify: true }); scheduleRankCheck(1500); })
+  .then(changed => { if (changed) render(); checkConsent({ onDecline: doLogout }); announceNewAccess(takeNewCourseAccess()); refreshUnreadMessages({ notify: true }); scheduleRankCheck(1500); })
   .catch(err => console.warn('No se pudo revalidar la sesión:', err))
   .finally(startPresence);
 
@@ -410,7 +415,7 @@ revalidateSession()
 window.addEventListener('pageshow', e => { if (e.persisted) authFlow.busy = false; });
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v96').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v97').catch(() => {}));
   // Cuando se activa una versión nueva del service worker hay que recargar una vez para no mezclar archivos de
   // dos despliegues (solo si ya había uno antes: la primera visita no recarga). No se hace de golpe: se espera a
   // que la pestaña quede en segundo plano (no se ve) o al siguiente cambio de página (con la pantalla de carga).

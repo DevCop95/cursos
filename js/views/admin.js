@@ -5,20 +5,20 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v96';
-import { isCloudEnabled } from '../config.js?v=dev101x-v96';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v96';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v96';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v96';
-import { rankView } from '../lib/ranks.js?v=dev101x-v96';
-import { groupRequests } from '../lib/requests.js?v=dev101x-v96';
-import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v96';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v96';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v96';
-import { openAdminThread } from './messages.js?v=dev101x-v96';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v96';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v96';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v96';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v97';
+import { isCloudEnabled } from '../config.js?v=dev101x-v97';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v97';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v97';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v97';
+import { rankView } from '../lib/ranks.js?v=dev101x-v97';
+import { groupRequests } from '../lib/requests.js?v=dev101x-v97';
+import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v97';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v97';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v97';
+import { openAdminThread } from './messages.js?v=dev101x-v97';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v97';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v97';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v97';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -91,6 +91,8 @@ function progressBarsHtml(row) {
       <span class="w-8 text-right font-mono text-[11px] tabular-nums ${i.done ? 'text-accent font-bold' : 'text-ink2'}">${i.done ? '✓' : `${i.percent}%`}</span>
     </div>`).join('');
 }
+
+const LEGAL_LABELS = { terms: 'Términos', privacy: 'Privacidad', cookies: 'Cookies' };
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -643,6 +645,9 @@ export function openUserDetails(userId) {
           ${row('Último login', esc(formatDate(r.last_login)))}
           ${row('Última actividad', esc(formatDate(r.last_seen)))}
           ${row('Registrado', esc(formatDate(r.created_at)))}
+          ${row('Documentos aceptados', (r.consents || []).length
+            ? r.consents.map(c => `<span class="block">${esc(LEGAL_LABELS[c.document] || c.document)} v${esc(c.version)} · ${esc(formatDate(c.accepted_at))}</span>`).join('')
+            : 'Pendiente')}
           ${row('Cursos terminados', (r.completions || []).length
             ? r.completions.map(c => `<span class="block text-accent">✓ ${esc((lastCourses.find(x => x.id === c.course_id) || { title: c.course_id }).title)} · ${esc(formatDate(c.completed_at))}</span>`).join('')
             : 'Ninguno')}
@@ -761,9 +766,11 @@ export function exportCsv() {
     const items = courseProgressItems(r);
     const pct = lastCourses.map(c => { const i = items.find(x => x.course.id === c.id); return i ? i.percent : ''; });
     return [r.id, r.full_name || '', r.email, r.role, r.role === 'admin' || r.access_level === 'full' ? 'total' : 'gratis', ...courses, ...pct, p.labsDone.length,
-      STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || '', completedAt(r) || ''];
+      STATUS_BADGE[activityStatus(r)].label, last ? new Date(last).toISOString() : '', r.last_login || '', completedAt(r) || '',
+      ...Object.keys(LEGAL_LABELS).map(d => { const c = (r.consents || []).filter(x => x.document === d).at(-1); return c ? `${c.version} ${c.accepted_at}` : ''; })];
   });
-  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', 'Nivel', ...lastCourses.map(c => `Acceso ${c.id}`), ...lastCourses.map(c => `Progreso ${c.id} %`), `Labs ${COURSE.id}`, 'Estado', 'Última actividad', 'Último login', `Terminado ${COURSE.id}`], rows);
+  const csv = toCsv(['ID', 'Alumno', 'Email', 'Rol', 'Nivel', ...lastCourses.map(c => `Acceso ${c.id}`), ...lastCourses.map(c => `Progreso ${c.id} %`), `Labs ${COURSE.id}`, 'Estado', 'Última actividad', 'Último login', `Terminado ${COURSE.id}`,
+    ...Object.values(LEGAL_LABELS).map(l => `Aceptó ${l}`)], rows);
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;

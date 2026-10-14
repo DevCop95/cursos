@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v96';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v97';
 
 let clientPromise = null;
 
@@ -328,6 +328,24 @@ export async function saveCourseState(courseId, data) {
   if (error) throw error;
 }
 
+// Documentos legales (términos, privacidad, cookies) cuya versión vigente aún no ha aceptado el usuario.
+export async function fetchPendingLegal() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.rpc('pending_legal');
+  if (error) throw error;
+  return data || [];
+}
+
+// Registra la aceptación (el servidor pone la fecha y la versión vigente). Devuelve cuántos quedan pendientes.
+export async function acceptLegal(documents) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { data, error } = await client.rpc('accept_legal', { p_documents: documents });
+  if (error) throw error;
+  return data;
+}
+
 // Catálogo: los alumnos ven los publicados; los admin, todos.
 export async function fetchCourses() {
   const client = await getClient();
@@ -341,12 +359,13 @@ export async function fetchCourses() {
 export async function adminListStudents() {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
-  const [profiles, progress, access, completions, courseProgress] = await Promise.all([
+  const [profiles, progress, access, completions, courseProgress, consents] = await Promise.all([
     client.from('profiles').select('id, email, full_name, display_name, avatar_url, role, access_level, last_login, last_seen, created_at').order('created_at', { ascending: false }),
     client.from('student_progress').select('user_id, steps, progress_percentage, completed_at'),
     client.from('course_access').select('user_id, course_id, enabled'),
     client.from('course_completions').select('user_id, course_id, completed_at'),
-    client.from('course_progress').select('user_id, course_id, progress_percentage, completed_at')
+    client.from('course_progress').select('user_id, course_id, progress_percentage, completed_at'),
+    client.from('legal_consents').select('user_id, document, version, accepted_at').order('accepted_at')
   ]);
   const err = profiles.error || progress.error || access.error || completions.error || courseProgress.error;
   if (err) throw err;
@@ -358,7 +377,8 @@ export async function adminListStudents() {
     progress: progress.data.find(r => r.user_id === p.id) || null,
     access: access.data.filter(r => r.user_id === p.id),
     completions: completions.data.filter(r => r.user_id === p.id),
-    courseProgress: courseProgress.data.filter(r => r.user_id === p.id)
+    courseProgress: courseProgress.data.filter(r => r.user_id === p.id),
+    consents: (consents.data || []).filter(r => r.user_id === p.id) // aceptaciones de términos, privacidad y cookies
   }));
 }
 

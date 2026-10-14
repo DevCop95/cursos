@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v96';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v96';
-import { esc } from '../lib/html.js?v=dev101x-v96';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v96';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v96';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v96';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v96';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v96';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v96';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v97';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v97';
+import { esc } from '../lib/html.js?v=dev101x-v97';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v97';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v97';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v97';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v97';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v97';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v97';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -301,7 +301,7 @@ export function renderLogin(container, onSuccess) {
         </button>
       </section>
 
-      <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a> · <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent">Privacidad</a></p>
+      <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a> · <a href="/terminos/" class="font-semibold text-ink2 hover:text-accent">Términos</a> · <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent">Privacidad</a> · <a href="/cookies/" class="font-semibold text-ink2 hover:text-accent">Cookies</a></p>
     </div>
 
     <div id="login-modal" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -319,6 +319,7 @@ export function renderLogin(container, onSuccess) {
         <p class="self-center inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-900">
           <span class="material-symbols-outlined text-[15px] text-accent" aria-hidden="true">verified_user</span>Solo usamos tu nombre, correo y foto de Google.
         </p>
+        <p class="text-center text-[11px] text-muted leading-snug">Al continuar aceptas los <a href="/terminos/" class="font-semibold text-ink2 hover:text-accent underline">Términos</a> y las políticas de <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent underline">Privacidad</a> y <a href="/cookies/" class="font-semibold text-ink2 hover:text-accent underline">Cookies</a>.</p>
       </div>
     </div>
   `;
