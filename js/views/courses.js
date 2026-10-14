@@ -1,19 +1,19 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v99';
-import { appState } from '../state.js?v=dev101x-v99';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v99';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v99';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v99';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v99';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v99';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v99';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v99';
-import { paintResume } from './resume.js?v=dev101x-v99';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v99';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v99';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v99';
+import { esc } from '../lib/html.js?v=dev101x-v100';
+import { appState } from '../state.js?v=dev101x-v100';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v100';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v100';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v100';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v100';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v100';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v100';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v100';
+import { paintResume } from './resume.js?v=dev101x-v100';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v100';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v100';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v100';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {

@@ -2,23 +2,24 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v99';
-import { resolveRoute } from './router.js?v=dev101x-v99';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, startGoogleLogin, authFlow, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v99';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v99';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v99';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v99';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v99';
-import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v99';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v99';
-import { COURSE } from './content.js?v=dev101x-v99';
-import { fetchCourses } from './cloud.js?v=dev101x-v99';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v99';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v99';
-import { startPresence } from './progress.js?v=dev101x-v99';
-import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v99';
-import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v99';
-import { checkConsent, closeConsent, showCookieNotice, hideCookieNotice } from './views/consent.js?v=dev101x-v99';
+import { appState, isSessionValid } from './state.js?v=dev101x-v100';
+import { resolveRoute } from './router.js?v=dev101x-v100';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, startGoogleLogin, authFlow, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v100';
+import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v100';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v100';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v100';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v100';
+import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v100';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v100';
+import { COURSE } from './content.js?v=dev101x-v100';
+import { fetchCourses } from './cloud.js?v=dev101x-v100';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v100';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v100';
+import { startPresence } from './progress.js?v=dev101x-v100';
+import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v100';
+import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v100';
+import { checkConsent, closeConsent, showCookieNotice, hideCookieNotice } from './views/consent.js?v=dev101x-v100';
+import { toggleDark, syncThemeButtons } from './lib/theme.js?v=dev101x-v100';
 
 const $ = id => document.getElementById(id);
 
@@ -28,9 +29,9 @@ function lazy(load) {
   let p = null;
   return () => (p = p || load().catch(err => { p = null; throw err; }));
 }
-const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v99'));
-const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v99'));
-const adminView = lazy(() => import('./views/admin.js?v=dev101x-v99'));
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v100'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v100'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v100'));
 // Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
 const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
 function prefetchViews() {
@@ -213,6 +214,7 @@ const ACTIONS = {
   'toggle-profile': () => toggleProfile(),
   'close-profile': () => toggleProfile(false),
   'open-search': () => { toggleProfile(false); openSearch({ admin: isAdmin() }); },
+  'toggle-theme': () => toggleDark(),
   'close-search': () => closeSearch(),
   'logout': () => { toggleProfile(false); doLogout(); },
   'open-course': el => openCourseDetail(el.dataset.id),
@@ -378,24 +380,22 @@ window.addEventListener('hashchange', render);
 initSearch({ onSelectCommand: goToCommand, isAdmin });
 
 // Vuelta de Google (?code=… o ?error=…): se muestra el login en modo "verificando" y se canjea el código.
+// Sin pantalla de carga a pantalla completa: el propio botón de acceso indica "Verificando tu cuenta…".
 const oauthRedirect = takeOAuthRedirect();
 if (oauthRedirect) setLoginStatus(oauthRedirect.code ? { type: 'pending' } : null);
 render();
+syncThemeButtons();
 if (oauthRedirect) {
-  if (oauthRedirect.code) showLoader('Verificando tu cuenta…');
   completeOAuthRedirect(oauthRedirect).then(result => {
     if (!result.ok && result.retry) {
       // Un reintento automático: Google ya reconoce la cuenta y vuelve enseguida con un código nuevo.
-      showLoader('Conectando con Google…');
       startGoogleLogin('continue', { auto: true }).catch(() => {
         authFlow.busy = false;
-        hideLoader();
         setLoginStatus({ type: 'error', text: result.error });
       });
       return;
     }
     authFlow.busy = false;
-    hideLoader();
     if (result.ok) {
       setLoginStatus(null);
       onLoggedIn();
@@ -415,7 +415,7 @@ revalidateSession()
 window.addEventListener('pageshow', e => { if (e.persisted) authFlow.busy = false; });
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v99').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v100').catch(() => {}));
   // Cuando se activa una versión nueva del service worker hay que recargar una vez para no mezclar archivos de
   // dos despliegues (solo si ya había uno antes: la primera visita no recarga). No se hace de golpe: se espera a
   // que la pestaña quede en segundo plano (no se ve) o al siguiente cambio de página (con la pantalla de carga).

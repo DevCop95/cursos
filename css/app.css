@@ -828,40 +828,152 @@ a.catalog-tile:hover { border-color: rgba(0, 92, 56, 0.45); background: #fff; }
   .hw-pumpkin-svg, .hw-face-glow, .hw-face-lit, .hw-banner-text { animation: none; }
 }
 
-/* Modo noche (al pulsar la calabaza, js/views/login.js): la portada toma los colores de la consola de muestra y
-   la calabaza brilla más, con un halo cálido y un parpadeo de vela. Solo en la portada (html.login-active). */
-html.hw-night.login-active,
-html.hw-night.login-active body { background-color: #0b0d10 !important; }
-html.hw-night.login-active #water-bg-wrapper { filter: invert(1) hue-rotate(180deg) brightness(0.42) saturate(0.6); }
-html.login-active #water-bg-wrapper,
-html.login-active .landing-card,
-html.login-active .catalog-tile { transition: filter 0.5s ease, background-color 0.5s ease, border-color 0.5s ease; }
-html.hw-night.login-active .landing-card {
+/* ---- Modo oscuro de toda la app (clase theme-dark en <html>: js/lib/theme.js y js/theme-boot.js) ----
+   Colores de la consola de muestra. Se redefinen las variables y las clases claras de Tailwind que usa la app;
+   lo que ya es oscuro (terminales, bg-term, textos slate/emerald claros) se queda igual. */
+html.theme-dark {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --bg2: #12161b;
+  --surface: #161b22;
+  --ink: #f0f3f6;
+  --ink2: #c9d1d9;
+  --muted: #8b949e;
+  --accent: #3fb67f;
+  --accent2: #2e9a68;
+  --line: #30363d;
+}
+html.theme-dark,
+html.theme-dark body { background-color: #0b0d10 !important; color: #f0f3f6; }
+
+/* Fondos claros */
+html.theme-dark .bg-bg { background-color: #0b0d10; }
+html.theme-dark .bg-bg2 { background-color: #1c2128; }
+html.theme-dark .bg-bg\/40,
+html.theme-dark .bg-bg\/60,
+html.theme-dark .bg-bg\/70 { background-color: rgba(255, 255, 255, 0.04); }
+html.theme-dark .bg-surface,
+html.theme-dark .bg-white { background-color: #161b22; }
+html.theme-dark .bg-surface\/95,
+html.theme-dark .bg-white\/95 { background-color: rgba(22, 27, 34, 0.95); }
+html.theme-dark .bg-surface\/70,
+html.theme-dark .bg-white\/70,
+html.theme-dark .bg-white\/60 { background-color: rgba(48, 54, 61, 0.55); }
+html.theme-dark .bg-line\/70 { background-color: #30363d; }
+html.theme-dark .bg-ink { background-color: #30363d; }
+html.theme-dark .hover\:bg-ink2:hover { background-color: #3d444d; }
+html.theme-dark .hover\:bg-bg:hover,
+html.theme-dark .hover\:bg-bg2:hover,
+html.theme-dark .hover\:bg-bg\/50:hover,
+html.theme-dark .hover\:bg-bg\/60:hover,
+html.theme-dark .hover\:bg-bg\/70:hover,
+html.theme-dark .hover\:bg-surface\/60:hover { background-color: rgba(255, 255, 255, 0.07); }
+
+/* Textos */
+html.theme-dark .text-ink { color: #f0f3f6; }
+html.theme-dark .text-ink2 { color: #c9d1d9; }
+html.theme-dark .text-muted { color: #8b949e; }
+html.theme-dark .text-line { color: #484f58; }
+html.theme-dark .text-accent { color: #4cc38a; }
+html.theme-dark .hover\:text-ink:hover { color: #ffffff; }
+html.theme-dark .hover\:text-accent:hover,
+html.theme-dark .group:hover .group-hover\:text-accent { color: #4cc38a; }
+
+/* Bordes */
+html.theme-dark .border-line,
+html.theme-dark .border-line\/60,
+html.theme-dark .border-line\/70,
+html.theme-dark .border-line\/80 { border-color: #30363d; }
+html.theme-dark .divide-line\/60 > :not([hidden]) ~ :not([hidden]) { border-color: #30363d; }
+html.theme-dark .border-white { border-color: #161b22; }
+html.theme-dark .border-slate-300 { border-color: #475569; }
+
+/* Avisos de color (verde, ámbar, rojo, azul, gris): tinte translúcido y texto claro */
+html.theme-dark .bg-emerald-50,
+html.theme-dark .bg-emerald-50\/60,
+html.theme-dark .bg-emerald-50\/70,
+html.theme-dark .bg-emerald-50\/80,
+html.theme-dark .bg-emerald-100,
+html.theme-dark .bg-emerald-100\/70,
+html.theme-dark .bg-emerald-100\/80,
+html.theme-dark .bg-emerald-100\/90 { background-color: rgba(52, 211, 153, 0.12); }
+html.theme-dark .hover\:bg-emerald-50:hover { background-color: rgba(52, 211, 153, 0.18); }
+html.theme-dark .text-emerald-700,
+html.theme-dark .text-emerald-800,
+html.theme-dark .text-emerald-900,
+html.theme-dark .text-emerald-950 { color: #6ee7b7; }
+html.theme-dark .border-emerald-200,
+html.theme-dark .border-emerald-200\/80,
+html.theme-dark .border-emerald-300 { border-color: rgba(52, 211, 153, 0.35); }
+
+html.theme-dark .bg-amber-50,
+html.theme-dark .bg-amber-50\/70,
+html.theme-dark .bg-amber-100 { background-color: rgba(251, 191, 36, 0.12); }
+html.theme-dark .hover\:bg-amber-100:hover,
+html.theme-dark .hover\:bg-amber-100\/50:hover,
+html.theme-dark .hover\:bg-amber-100\/60:hover { background-color: rgba(251, 191, 36, 0.18); }
+html.theme-dark .text-amber-600,
+html.theme-dark .text-amber-700,
+html.theme-dark .text-amber-800,
+html.theme-dark .text-amber-800\/80,
+html.theme-dark .text-amber-900,
+html.theme-dark .text-amber-950 { color: #fcd34d; }
+html.theme-dark .border-amber-200,
+html.theme-dark .border-amber-300 { border-color: rgba(251, 191, 36, 0.35); }
+html.theme-dark .divide-amber-200\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(251, 191, 36, 0.25); }
+
+html.theme-dark .bg-rose-50,
+html.theme-dark .bg-rose-100,
+html.theme-dark .bg-red-100 { background-color: rgba(244, 63, 94, 0.14); }
+html.theme-dark .hover\:bg-rose-50:hover,
+html.theme-dark .hover\:bg-rose-100:hover { background-color: rgba(244, 63, 94, 0.2); }
+html.theme-dark .text-rose-600,
+html.theme-dark .text-rose-700,
+html.theme-dark .text-rose-800,
+html.theme-dark .text-rose-950,
+html.theme-dark .text-red-800,
+html.theme-dark .hover\:text-rose-600:hover { color: #fda4af; }
+html.theme-dark .border-rose-200,
+html.theme-dark .border-rose-300,
+html.theme-dark .border-red-300,
+html.theme-dark .hover\:border-rose-300:hover { border-color: rgba(244, 63, 94, 0.4); }
+
+html.theme-dark .bg-sky-100 { background-color: rgba(56, 189, 248, 0.14); }
+html.theme-dark .text-sky-600,
+html.theme-dark .text-sky-700,
+html.theme-dark .text-sky-800 { color: #7dd3fc; }
+html.theme-dark .border-sky-300 { border-color: rgba(56, 189, 248, 0.4); }
+
+html.theme-dark .bg-slate-100 { background-color: rgba(148, 163, 184, 0.14); }
+html.theme-dark .text-slate-800 { color: #e2e8f0; }
+
+/* Componentes propios (css/app.css) */
+html.theme-dark .landing-card,
+html.theme-dark .login-card-editorial {
   background-color: rgba(22, 27, 34, 0.9);
   border-color: #30363d;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
-html.hw-night.login-active .catalog-tile { background: rgba(14, 16, 19, 0.6); border-color: #30363d; }
-html.hw-night.login-active a.catalog-tile:hover { background: #161b22; border-color: rgba(232, 162, 74, 0.55); }
-html.hw-night.login-active .phone-tab { color: #8b949e; }
-html.hw-night.login-active .phone-tab:hover { background: rgba(232, 162, 74, 0.07); }
-html.hw-night.login-active .phone-tab[aria-selected="true"] { background: rgba(232, 162, 74, 0.1); border-color: rgba(232, 162, 74, 0.35); color: #e8a24a; }
-html.hw-night.login-active .text-ink { color: #f3f0ea; }
-html.hw-night.login-active .text-ink2 { color: #c9d1d9; }
-html.hw-night.login-active .text-muted { color: #8b949e; }
-html.hw-night.login-active .text-accent { color: #e8a24a; }
-html.hw-night.login-active .bg-white,
-html.hw-night.login-active .bg-surface { background-color: #161b22; }
-html.hw-night.login-active .border-line { border-color: #30363d; }
-html.hw-night.login-active .hover\:text-accent:hover { color: #e8a24a; }
-html.hw-night.login-active .hw-banner { border-color: #5a3d1c; }
-html.hw-night .hw-pumpkin-stage {
+html.theme-dark .catalog-tile { background: rgba(14, 16, 19, 0.6); border-color: #30363d; }
+html.theme-dark a.catalog-tile:hover { background: #161b22; border-color: rgba(76, 195, 138, 0.5); }
+html.theme-dark .phone-tab:hover { background: rgba(76, 195, 138, 0.07); }
+html.theme-dark .phone-tab[aria-selected="true"] { background: rgba(76, 195, 138, 0.1); border-color: rgba(76, 195, 138, 0.35); color: #4cc38a; }
+html.theme-dark .ldr { background: rgba(11, 13, 16, 0.92); }
+html.theme-dark .ldr-brand,
+html.theme-dark .ldr-g { background: #1c2128; }
+html.theme-dark #water-bg-wrapper { filter: invert(1) hue-rotate(180deg) brightness(0.42) saturate(0.6); }
+html.login-active #water-bg-wrapper,
+html.login-active .landing-card,
+html.login-active .catalog-tile { transition: filter 0.5s ease, background-color 0.5s ease, border-color 0.5s ease; }
+
+/* Halloween: en modo oscuro la calabaza brilla más, con halo cálido y parpadeo de vela */
+html.theme-dark .hw-banner { border-color: #5a3d1c; }
+html.theme-dark .hw-pumpkin-stage {
   filter: drop-shadow(0 0 10px rgba(255, 170, 60, 0.55)) drop-shadow(0 0 26px rgba(255, 130, 30, 0.35));
 }
-html.hw-night .hw-face-dark { fill: #ffb444; }
-html.hw-night .hw-face-glow { fill: #ffc65a; fill-opacity: 1; }
-html.hw-night .hw-face-lit { fill: #fff1c4; }
-html.hw-night .hw-face-glow { animation: hw-candle 2.6s ease-in-out infinite; }
+html.theme-dark .hw-face-dark { fill: #ffb444; }
+html.theme-dark .hw-face-glow { fill: #ffc65a; fill-opacity: 1; animation: hw-candle 2.6s ease-in-out infinite; }
+html.theme-dark .hw-face-lit { fill: #fff1c4; }
 @keyframes hw-candle { /* vela: oscila sin llegar a apagarse */
   0%, 100% { opacity: 1; }
   22% { opacity: 0.78; }
@@ -870,7 +982,7 @@ html.hw-night .hw-face-glow { animation: hw-candle 2.6s ease-in-out infinite; }
   80% { opacity: 0.92; }
 }
 @media (prefers-reduced-motion: reduce) {
-  html.hw-night .hw-face-glow { animation: none; }
+  html.theme-dark .hw-face-glow { animation: none; }
 }
 
 /* Araña que cuelga de un hilo fino en la esquina de la tarjeta; balanceo muy leve. Solo en escritorio,
