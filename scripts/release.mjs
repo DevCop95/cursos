@@ -41,20 +41,9 @@ const main = read('js/main.js').replace(/register\('\.\/sw\.js(?:\?v=[^']*)?'/, 
 write('js/main.js', main);
 
 // 3. index.html y sw.js: versión y lista de precarga con las mismas URLs que usan los imports.
-// modulepreload de todos los módulos que main.js importa (directa o indirectamente, sin los import() dinámicos):
-// el navegador los pide todos a la vez en vez de descubrirlos nivel a nivel (3-4 viajes encadenados a la red).
-function staticImports(file, seen = new Set()) {
-  for (const m of read(file).matchAll(/^\s*import\s[^'"]*?from\s+'(\.{1,2}\/[^'?]+\.js)/gm)) {
-    const dep = join(file, '..', m[1]).split('\\').join('/');
-    if (!seen.has(dep)) { seen.add(dep); staticImports(dep, seen); }
-  }
-  return seen;
-}
-const preloads = [...staticImports('js/main.js')].sort()
-  .map(f => `  <link rel="modulepreload" href="${f}?v=${next}" />`).join('\n');
-write('index.html', read('index.html')
-  .replace(/dev101x-v\d+/g, next)
-  .replace(/(<!-- modulepreload[^>]*-->)[\s\S]*?(\s*<!-- \/modulepreload -->)/, `$1\n${preloads}$2`));
+// Sin <link rel="modulepreload">: se probó en la v97 y la primera visita pintaba más tarde (0,5 s → 1,25 s),
+// porque los ~30 módulos competían con el CSS y las fuentes; la carga total no mejoraba.
+write('index.html', read('index.html').replace(/dev101x-v\d+/g, next));
 // Páginas estáticas de cada curso (scripts/course-pages.mjs).
 const { courses } = JSON.parse(read('scripts/course-pages.json'));
 for (const slug of [...courses.map(c => c.slug), 'lab-linux', 'privacidad', 'terminos', 'cookies']) {
