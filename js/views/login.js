@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v98';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v98';
-import { esc } from '../lib/html.js?v=dev101x-v98';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v98';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v98';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v98';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v98';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v98';
-import { showLoader, hideLoader } from './loader.js?v=dev101x-v98';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v99';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v99';
+import { esc } from '../lib/html.js?v=dev101x-v99';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v99';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v99';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v99';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v99';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v99';
+import { showLoader, hideLoader } from './loader.js?v=dev101x-v99';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -55,10 +55,22 @@ const PUMPKIN_SVG = `
     <use href="#hw-face" class="hw-face-lit" />
   </svg>`;
 
+// Modo noche: al pulsar la calabaza la portada se oscurece y la calabaza brilla más; otra pulsación lo quita.
+// Solo dura mientras la pestaña está abierta (no se guarda) y solo afecta a la portada (css/app.css, .hw-night).
+let hwNight = false;
+function setHalloweenNight(on, button) {
+  hwNight = on;
+  document.documentElement.classList.toggle('hw-night', on);
+  if (button) {
+    button.setAttribute('aria-pressed', String(on));
+    button.title = on ? 'Volver al modo normal' : 'Encender la noche';
+  }
+}
+
 function halloweenBannerHtml() {
   return `
       <section class="hw-banner" aria-label="Especial Halloween">
-        <span class="hw-pumpkin-stage">${PUMPKIN_SVG}</span>
+        <button type="button" class="hw-pumpkin-stage" data-hw-night aria-pressed="${hwNight}" aria-label="Modo noche" title="${hwNight ? 'Volver al modo normal' : 'Encender la noche'}">${PUMPKIN_SVG}</button>
         <div class="hw-banner-text">
           <p class="hw-banner-eyebrow">Especial Halloween</p>
           <h2 class="hw-banner-title">Truco o trato en la consola</h2>
@@ -328,6 +340,9 @@ export function renderLogin(container, onSuccess) {
   initPhoneShowcase(container);
   initDemoTerm(container, halloween);
   container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
+  const pumpkin = container.querySelector('[data-hw-night]');
+  if (pumpkin) pumpkin.addEventListener('click', () => setHalloweenNight(!hwNight, pumpkin));
+  else if (hwNight) setHalloweenNight(false); // pasó Halloween con la pestaña abierta
   const scrollBtn = container.querySelector('[data-action="scroll-catalog"]');
   if (scrollBtn) scrollBtn.addEventListener('click', () => container.querySelector('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   if (loginStatus) openLoginModal();

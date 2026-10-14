@@ -731,7 +731,15 @@ a.catalog-tile:hover { border-color: rgba(0, 92, 56, 0.45); background: #fff; }
   justify-content: center;
   width: 80px;
   height: 76px;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  cursor: pointer;
+  transition: filter 0.5s ease, transform 0.2s ease;
 }
+.hw-pumpkin-stage:hover { transform: scale(1.04); }
+.hw-pumpkin-stage:focus-visible { outline: 2px solid #e8a24a; outline-offset: 4px; }
 .hw-pumpkin-svg {
   width: 80px;
   height: auto;
@@ -818,6 +826,51 @@ a.catalog-tile:hover { border-color: rgba(0, 92, 56, 0.45); background: #fff; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hw-pumpkin-svg, .hw-face-glow, .hw-face-lit, .hw-banner-text { animation: none; }
+}
+
+/* Modo noche (al pulsar la calabaza, js/views/login.js): la portada toma los colores de la consola de muestra y
+   la calabaza brilla más, con un halo cálido y un parpadeo de vela. Solo en la portada (html.login-active). */
+html.hw-night.login-active,
+html.hw-night.login-active body { background-color: #0b0d10 !important; }
+html.hw-night.login-active #water-bg-wrapper { filter: invert(1) hue-rotate(180deg) brightness(0.42) saturate(0.6); }
+html.login-active #water-bg-wrapper,
+html.login-active .landing-card,
+html.login-active .catalog-tile { transition: filter 0.5s ease, background-color 0.5s ease, border-color 0.5s ease; }
+html.hw-night.login-active .landing-card {
+  background-color: rgba(22, 27, 34, 0.9);
+  border-color: #30363d;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+html.hw-night.login-active .catalog-tile { background: rgba(14, 16, 19, 0.6); border-color: #30363d; }
+html.hw-night.login-active a.catalog-tile:hover { background: #161b22; border-color: rgba(232, 162, 74, 0.55); }
+html.hw-night.login-active .phone-tab { color: #8b949e; }
+html.hw-night.login-active .phone-tab:hover { background: rgba(232, 162, 74, 0.07); }
+html.hw-night.login-active .phone-tab[aria-selected="true"] { background: rgba(232, 162, 74, 0.1); border-color: rgba(232, 162, 74, 0.35); color: #e8a24a; }
+html.hw-night.login-active .text-ink { color: #f3f0ea; }
+html.hw-night.login-active .text-ink2 { color: #c9d1d9; }
+html.hw-night.login-active .text-muted { color: #8b949e; }
+html.hw-night.login-active .text-accent { color: #e8a24a; }
+html.hw-night.login-active .bg-white,
+html.hw-night.login-active .bg-surface { background-color: #161b22; }
+html.hw-night.login-active .border-line { border-color: #30363d; }
+html.hw-night.login-active .hover\:text-accent:hover { color: #e8a24a; }
+html.hw-night.login-active .hw-banner { border-color: #5a3d1c; }
+html.hw-night .hw-pumpkin-stage {
+  filter: drop-shadow(0 0 10px rgba(255, 170, 60, 0.55)) drop-shadow(0 0 26px rgba(255, 130, 30, 0.35));
+}
+html.hw-night .hw-face-dark { fill: #ffb444; }
+html.hw-night .hw-face-glow { fill: #ffc65a; fill-opacity: 1; }
+html.hw-night .hw-face-lit { fill: #fff1c4; }
+html.hw-night .hw-face-glow { animation: hw-candle 2.6s ease-in-out infinite; }
+@keyframes hw-candle { /* vela: oscila sin llegar a apagarse */
+  0%, 100% { opacity: 1; }
+  22% { opacity: 0.78; }
+  38% { opacity: 0.95; }
+  61% { opacity: 0.7; }
+  80% { opacity: 0.92; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.hw-night .hw-face-glow { animation: none; }
 }
 
 /* Araña que cuelga de un hilo fino en la esquina de la tarjeta; balanceo muy leve. Solo en escritorio,
