@@ -1015,3 +1015,209 @@ html.theme-dark .hw-face-lit { fill: #fff1c4; }
 }
 @media (min-width: 768px) { .hw-spider { display: block; } }
 @media (prefers-reduced-motion: reduce) { .hw-spider { animation: none; } }
+
+/* ---- Laboratorio de redes (js/views/net-lab.js): topología en SVG, consola por equipo y tareas ----
+   Usa las variables del sitio (funciona en modo claro y oscuro); la consola es oscura siempre, como las terminales. */
+html.nl-open { overflow: hidden; }
+.nl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(12, 13, 14, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.nl-backdrop[hidden] { display: none; }
+.nl-panel {
+  width: 100%;
+  max-width: 1120px;
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+}
+.nl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.nl-kicker { margin: 0; font: 700 10px var(--fm); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.nl-title { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ink); }
+.nl-head-actions { display: flex; align-items: center; gap: 6px; }
+.nl-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.nl-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nl-close { width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font-size: 16px; }
+.nl-close:hover { background: var(--bg); color: var(--ink); }
+
+.nl-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "topo" "console" "tasks";
+  gap: 12px;
+  padding: 12px;
+}
+@media (min-width: 720px) {
+  .nl-body {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    grid-template-areas: "topo topo" "console tasks";
+    gap: 14px;
+    padding: 16px;
+  }
+}
+
+/* Topología */
+.nl-topo {
+  grid-area: topo;
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: 6px;
+}
+.nl-svg { display: block; width: 100%; height: auto; max-height: 330px; margin: 0 auto; touch-action: manipulation; }
+@media (max-width: 719px) { .nl-svg { max-height: 460px; } }
+.nl-topo-hint { margin: 0; padding: 0 8px 4px; text-align: right; font: 11px var(--fm); color: var(--muted); }
+@media (max-width: 719px) { .nl-topo-hint { text-align: center; } }
+.nl-mini { padding: 6px; }
+.nl-mini .nl-svg { max-height: 360px; }
+.nl-zone { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.nl-zone-label { font: 600 11px var(--fm); fill: var(--muted); }
+/* Contorno del color del fondo: los textos tapan el cable que pasa por debajo. */
+.nl-zone-label, .nl-name, .nl-ip { paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+.nl-link { stroke: var(--line); stroke-width: 3; stroke-linecap: round; transition: stroke 0.15s ease; }
+.nl-link.is-active { stroke: var(--accent); }
+.nl-node { cursor: pointer; outline: none; }
+.nl-shape { fill: var(--surface); stroke: var(--ink2); stroke-width: 1.8; }
+.nl-screen { fill: #0e1013; }
+.nl-detail { fill: none; stroke: var(--ink2); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nl-port { fill: var(--ink2); }
+.nl-led { fill: var(--accent); }
+.nl-halo { fill: transparent; stroke: transparent; stroke-width: 2.5; transition: fill 0.15s ease, stroke 0.15s ease; }
+.nl-node:hover .nl-halo { fill: rgba(0, 92, 56, 0.07); }
+.nl-node.is-selected .nl-halo { fill: rgba(0, 92, 56, 0.1); stroke: var(--accent); }
+.nl-node:focus-visible .nl-halo { stroke: var(--accent); stroke-dasharray: 4 3; }
+.nl-name { text-anchor: middle; font: 700 13px var(--fh); fill: var(--ink); }
+.nl-ip { text-anchor: middle; font: 400 11px var(--fm); fill: var(--muted); }
+.nl-name.is-right, .nl-ip.is-right { text-anchor: start; }
+.nl-packet { stroke: var(--surface); stroke-width: 2; }
+.nl-packet-go { fill: #1f9d63; }
+.nl-packet-back { fill: #e0962f; }
+.nl-packet-dns, .nl-packet-dns-back { fill: #3b82c4; }
+.nl-packet.is-lost { fill: #e5484d; }
+.nl-fail circle { fill: #e5484d; }
+.nl-fail path { stroke: #fff; stroke-width: 2.2; stroke-linecap: round; }
+
+/* Consola del equipo elegido */
+.nl-console {
+  grid-area: console;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0e1013;
+  border: 1px solid #30363d;
+}
+.nl-console-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  font: 700 11px var(--fm);
+  color: #f0f3f6;
+}
+.nl-console-ip { font-weight: 400; color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nl-out {
+  flex: 1;
+  min-height: 150px;
+  max-height: 300px;
+  overflow: auto;
+  padding: 10px 12px;
+  font: 12.5px/1.55 var(--fm);
+  color: #c9d1d9;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.nl-line.nl-cmd { color: #f0f3f6; }
+.nl-line.nl-ok { color: #4cc38a; }
+.nl-line.nl-err { color: #ff7b72; }
+.nl-line.nl-info { color: #8b949e; }
+.nl-form { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid #30363d; }
+.nl-form.is-off { opacity: 0.4; }
+.nl-prompt { flex: none; font: 700 12.5px var(--fm); color: #4cc38a; }
+.nl-input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #f0f3f6; font: 12.5px var(--fm); caret-color: #4cc38a; }
+@media (max-width: 719px) { .nl-input { font-size: 16px; } } /* sin zoom automático en iPhone */
+
+/* Tareas */
+.nl-tasks {
+  grid-area: tasks;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.nl-tasks-head { margin: 0; display: flex; justify-content: space-between; font: 700 11px var(--fm); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.nl-task-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.nl-task { display: flex; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.nl-task p { margin: 0; }
+.nl-task.is-next { color: var(--ink); }
+.nl-task.is-done { color: var(--muted); }
+.nl-task code { font: 12px var(--fm); padding: 0 4px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); }
+.nl-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 11px var(--fm);
+  border: 1.5px solid var(--line);
+  color: var(--muted);
+}
+.nl-task.is-next .nl-check { border-color: var(--accent); color: var(--accent); }
+.nl-task.is-done .nl-check { border-color: var(--accent); background: var(--accent); color: #fff; }
+.nl-task-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.nl-hint-btn { align-self: flex-start; padding: 0; border: 0; background: none; font: 600 12px var(--fh); color: var(--accent); }
+.nl-hint-btn:hover { text-decoration: underline; }
+.nl-hint { margin: 0; padding: 6px 8px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); font: 12px var(--fm); color: var(--ink2); white-space: pre-wrap; }
+.nl-win { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(0, 92, 56, 0.35); color: var(--accent); font-size: 13px; font-weight: 600; }
+.nl-win p { margin: 0; }
+.nl-btn-solid { align-self: flex-start; border-color: var(--accent); background: var(--accent); color: #fff; }
+.nl-btn-solid:hover { color: #fff; filter: brightness(1.08); }
+
+@media (max-width: 719px) {
+  .nl-backdrop { padding: 0; }
+  .nl-panel { max-height: 100dvh; height: 100dvh; border-radius: 0; border: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nl-link, .nl-halo { transition: none; }
+}

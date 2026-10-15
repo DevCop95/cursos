@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="robots" content="noindex" />
+  <title>Laboratorio de redes (prototipo) | Dev101x</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
+  <meta name="theme-color" content="#005c38" />
+  <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v101" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v101" />
+  <link rel="stylesheet" href="/css/app.css?v=dev101x-v101" />
+  <script src="/js/theme-boot.js?v=dev101x-v101"></script>
+  <script type="module" src="lab-red.js?v=dev101x-v101"></script>
+</head>
+<body class="bg-bg font-sans text-ink antialiased min-h-screen">
+  <div class="max-w-3xl mx-auto px-4 py-6 flex flex-col gap-4">
+    <header class="flex items-center justify-between gap-3">
+      <a href="/" class="flex items-center gap-2.5 font-extrabold text-[17px]"><img src="/assets/icon-192.png" alt="" class="w-9 h-9 rounded-lg" /><span>Dev<em class="not-italic text-accent">101x</em> Cursos</span></a>
+      <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-mono text-[10px] font-bold">PROTOTIPO</span>
+    </header>
+
+    <section class="bg-surface rounded-2xl border border-line p-5 sm:p-6 flex flex-col gap-3">
+      <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Redes para ciberseguridad · Lección 1</p>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Tu primera red</h1>
+      <p class="text-[14px] text-ink2 leading-relaxed">Dos PCs conectados a un switch, un router que une dos redes y un servidor al otro lado. Cada equipo tiene su propia consola: pulsa uno, escribe comandos y mira cómo viaja el paquete por los cables. PC2 tiene un problema que vas a tener que descubrir y arreglar.</p>
+      <button type="button" data-open-net class="self-start inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">Ver la red</button>
+    </section>
+  </div>
+</body>
+</html>

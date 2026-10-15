@@ -1,8 +1,8 @@
 /**
  * Búsqueda rápida (Ctrl/Cmd + K) sobre páginas, comandos, lecciones y recursos.
  */
-import { esc, normalize } from './lib/html.js?v=dev101x-v100';
-import { COURSE, NMAP_RESOURCES, PENTESTING_COMMANDS } from './content.js?v=dev101x-v100';
+import { esc, normalize } from './lib/html.js?v=dev101x-v101';
+import { COURSE, NMAP_RESOURCES, PENTESTING_COMMANDS } from './content.js?v=dev101x-v101';
 
 const MAX_RESULTS = 12;
 

@@ -3,13 +3,15 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v100';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v100';
-import { isCloudEnabled } from '../config.js?v=dev101x-v100';
-import * as cloud from '../cloud.js?v=dev101x-v100';
-import { appState } from '../state.js?v=dev101x-v100';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v100';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v100';
+import { esc } from '../lib/html.js?v=dev101x-v101';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v101';
+import { isCloudEnabled } from '../config.js?v=dev101x-v101';
+import * as cloud from '../cloud.js?v=dev101x-v101';
+import { appState } from '../state.js?v=dev101x-v101';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v101';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v101';
+import { openNetLab, refreshNetLabTasks, drawTopology, currentNet, resetNetLab } from './net-lab.js?v=dev101x-v101';
+import { createNetwork, importNetState } from '../lib/netsim.js?v=dev101x-v101';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',
@@ -80,7 +82,8 @@ export async function renderCourseAula(container, courseId) {
   paintAula(container);
 }
 
-const introLines = content => (content.terminal.intro || []).map(([text, type]) => ({ text, type }));
+// Líneas iniciales de la terminal simulada. En los cursos de red, intro es el texto del panel de la red.
+const introLines = content => (Array.isArray(content.terminal.intro) ? content.terminal.intro : []).map(([text, type]) => ({ text, type }));
 
 // El estado guardado lo escribe el propio alumno: se valida antes de usarlo (solo variables
 // conocidas, textos cortos y tipos de línea permitidos).
@@ -102,12 +105,14 @@ function restoreState(id, content, steps, saved) {
     if (lines.length) S0.lines = [...lines, { text: '— Sesión restaurada: sigues donde lo dejaste —', type: 'slate' }];
   }
   if (explKeys.includes(saved.expl)) S0.expl = saved.expl;
+  // Laboratorio de red: direcciones y rutas que cambió el alumno (net-lab las valida al aplicarlas).
+  if (saved.net && typeof saved.net === 'object' && JSON.stringify(saved.net).length < 8000) S0.netState = saved.net;
   return S0;
 }
 
 function scheduleSave() {
   if (!S) return;
-  pendingSave = { id: S.id, data: { v: 1, vars: S.state, lines: S.lines.slice(-SAVED_LINES), expl: S.expl } };
+  pendingSave = { id: S.id, data: { v: 1, vars: S.state, lines: S.lines.slice(-SAVED_LINES), expl: S.expl, ...(S.netState ? { net: S.netState } : {}) } };
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flushSave, SAVE_DELAY);
 }
@@ -167,7 +172,7 @@ function paintAula(container) {
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
         <div class="lg:col-span-8 flex flex-col gap-4 sm:gap-5 min-w-0">
-        <section class="bg-term rounded-2xl border border-term-line overflow-hidden font-mono text-xs" aria-label="Terminal del laboratorio">
+        ${isNet() ? netPanelHtml() : `<section class="bg-term rounded-2xl border border-term-line overflow-hidden font-mono text-xs" aria-label="Terminal del laboratorio">
           <div class="p-3 bg-term-2 text-slate-300 flex items-center justify-between gap-2 text-[11px] border-b border-term-line">
             <div class="flex items-center gap-2.5 min-w-0">
               <div class="hidden sm:flex items-center gap-1.5" aria-hidden="true"><span class="w-3 h-3 rounded-full bg-[#ff5f56]/80"></span><span class="w-3 h-3 rounded-full bg-[#ffbd2e]/80"></span><span class="w-3 h-3 rounded-full bg-[#27c93f]/80"></span></div>
@@ -197,7 +202,7 @@ function paintAula(container) {
           </form>
           </div>
           <div id="c-linux" class="hidden"></div>
-        </section>
+        </section>`}
         ${explanationsPanelHtml()}
         </div>
 
@@ -238,6 +243,111 @@ function paintAula(container) {
       </div>
     </div>`;
   renderScreen();
+  drawNetMini();
+}
+
+// ---------------------------------------------------------------------------
+// Laboratorio de red (terminal.kind = 'network'): en vez de una terminal, la red de equipos. Se practica en una
+// ventana (js/views/net-lab.js) con la consola de cada equipo; los pasos salen de los eventos de cada comando
+// según las reglas del curso (terminal.netSteps: { step, match: { campo: valor }, after? }).
+// ---------------------------------------------------------------------------
+const isNet = () => Boolean(S && S.content.terminal && S.content.terminal.kind === 'network' && S.content.terminal.network);
+
+function netPanelHtml() {
+  const t = S.content.terminal;
+  return `
+        <section class="bg-surface rounded-2xl border border-line overflow-hidden" aria-label="Laboratorio de red">
+          <div class="px-4 py-3 border-b border-line flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-ink font-mono uppercase">${esc(t.title || 'Laboratorio de red')}</span>
+            <button type="button" data-action="c-net-reset" title="Vuelve la red a como estaba al principio (no borra tu progreso)" class="px-2.5 h-7 inline-flex items-center rounded-lg border border-line hover:border-rose-300 text-rose-600 text-[11px] font-semibold">Reiniciar red</button>
+          </div>
+          <div class="nl-mini bg-bg"><svg id="c-net-mini" class="nl-svg" role="group" aria-label="Equipos de la red: pulsa uno para abrir su consola"></svg></div>
+          <div class="px-4 py-3 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p class="text-xs text-muted leading-relaxed">${esc(t.intro || 'Pulsa un equipo para abrir su consola. Cada equipo tiene su IP, sus rutas y sus servicios.')}</p>
+            <button type="button" data-action="c-net-open" class="self-start sm:self-auto shrink-0 inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">lan</span>Abrir la red
+            </button>
+          </div>
+        </section>`;
+}
+
+// Miniatura de la red en el aula: cada equipo abre la ventana con su consola.
+function drawNetMini() {
+  const svg = document.getElementById('c-net-mini');
+  if (!svg || !isNet()) return;
+  let net = currentNet(S.id);
+  if (!net) { net = createNetwork(S.content.terminal.network.spec); if (S.netState) importNetState(net, S.netState); }
+  drawTopology(svg, S.content.terminal.network, { net, interactive: false });
+  svg.querySelectorAll('.nl-node').forEach(n => { n.setAttribute('data-action', 'c-net-open'); n.setAttribute('data-dev', n.dataset.dev); });
+}
+
+// Tareas de la ventana: los comandos de la lección actual (concepto como tarea, comando como pista).
+function netTasks() {
+  const p = computeCourseProgress(S.content, S.steps);
+  if (!p.nextLesson) return [];
+  return (p.nextLesson.requires || []).filter(s => !isCheckStep(s)).map(s => {
+    const info = S.content.steps[s] || {};
+    return { text: info.concept || s, hint: info.command ? `${info.device ? info.device + ': ' : ''}${info.command}` : '', done: Boolean(S.steps[s]) };
+  });
+}
+
+function netExtra() {
+  const p = computeCourseProgress(S.content, S.steps);
+  if (p.complete) return { text: 'Has completado todas las lecciones del curso.' };
+  const { commands, checks } = pendingCourseSteps(S.content, S.steps);
+  if (commands.length || !checks.length) return null;
+  return p.nextLesson.afterAll
+    ? { text: 'Cuando tengas las respuestas, resuelve el reto final.', button: 'Ir al reto final', arg: p.nextLesson.id }
+    : { text: 'Práctica de la lección hecha. Falta la pregunta.', button: 'Responder la pregunta', arg: p.nextLesson.id };
+}
+
+function onNetEvent(ev) {
+  if (!S || !ev) return;
+  const steps = (S.content.terminal.netSteps || [])
+    .filter(r => r && typeof r.step === 'string' && r.match && typeof r.match === 'object' && !S.steps[r.step])
+    .filter(r => Object.entries(r.match).every(([k, v]) => String(ev[k]) === String(v)))
+    .filter(r => !r.after || S.steps[r.after])
+    .map(r => r.step);
+  recordFreshSteps(steps);
+  const key = ev.cmd ? explanationFor(String(ev.cmd).replace(/^sudo /, '')) : null;
+  if (key && key !== S.expl) selectCourseExplanation(key);
+}
+
+export function openCourseNetLab(device, prefill) {
+  if (!isNet()) return;
+  const p = computeCourseProgress(S.content, S.steps);
+  const id = S.id;
+  openNetLab({
+    key: id,
+    network: S.content.terminal.network,
+    kicker: () => { const q = computeCourseProgress(S.content, S.steps); return q.nextLesson ? q.nextLesson.module : S.content.title; },
+    title: () => { const q = computeCourseProgress(S.content, S.steps); return q.nextLesson ? q.nextLesson.title : 'Curso completado'; },
+    saved: S.netState,
+    select: device || (p.nextLesson && firstDeviceOf(p.nextLesson)) || undefined,
+    prefill,
+    tasks: netTasks,
+    extra: netExtra,
+    onExtra: lessonId => { if (lessonId) openCourseLesson(lessonId); },
+    onEvent: onNetEvent,
+    onChange: state => { if (S && S.id === id) { S.netState = state; scheduleSave(); } },
+    onClose: () => { if (S && S.id === id) drawNetMini(); }
+  });
+}
+
+// Equipo con el que empieza la lección (el del primer comando que le falta).
+function firstDeviceOf(lesson) {
+  const step = (lesson.requires || []).find(s => !isCheckStep(s) && !S.steps[s]);
+  const dev = step && S.content.steps[step] && S.content.steps[step].deviceId;
+  return dev || null;
+}
+
+export function resetCourseNetLab() {
+  if (!isNet()) return;
+  if (!window.confirm('¿Reiniciar la red? Las direcciones y rutas vuelven a como estaban al principio; tu progreso se conserva.')) return;
+  resetNetLab(S.id);
+  S.netState = null;
+  drawNetMini();
+  scheduleSave();
 }
 
 function syllabusHtml() {
@@ -391,6 +501,7 @@ function applyServerSteps(serverSteps) {
     const l = after.lessons.find(x => x.id === id);
     if (l) showToast(`Lección completada: ${l.title}`, 'success');
   });
+  refreshNetLabTasks();
   if (after.complete && !before.complete) showToast('¡Felicidades! Has completado el curso.', 'success');
   // El servidor ya tiene el avance: si subió de rango, se avisa.
   if (after.lessonsDone.length > before.lessonsDone.length) scheduleRankCheck(1500);
@@ -583,6 +694,7 @@ export function resetLinuxLab() {
 }
 
 export function runCourseCmdFromUi(el) {
+  if (isNet()) { if (el.closest('#app-dialog')) closeModal('app-dialog'); openCourseNetLab(el.dataset.dev, el.dataset.cmd); return; }
   const linux = S && S.mode === 'linux';
   if (el.closest('#app-dialog')) {
     closeModal('app-dialog');
@@ -656,7 +768,7 @@ export function openCourseHint(step) {
           <summary class="list-none cursor-pointer px-4 py-3 text-xs font-semibold text-accent select-none">¿Sigues sin verlo? Muestra el comando</summary>
           <div class="px-4 pb-4 flex flex-col gap-2">
             <code class="block px-3 py-2 rounded-lg bg-term text-emerald-300 font-mono text-xs break-all">${esc(info.command || '')}</code>
-            <button type="button" data-action="c-run" data-cmd="${esc(info.command || '')}" class="self-start h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold">Ejecutar en la terminal</button>
+            <button type="button" data-action="c-run" data-cmd="${esc(info.command || '')}"${info.deviceId ? ` data-dev="${esc(info.deviceId)}"` : ''} class="self-start h-9 px-4 rounded-xl bg-accent hover:bg-accent2 text-white text-xs font-semibold">${info.device ? `Escribirlo en la consola de ${esc(info.device)}` : 'Ejecutar en la terminal'}</button>
           </div>
         </details>
       </div>`
@@ -714,7 +826,7 @@ export function openCourseLesson(id) {
           <p class="text-[13px] ${ok ? 'text-ink2' : 'text-ink'}">${esc(info.concept || step)}</p>
           <details class="mt-1">
             <summary class="list-none cursor-pointer text-[11px] font-semibold text-accent hover:underline select-none">${ok ? 'Ver el comando' : 'Pista: ver el comando'}</summary>
-            <button type="button" data-action="c-run" data-cmd="${esc(info.command || '')}" class="mt-1.5 max-w-full text-left px-2.5 py-1.5 rounded-lg bg-term hover:bg-term-3 text-emerald-300 font-mono text-[11px] truncate transition-colors">${esc(info.command || '')}</button>
+            <button type="button" data-action="c-run" data-cmd="${esc(info.command || '')}"${info.deviceId ? ` data-dev="${esc(info.deviceId)}"` : ''} class="mt-1.5 max-w-full text-left px-2.5 py-1.5 rounded-lg bg-term hover:bg-term-3 text-emerald-300 font-mono text-[11px] truncate transition-colors">${esc(info.command || '')}</button>
           </details>
         </div>
       </li>`;

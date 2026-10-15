@@ -46,11 +46,12 @@ write('js/main.js', main);
 write('index.html', read('index.html').replace(/dev101x-v\d+/g, next));
 // Páginas estáticas de cada curso (scripts/course-pages.mjs).
 const { courses } = JSON.parse(read('scripts/course-pages.json'));
-for (const slug of [...courses.map(c => c.slug), 'lab-linux', 'privacidad', 'terminos', 'cookies']) {
+for (const slug of [...courses.map(c => c.slug), 'lab-linux', 'lab-red', 'privacidad', 'terminos', 'cookies']) {
   try { write(`${slug}/index.html`, read(`${slug}/index.html`).replace(/dev101x-v\d+/g, next)); } catch (e) { /* aún no generada */ }
 }
 write('lab-linux/embed.html', read('lab-linux/embed.html').replace(/dev101x-v\d+/g, next));
 write('lab-linux/lab.js', read('lab-linux/lab.js').replace(/dev101x-v\d+/g, next)); // URL de lab-hook.sh
+write('lab-red/lab-red.js', read('lab-red/lab-red.js').replace(/dev101x-v\d+/g, next)); // prototipo del laboratorio de redes
 let sw = read('sw.js').replace(/dev101x-v\d+/g, next);
 sw = sw.replace(/'(\.\/js\/[^'?]+\.js)(?:\?v=[^']*)?'/g, `'$1?v=${next}'`);
 write('sw.js', sw);
