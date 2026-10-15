@@ -90,5 +90,18 @@ export const PUBLIC_COURSES = [
     "free": false,
     "logo": "assets/logos/owasp-bn.svg",
     "pitch": "Encuentra y reporta fallos del OWASP Top 10 con una línea ética clara."
+  },
+  {
+    "id": "redes-101",
+    "slug": "redes",
+    "title": "Redes para ciberseguridad desde cero",
+    "short": "Redes",
+    "category": "CIBERSEGURIDAD",
+    "duration": "2 Semanas",
+    "lessons": 12,
+    "labs": 5,
+    "free": true,
+    "logo": "assets/logos/redes-red.svg",
+    "pitch": "Arregla la red de una oficina: rutas, DNS, puertos y HTTPS."
   }
 ];

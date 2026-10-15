@@ -1,6 +1,6 @@
 // Prototipo del laboratorio de redes: una lección de muestra con la ventana de la red (js/views/net-lab.js).
 // El curso de verdad (con progreso, preguntas y reto) vive en el aula; esto es solo para probar la ventana.
-import { openNetLab } from '/js/views/net-lab.js?v=dev101x-v101';
+import { openNetLab } from '/js/views/net-lab.js?v=dev101x-v102';
 
 const network = {
   spec: {

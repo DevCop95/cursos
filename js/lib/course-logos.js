@@ -9,7 +9,8 @@ export const COURSE_LOGOS = {
   'osint-101': 'assets/logos/osint-huella.svg',
   'linux-101': 'assets/logos/linux-bn.svg',
   'devsec-101': 'assets/logos/devsec-escudo.svg',
-  'webhacking-101': 'assets/logos/owasp-bn.svg'
+  'webhacking-101': 'assets/logos/owasp-bn.svg',
+  'redes-101': 'assets/logos/redes-red.svg'
 };
 
 export const courseLogo = id => COURSE_LOGOS[id] || '';

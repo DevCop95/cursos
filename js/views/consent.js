@@ -5,11 +5,11 @@
  *  - Sin sesión: aviso breve de cookies en la portada; se recuerda en este navegador.
  * Cuando se cambie un documento: subir LEGAL_VERSION y la versión en public.legal_documents (migración).
  */
-import { appState, isSessionValid } from '../state.js?v=dev101x-v101';
-import { isCloudEnabled } from '../config.js?v=dev101x-v101';
-import { fetchPendingLegal, acceptLegal } from '../cloud.js?v=dev101x-v101';
-import { showToast } from '../ui.js?v=dev101x-v101';
-import { esc } from '../lib/html.js?v=dev101x-v101';
+import { appState, isSessionValid } from '../state.js?v=dev101x-v102';
+import { isCloudEnabled } from '../config.js?v=dev101x-v102';
+import { fetchPendingLegal, acceptLegal } from '../cloud.js?v=dev101x-v102';
+import { showToast } from '../ui.js?v=dev101x-v102';
+import { esc } from '../lib/html.js?v=dev101x-v102';
 
 export const LEGAL_VERSION = '2026-10-13';
 const DOCS = {

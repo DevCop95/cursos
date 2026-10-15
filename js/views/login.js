@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v101';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v101';
-import { esc } from '../lib/html.js?v=dev101x-v101';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v101';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v101';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v101';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v101';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v101';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v101';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v102';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v102';
+import { esc } from '../lib/html.js?v=dev101x-v102';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v102';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v102';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v102';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v102';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v102';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v102';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -357,6 +357,7 @@ function openLoginModal() {
 const COURSE_TOOLS = {
   'pentesting-101': 'nmap · PowerShell',
   'linux-101': 'ls · chmod · grep',
+  'redes-101': 'ip · dig · curl',
   'git-github-101': 'git · ssh · gh',
   'shodan-101': 'shodan · filtros',
   'osint-101': 'exiftool · sherlock',
@@ -429,6 +430,14 @@ const DEMO_SCENES = [
     { cmd: 'ls -l notas.txt' },
     { out: '-rw------- 1 ana ana 312 notas.txt' },
     { out: '✓ Solo ana puede leerlo', tone: 'ok' }
+  ] },
+  { id: 'redes-101', pick: 'Redes', title: 'Redes desde cero', prompt: '$', steps: [
+    { cmd: 'ping -c 1 10.0.0.20' },
+    { out: 'ping: connect: Network is unreachable', tone: 'muted' },
+    { cmd: 'ip route add default via 192.168.1.1' },
+    { cmd: 'ping -c 1 10.0.0.20' },
+    { out: '64 bytes from 10.0.0.20: icmp_seq=1 ttl=63', tone: 'info' },
+    { out: '✓ Puerta de enlace arreglada', tone: 'ok' }
   ] },
   { id: 'git-github-101', pick: 'Git', title: 'Git y GitHub', prompt: '$', steps: [
     { cmd: 'git switch -c mi-rama' },

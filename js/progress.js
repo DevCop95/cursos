@@ -1,10 +1,10 @@
 /**
  * Registro del progreso del alumno: guarda en localStorage y, en modo nube, sincroniza con Supabase.
  */
-import { appState, saveState, getProgressRecord } from './state.js?v=dev101x-v101';
-import { computeProgress, mergeSteps, isCommandStep, applyProgressReset } from './lab.js?v=dev101x-v101';
-import * as cloud from './cloud.js?v=dev101x-v101';
-import { computeStreak } from './lib/activity.js?v=dev101x-v101';
+import { appState, saveState, getProgressRecord } from './state.js?v=dev101x-v102';
+import { computeProgress, mergeSteps, isCommandStep, applyProgressReset } from './lab.js?v=dev101x-v102';
+import * as cloud from './cloud.js?v=dev101x-v102';
+import { computeStreak } from './lib/activity.js?v=dev101x-v102';
 
 // Señal de presencia para el panel de admin: cada minuto mientras la pestaña está visible.
 const PRESENCE_INTERVAL_MS = 60 * 1000;

@@ -273,6 +273,57 @@
       "short": "Web Hacking",
       "practice": "Practicas con curl contra la API de una tienda ficticia en una terminal simulada en el navegador, siguiendo las reglas de un programa de bug bounty real.",
       "pitch": "Encuentra y reporta fallos del OWASP Top 10 con una línea ética clara."
+    },
+    {
+      "slug": "redes",
+      "id": "redes-101",
+      "seoTitle": "Curso de redes gratis desde cero para ciberseguridad | Dev101x",
+      "seoDescription": "Curso gratis en español de redes desde cero: direcciones IP, puerta de enlace y rutas, DNS, puertos, HTTP y HTTPS, practicando en una red de equipos simulada en el navegador con la consola de cada uno.",
+      "free": true,
+      "workload": "PT14H",
+      "title": "Redes para ciberseguridad desde cero",
+      "category": "CIBERSEGURIDAD",
+      "duration": "2 Semanas",
+      "description": "Aprende cómo se comunican los equipos de una red: direcciones IP, puerta de enlace y rutas, DNS, puertos y servicios, HTTP y HTTPS. Practicas en una oficina simulada con PCs, un router y servidores: abres la consola de cada equipo, ves viajar los paquetes por los cables y arreglas los fallos de la red.",
+      "objectives": [
+        "Leer direcciones IP y máscaras, y saber cuándo dos equipos están en la misma red.",
+        "Entender la puerta de enlace y la tabla de rutas, y arreglar un equipo que no sale de su red.",
+        "Resolver nombres con DNS y distinguir un fallo de nombre de un fallo de red.",
+        "Ver qué puertos tiene abiertos un servidor y probarlos desde otro equipo.",
+        "Leer una petición HTTP completa y el certificado de una web HTTPS."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Direcciones IP",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 2: Puerta de enlace y rutas",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 3: DNS",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 4: Puertos y servicios",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 5: HTTP y HTTPS",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 6: Reto final",
+          "lessons": 1
+        }
+      ],
+      "labs": 5,
+      "videoAuthor": "NASeros",
+      "logo": "assets/logos/redes-red.svg",
+      "short": "Redes",
+      "practice": "Practicas en una red simulada dentro del navegador: abres la consola de cada equipo y ves viajar los paquetes por los cables, sin instalar nada.",
+      "pitch": "Arregla la red de una oficina: rutas, DNS, puertos y HTTPS."
     }
   ]
 }
