@@ -5,12 +5,14 @@
  *  - Sin sesión: aviso breve de cookies en la portada; se recuerda en este navegador.
  * Cuando se cambie un documento: subir LEGAL_VERSION y la versión en public.legal_documents (migración).
  */
-import { appState, isSessionValid } from '../state.js?v=dev101x-v102';
-import { isCloudEnabled } from '../config.js?v=dev101x-v102';
-import { fetchPendingLegal, acceptLegal } from '../cloud.js?v=dev101x-v102';
-import { showToast } from '../ui.js?v=dev101x-v102';
-import { esc } from '../lib/html.js?v=dev101x-v102';
+import { appState, isSessionValid } from '../state.js?v=dev101x-v103';
+import { isCloudEnabled, CONFIG } from '../config.js?v=dev101x-v103';
+import { fetchPendingLegal, acceptLegal, setEmailOptIn } from '../cloud.js?v=dev101x-v103';
+import { showToast } from '../ui.js?v=dev101x-v103';
+import { esc } from '../lib/html.js?v=dev101x-v103';
 
+// Al activar los avisos por correo (CONFIG.emailReminders) pasa a '2026-10-15' junto con la nueva privacidad
+// (supabase/pendiente/privacidad-2026-10-15.html) y public.legal_documents.
 export const LEGAL_VERSION = '2026-10-13';
 const DOCS = {
   terms: { label: 'He leído y acepto los', link: 'Términos y condiciones', href: '/terminos/' },
@@ -67,6 +69,10 @@ function showConsent(docs, userId, onDecline) {
             <span>${esc(DOCS[d].label)} <a href="${DOCS[d].href}" target="_blank" rel="noopener" class="font-semibold text-accent hover:underline">${esc(DOCS[d].link)}</a>.</span>
           </label>`).join('')}
       </div>
+      ${CONFIG.emailReminders ? `<label class="flex items-start gap-2.5 pt-3 border-t border-line text-[13px] text-ink2 leading-snug cursor-pointer">
+        <input type="checkbox" data-consent-email class="mt-0.5 w-4 h-4 shrink-0 accent-[#005c38]" />
+        <span>Quiero recibir por correo avisos sobre mi progreso. <span class="text-muted">Opcional: puedes cambiarlo en tu perfil o darte de baja desde cualquier correo.</span></span>
+      </label>` : ''}
       <p data-consent-error role="alert" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
       <div class="flex items-center justify-between gap-3 pt-1">
         <button type="button" data-consent-decline class="text-[13px] font-semibold text-muted hover:text-ink">Salir</button>
@@ -88,9 +94,13 @@ function showConsent(docs, userId, onDecline) {
     try {
       const left = await acceptLegal(docs);
       if (left > 0) throw new Error('Quedan documentos pendientes');
+      const emailBox = overlay.querySelector('[data-consent-email]');
+      const wantsEmail = Boolean(emailBox && emailBox.checked);
       markAccepted(userId);
       closeConsent();
       showToast('Gracias. Ya puedes seguir con tus cursos.', 'success');
+      // El permiso de correo es aparte y opcional: si falla, no bloquea la entrada (se puede activar en el perfil).
+      if (wantsEmail) setEmailOptIn(true, 'consent').catch(() => showToast('No se pudieron activar los avisos por correo. Puedes hacerlo desde tu perfil.', 'error'));
     } catch (e) {
       error.textContent = 'No se pudo guardar tu aceptación. Revisa tu conexión e inténtalo de nuevo.';
       error.classList.remove('hidden');

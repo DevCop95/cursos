@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v102';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v103';
 
 let clientPromise = null;
 
@@ -92,7 +92,7 @@ export async function signOut() {
 export async function fetchOwnProfile(userId) {
   const client = await getClient();
   if (!client) return null;
-  const { data, error } = await client.from('profiles').select('id, email, full_name, display_name, role').eq('id', userId).maybeSingle();
+  const { data, error } = await client.from('profiles').select('id, email, full_name, display_name, role, email_opt_in').eq('id', userId).maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -346,6 +346,24 @@ export async function acceptLegal(documents) {
   return data;
 }
 
+// Avisos por correo (opcionales): el servidor guarda la fecha y un registro de cada cambio (source: consent | perfil).
+export async function setEmailOptIn(on, source = 'perfil') {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { data, error } = await client.rpc('set_email_opt_in', { p_on: Boolean(on), p_source: source });
+  if (error) throw error;
+  return data;
+}
+
+// Baja desde el enlace de un correo (?baja=<token>), sin necesidad de iniciar sesión.
+export async function emailUnsubscribe(token) {
+  const client = await getClient();
+  if (!client) return false;
+  const { data, error } = await client.rpc('email_unsubscribe', { p_token: token });
+  if (error) throw error;
+  return Boolean(data);
+}
+
 // Catálogo: los alumnos ven los publicados; los admin, todos.
 export async function fetchCourses() {
   const client = await getClient();
@@ -359,13 +377,14 @@ export async function fetchCourses() {
 export async function adminListStudents() {
   const client = await getClient();
   if (!client) throw new Error('Supabase no está configurado.');
-  const [profiles, progress, access, completions, courseProgress, consents] = await Promise.all([
-    client.from('profiles').select('id, email, full_name, display_name, avatar_url, role, access_level, last_login, last_seen, created_at').order('created_at', { ascending: false }),
+  const [profiles, progress, access, completions, courseProgress, consents, nudges] = await Promise.all([
+    client.from('profiles').select('id, email, full_name, display_name, avatar_url, role, access_level, last_login, last_seen, created_at, email_opt_in, email_opt_in_at').order('created_at', { ascending: false }),
     client.from('student_progress').select('user_id, steps, progress_percentage, completed_at'),
     client.from('course_access').select('user_id, course_id, enabled'),
     client.from('course_completions').select('user_id, course_id, completed_at'),
     client.from('course_progress').select('user_id, course_id, progress_percentage, completed_at'),
-    client.from('legal_consents').select('user_id, document, version, accepted_at').order('accepted_at')
+    client.from('legal_consents').select('user_id, document, version, accepted_at').order('accepted_at'),
+    client.from('nudges').select('user_id, kind, created_at, email_status').order('created_at')
   ]);
   const err = profiles.error || progress.error || access.error || completions.error || courseProgress.error;
   if (err) throw err;
@@ -378,7 +397,8 @@ export async function adminListStudents() {
     access: access.data.filter(r => r.user_id === p.id),
     completions: completions.data.filter(r => r.user_id === p.id),
     courseProgress: courseProgress.data.filter(r => r.user_id === p.id),
-    consents: (consents.data || []).filter(r => r.user_id === p.id) // aceptaciones de términos, privacidad y cookies
+    consents: (consents.data || []).filter(r => r.user_id === p.id), // aceptaciones de términos, privacidad y cookies
+    nudges: (nudges.data || []).filter(r => r.user_id === p.id) // recordatorios automáticos enviados
   }));
 }
 

@@ -180,15 +180,15 @@
   <link rel="preconnect" href="https://tkiknjszqllztzqnvhnz.supabase.co" crossorigin />
   <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/assets/fonts/dm-mono-400-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v102" />
+  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v103" />
 
-  <link rel="stylesheet" href="css/tailwind.css?v=dev101x-v102" />
-  <link rel="stylesheet" href="css/app.css?v=dev101x-v102" />
+  <link rel="stylesheet" href="css/tailwind.css?v=dev101x-v103" />
+  <link rel="stylesheet" href="css/app.css?v=dev101x-v103" />
 
-  <script src="js/theme-boot.js?v=dev101x-v102"></script>
-  <script src="js/identicon.js?v=dev101x-v102" defer></script>
-  <script src="js/water-reveal.js?v=dev101x-v102" defer></script>
-  <script type="module" src="js/main.js?v=dev101x-v102"></script>
+  <script src="js/theme-boot.js?v=dev101x-v103"></script>
+  <script src="js/identicon.js?v=dev101x-v103" defer></script>
+  <script src="js/water-reveal.js?v=dev101x-v103" defer></script>
+  <script type="module" src="js/main.js?v=dev101x-v103"></script>
 </head>
 
 <body class="bg-bg font-sans text-ink antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
@@ -286,10 +286,35 @@
     </div>
   </nav>
 
-  <footer id="app-footer" class="hidden max-md:!hidden w-full bg-surface border-t border-line py-5 text-xs text-muted font-mono">
-    <div class="max-w-[1280px] mx-auto px-gutter flex items-center justify-between gap-4">
-      <span>&copy; Dev<em class="not-italic text-accent font-bold">101x</em> · <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="hover:text-accent">Portafolio</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="hover:text-accent">GitHub</a> · <a href="/terminos/" class="hover:text-accent">Términos</a> · <a href="/privacidad/" class="hover:text-accent">Privacidad</a> · <a href="/cookies/" class="hover:text-accent">Cookies</a></span>
-      <a href="#/panel-admin" data-admin-only class="hidden text-accent font-bold hover:underline">Admin</a>
+  <footer id="app-footer" class="hidden max-md:!hidden w-full bg-surface border-t border-line text-xs">
+    <div class="max-w-[1280px] mx-auto px-gutter py-8 flex items-start justify-between gap-10">
+      <div class="flex flex-col gap-2 max-w-xs">
+        <span class="font-extrabold text-[15px] tracking-tight text-ink">Dev<em class="not-italic text-accent">101x</em> Cursos</span>
+        <p class="text-muted leading-relaxed">Cursos de ciberseguridad en español. Cada lección se practica escribiendo comandos.</p>
+      </div>
+      <nav class="grid grid-cols-3 gap-x-14" aria-label="Pie de página">
+        <div class="flex flex-col gap-2.5">
+          <p class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Plataforma</p>
+          <a href="#/mis-cursos" class="text-ink2 hover:text-accent">Mis cursos</a>
+          <a href="#/explorar-cursos" class="text-ink2 hover:text-accent">Catálogo</a>
+          <a href="#/perfil" class="text-ink2 hover:text-accent">Mi perfil</a>
+          <a href="#/panel-admin" data-admin-only class="hidden text-accent font-semibold hover:underline">Panel de administración</a>
+        </div>
+        <div class="flex flex-col gap-2.5">
+          <p class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Legal</p>
+          <a href="/terminos/" class="text-ink2 hover:text-accent">Términos y condiciones</a>
+          <a href="/privacidad/" class="text-ink2 hover:text-accent">Privacidad</a>
+          <a href="/cookies/" class="text-ink2 hover:text-accent">Cookies</a>
+        </div>
+        <div class="flex flex-col gap-2.5">
+          <p class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Autor</p>
+          <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="text-ink2 hover:text-accent">Portafolio</a>
+          <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="text-ink2 hover:text-accent">GitHub</a>
+        </div>
+      </nav>
+    </div>
+    <div class="border-t border-line/60">
+      <p class="max-w-[1280px] mx-auto px-gutter py-3 text-[11px] font-mono text-muted">&copy; 2026 Dev101x · Yared Henriquez</p>
     </div>
   </footer>
 

@@ -2,24 +2,24 @@
  * Dev101x — Punto de entrada: enrutado, cabecera/navegación y delegación de eventos.
  * No hay manejadores inline (onclick=…): todos los controles usan data-action.
  */
-import { appState, isSessionValid } from './state.js?v=dev101x-v102';
-import { resolveRoute } from './router.js?v=dev101x-v102';
-import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, startGoogleLogin, authFlow, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v102';
-import { showToast, closeModal, avatarFor } from './ui.js?v=dev101x-v102';
-import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v102';
-import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v102';
-import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v102';
-import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v102';
-import { createHistory } from './lib/cmd-history.js?v=dev101x-v102';
-import { COURSE } from './content.js?v=dev101x-v102';
-import { fetchCourses } from './cloud.js?v=dev101x-v102';
-import { rememberLastCourse } from './views/resume.js?v=dev101x-v102';
-import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v102';
-import { startPresence } from './progress.js?v=dev101x-v102';
-import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v102';
-import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v102';
-import { checkConsent, closeConsent, showCookieNotice, hideCookieNotice } from './views/consent.js?v=dev101x-v102';
-import { toggleDark, syncThemeButtons } from './lib/theme.js?v=dev101x-v102';
+import { appState, isSessionValid } from './state.js?v=dev101x-v103';
+import { resolveRoute } from './router.js?v=dev101x-v103';
+import { isAdmin, logout, revalidateSession, takeOAuthRedirect, completeOAuthRedirect, startGoogleLogin, authFlow, takeNewCourseAccess, checkNewCourseAccess } from './auth.js?v=dev101x-v103';
+import { showToast, closeModal, avatarFor, openDialog } from './ui.js?v=dev101x-v103';
+import { initSearch, openSearch, closeSearch } from './search.js?v=dev101x-v103';
+import { renderLogin, setLoginStatus, loginWithGoogle, forgetAccount } from './views/login.js?v=dev101x-v103';
+import { renderMisCursos, renderExplorar, openCourseDetail, openDbCourseDetail, requestAccess } from './views/courses.js?v=dev101x-v103';
+import { renderPerfil, openAccountDetails, openNameDialog, submitName } from './views/perfil.js?v=dev101x-v103';
+import { createHistory } from './lib/cmd-history.js?v=dev101x-v103';
+import { COURSE } from './content.js?v=dev101x-v103';
+import { fetchCourses, emailUnsubscribe } from './cloud.js?v=dev101x-v103';
+import { rememberLastCourse } from './views/resume.js?v=dev101x-v103';
+import { openMessages, submitMessage, submitAdminReply, updateCounter, refreshUnreadMessages } from './views/messages.js?v=dev101x-v103';
+import { startPresence } from './progress.js?v=dev101x-v103';
+import { scheduleRankCheck } from './views/rank-notice.js?v=dev101x-v103';
+import { showLoader, hideLoader } from './views/loader.js?v=dev101x-v103';
+import { checkConsent, closeConsent, showCookieNotice, hideCookieNotice } from './views/consent.js?v=dev101x-v103';
+import { toggleDark, syncThemeButtons } from './lib/theme.js?v=dev101x-v103';
 
 const $ = id => document.getElementById(id);
 
@@ -29,9 +29,9 @@ function lazy(load) {
   let p = null;
   return () => (p = p || load().catch(err => { p = null; throw err; }));
 }
-const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v102'));
-const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v102'));
-const adminView = lazy(() => import('./views/admin.js?v=dev101x-v102'));
+const aulaView = lazy(() => import('./views/aula.js?v=dev101x-v103'));
+const courseView = lazy(() => import('./views/course-aula.js?v=dev101x-v103'));
+const adminView = lazy(() => import('./views/admin.js?v=dev101x-v103'));
 // Ejecuta fn(módulo) cuando está listo (dentro del aula ya lo está).
 const withView = (view, fn) => view().then(fn, () => showToast('No se pudo cargar esta sección. Revisa tu conexión y recarga.', 'error'));
 function prefetchViews() {
@@ -387,6 +387,23 @@ const oauthRedirect = takeOAuthRedirect();
 if (oauthRedirect) setLoginStatus(oauthRedirect.code ? { type: 'pending' } : null);
 render();
 syncThemeButtons();
+
+// Baja de los avisos por correo desde el enlace de un correo (?baja=<token>): no hace falta iniciar sesión.
+const unsubToken = new URLSearchParams(window.location.search).get('baja');
+if (unsubToken) {
+  history.replaceState(null, '', window.location.pathname + (window.location.hash || ''));
+  const done = ok => openDialog({
+    title: ok ? 'Te has dado de baja' : 'Enlace no válido',
+    body: `<p class="text-sm text-ink2 leading-relaxed">${ok
+      ? 'Ya no recibirás avisos por correo de Dev101x Cursos. Si cambias de idea, puedes activarlos de nuevo en tu perfil, en «Habilidades y cuenta».'
+      : 'Este enlace de baja no es válido o ya no existe. Puedes desactivar los avisos por correo desde tu perfil, en «Habilidades y cuenta».'}</p>`
+  });
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unsubToken)) {
+    emailUnsubscribe(unsubToken).then(done).catch(() => showToast('No se pudo completar la baja. Inténtalo de nuevo en un momento.', 'error'));
+  } else {
+    done(false);
+  }
+}
 if (oauthRedirect) {
   completeOAuthRedirect(oauthRedirect).then(result => {
     if (!result.ok && result.retry) {
@@ -417,7 +434,7 @@ revalidateSession()
 window.addEventListener('pageshow', e => { if (e.persisted) authFlow.busy = false; });
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v102').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=dev101x-v103').catch(() => {}));
   // Cuando se activa una versión nueva del service worker hay que recargar una vez para no mezclar archivos de
   // dos despliegues (solo si ya había uno antes: la primera visita no recarga). No se hace de golpe: se espera a
   // que la pestaña quede en segundo plano (no se ve) o al siguiente cambio de página (con la pantalla de carga).

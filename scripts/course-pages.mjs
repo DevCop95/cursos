@@ -163,8 +163,14 @@ function page(c, other) {
       </section>
     </main>
 
-    <footer class="text-center text-[11px] text-muted pt-2 pb-4">
-      Cursos creados por <a href="https://dev101x.online/" rel="author noopener" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a> · <a href="/terminos/" class="font-semibold text-ink2 hover:text-accent">Términos</a> · <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent">Privacidad</a> · <a href="/cookies/" class="font-semibold text-ink2 hover:text-accent">Cookies</a>
+    <footer class="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 pt-2 pb-4 text-[12px] text-muted">
+      <p>Cursos creados por <a href="https://dev101x.online/" rel="author noopener" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez</a></p>
+      <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Pie de página">
+        <a href="https://github.com/DevCop95" rel="me noopener" class="hover:text-accent">GitHub</a>
+        <a href="/terminos/" class="hover:text-accent">Términos</a>
+        <a href="/privacidad/" class="hover:text-accent">Privacidad</a>
+        <a href="/cookies/" class="hover:text-accent">Cookies</a>
+      </nav>
     </footer>
   </div>
 </body>

@@ -16,7 +16,9 @@ export const CONFIG = {
   // Duración de la sesión en modo local (en modo nube la gestiona Supabase con refresh tokens)
   localSessionTtlMs: 7 * 24 * 60 * 60 * 1000,
 
-  defaultCourseId: 'pentesting-101'
+  defaultCourseId: 'pentesting-101',
+  // Avisos por correo (casilla al aceptar e interruptor del perfil). Apagado hasta configurar el envío de correos.
+  emailReminders: false
 };
 
 export function isCloudEnabled() {

@@ -1,7 +1,7 @@
 /**
  * Utilidades de interfaz compartidas: toasts, modales y avatar.
  */
-import { safeUrl } from './lib/html.js?v=dev101x-v102';
+import { safeUrl } from './lib/html.js?v=dev101x-v103';
 
 export function showToast(message, type = 'info') {
   const toast = document.createElement('div');

@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v102';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v102';
-import { esc } from '../lib/html.js?v=dev101x-v102';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v102';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v102';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v102';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v102';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v102';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v102';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v103';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v103';
+import { esc } from '../lib/html.js?v=dev101x-v103';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v103';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v103';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v103';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v103';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v103';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v103';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -305,7 +305,15 @@ export function renderLogin(container, onSuccess) {
         </button>
       </section>
 
-      <p class="text-center text-[11px] text-muted px-4 pb-2">Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez (Dev101x)</a> · <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">GitHub DevCop95</a> · <a href="/terminos/" class="font-semibold text-ink2 hover:text-accent">Términos</a> · <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent">Privacidad</a> · <a href="/cookies/" class="font-semibold text-ink2 hover:text-accent">Cookies</a></p>
+      <footer class="w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-2 pt-1 pb-3 text-[12px] text-muted">
+        <p>Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez</a></p>
+        <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Pie de página">
+          <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="hover:text-accent">GitHub</a>
+          <a href="/terminos/" class="hover:text-accent">Términos</a>
+          <a href="/privacidad/" class="hover:text-accent">Privacidad</a>
+          <a href="/cookies/" class="hover:text-accent">Cookies</a>
+        </nav>
+      </footer>
     </div>
 
     <div id="login-modal" class="modal-backdrop hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">

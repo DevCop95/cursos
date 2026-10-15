@@ -1,19 +1,20 @@
 /**
  * Vista: Perfil del alumno (resumen) + ventana con habilidades y datos de la cuenta.
  */
-import { esc } from '../lib/html.js?v=dev101x-v102';
-import { appState, saveState } from '../state.js?v=dev101x-v102';
-import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v102';
-import { computeBadges } from '../lib/badges.js?v=dev101x-v102';
-import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v102';
-import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v102';
-import { isAdmin } from '../auth.js?v=dev101x-v102';
-import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName } from '../cloud.js?v=dev101x-v102';
-import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v102';
-import { COURSE } from '../content.js?v=dev101x-v102';
-import { paintResume } from './resume.js?v=dev101x-v102';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v102';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v102'; // curso de Nmap: su progreso vive en progress.js
+import { esc } from '../lib/html.js?v=dev101x-v103';
+import { CONFIG } from '../config.js?v=dev101x-v103';
+import { appState, saveState } from '../state.js?v=dev101x-v103';
+import { currentProgress, currentSteps, fetchStreak } from '../progress.js?v=dev101x-v103';
+import { computeBadges } from '../lib/badges.js?v=dev101x-v103';
+import { avatarFor, openDialog, closeModal, showToast } from '../ui.js?v=dev101x-v103';
+import { checkDisplayName } from '../lib/display-name.js?v=dev101x-v103';
+import { isAdmin } from '../auth.js?v=dev101x-v103';
+import { fetchCourseProgress, fetchCourses, fetchAccessibleCourses, fetchUserStats, setDisplayName, fetchOwnProfile, setEmailOptIn } from '../cloud.js?v=dev101x-v103';
+import { rankView, courseIcon } from '../lib/ranks.js?v=dev101x-v103';
+import { COURSE } from '../content.js?v=dev101x-v103';
+import { paintResume } from './resume.js?v=dev101x-v103';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v103';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v103'; // curso de Nmap: su progreso vive en progress.js
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -326,6 +327,41 @@ export function openAccountDetails() {
             ${p.complete ? row('Curso completado', formatDate((appState.progress[user.email] || {}).completedAt)) : ''}
           </dl>
         </section>
+        ${user.mode === 'cloud' && CONFIG.emailReminders ? `
+        <section class="flex flex-col gap-2">
+          <h3 class="text-[11px] font-mono font-bold text-muted uppercase tracking-wide">Avisos por correo</h3>
+          <label class="flex items-start justify-between gap-3 p-3 rounded-xl border border-line bg-bg/60 cursor-pointer">
+            <span class="text-[13px] text-ink2 leading-snug">Recibir en <strong class="text-ink">${esc(user.email)}</strong> recordatorios sobre mi progreso. Como mucho dos, y nunca si ya terminaste un curso.</span>
+            <input type="checkbox" data-email-optin disabled class="mt-0.5 w-5 h-5 shrink-0 accent-[#005c38] cursor-pointer" aria-label="Recibir avisos por correo" />
+          </label>
+          <p data-email-optin-status class="text-[11px] text-muted font-mono min-h-4" role="status"></p>
+        </section>` : ''}
       </div>`
+  });
+  if (user.mode === 'cloud' && CONFIG.emailReminders) initEmailToggle(user);
+}
+
+// Interruptor de los avisos por correo: muestra el estado guardado y lo cambia en el servidor (queda registrado).
+function initEmailToggle(user) {
+  const box = document.querySelector('[data-email-optin]');
+  const status = document.querySelector('[data-email-optin-status]');
+  if (!box) return;
+  fetchOwnProfile(user.userId).then(profile => {
+    if (!document.body.contains(box)) return;
+    box.checked = Boolean(profile && profile.email_opt_in);
+    box.disabled = false;
+  }).catch(() => { if (status) status.textContent = 'No se pudo cargar esta opción.'; });
+  box.addEventListener('change', async () => {
+    const on = box.checked;
+    box.disabled = true;
+    try {
+      await setEmailOptIn(on, 'perfil');
+      if (status) status.textContent = on ? 'Activado. Puedes darte de baja desde cualquier correo.' : 'Desactivado. Ya no recibirás correos.';
+    } catch (e) {
+      box.checked = !on;
+      if (status) status.textContent = 'No se pudo guardar. Inténtalo de nuevo.';
+    } finally {
+      box.disabled = false;
+    }
   });
 }

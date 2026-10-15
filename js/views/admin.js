@@ -5,20 +5,20 @@
  *  - Cursos: catálogo con los interruptores Gratis y Publicado.
  * La regla de acceso la aplica el servidor (can_access_course); lib/access.js solo la explica.
  */
-import { esc, toCsv } from '../lib/html.js?v=dev101x-v102';
-import { isCloudEnabled } from '../config.js?v=dev101x-v102';
-import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v102';
-import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v102';
-import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v102';
-import { rankView } from '../lib/ranks.js?v=dev101x-v102';
-import { groupRequests } from '../lib/requests.js?v=dev101x-v102';
-import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v102';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v102';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v102';
-import { openAdminThread } from './messages.js?v=dev101x-v102';
-import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v102';
-import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v102';
-import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v102';
+import { esc, toCsv } from '../lib/html.js?v=dev101x-v103';
+import { isCloudEnabled } from '../config.js?v=dev101x-v103';
+import { COURSE, LAB_STEPS } from '../content.js?v=dev101x-v103';
+import { computeProgress, isLabDone, TOTAL_LESSONS } from '../lab.js?v=dev101x-v103';
+import { adminListStudents, fetchCourses, adminSetCourseOverride, adminSetAccessLevel, adminUpdateCourse, adminResetProgress, fetchAccessRequests, adminRejectAccessRequest, fetchMessages, adminRevokeCourse, fetchUserStats } from '../cloud.js?v=dev101x-v103';
+import { rankView } from '../lib/ranks.js?v=dev101x-v103';
+import { groupRequests } from '../lib/requests.js?v=dev101x-v103';
+import { searchUsers, groupThreads } from '../lib/admin-list.js?v=dev101x-v103';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v103';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v103';
+import { openAdminThread } from './messages.js?v=dev101x-v103';
+import { avatarFor, showToast, openDialog } from '../ui.js?v=dev101x-v103';
+import { activityStatus, filterByActivity, lastActivity, relativeTime } from '../lib/activity.js?v=dev101x-v103';
+import { courseAccess, ACCESS_LEVELS } from '../lib/access.js?v=dev101x-v103';
 
 const REFRESH_MS = 60 * 1000;
 const FILTERS = [
@@ -27,7 +27,7 @@ const FILTERS = [
   { id: 'all', label: 'Todos' }
 ];
 const STATUS_BADGE = {
-  online: { label: 'En línea', dot: 'bg-emerald-500 animate-pulse', text: 'text-emerald-700' },
+  online: { label: 'En línea', dot: 'bg-emerald-500', text: 'text-emerald-700' },
   active: { label: 'Activo', dot: 'bg-sky-500', text: 'text-sky-700' },
   inactive: { label: 'Inactivo', dot: 'bg-[#b6b2a9]', text: 'text-muted' },
   never: { label: 'Sin actividad', dot: 'bg-[#d3cec5]', text: 'text-muted' }
@@ -80,16 +80,24 @@ function courseProgressItems(row) {
 }
 
 const shortTitle = title => String(title || '').split(/[\s:]+/)[0];
+// Nombre corto del curso (el de la ficha pública: "Nmap", "Redes"…) o la primera palabra del título.
+const shortName = c => (PUBLIC_COURSES.find(p => p.id === c.id) || {}).short || shortTitle(c.title);
 
-function progressBarsHtml(row) {
+// Todos los cursos del alumno (con acceso o con progreso) como etiquetas: terminado ✓, en curso %, sin empezar —.
+function courseChipsHtml(row) {
   const items = courseProgressItems(row);
-  if (!items.length) return '<span class="text-[11px] text-muted">—</span>';
-  return items.map(i => `
-    <div class="flex items-center gap-2 w-44" title="${esc(i.course.title)}">
-      <span class="w-16 truncate text-[10px] text-muted">${esc(shortTitle(i.course.title))}</span>
-      <div class="flex-1 h-1.5 rounded-full bg-bg overflow-hidden"><div class="h-full rounded-full bg-accent" style="width: ${i.percent}%;"></div></div>
-      <span class="w-8 text-right font-mono text-[11px] tabular-nums ${i.done ? 'text-accent font-bold' : 'text-ink2'}">${i.done ? '✓' : `${i.percent}%`}</span>
-    </div>`).join('');
+  if (!items.length) return '<span class="text-[11px] text-muted">Sin cursos</span>';
+  const done = items.filter(i => i.done).length;
+  const chip = i => {
+    const tone = i.done ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+      : i.started ? 'bg-white border-line text-ink2' : 'bg-bg/60 border-line/70 text-muted';
+    const value = i.done ? '✓' : i.started ? `${i.percent}%` : '—';
+    return `<span class="inline-flex items-center gap-1 h-6 px-2 rounded-md border text-[11px] ${tone}" title="${esc(i.course.title)}${i.done ? ' · terminado' : i.started ? ` · ${i.percent} %` : ' · sin empezar'}">
+      <span class="font-semibold">${esc(shortName(i.course))}</span><span class="font-mono tabular-nums">${value}</span></span>`;
+  };
+  return `
+    <span class="text-[11px] font-mono text-muted mr-0.5">${items.length} ${items.length === 1 ? 'curso' : 'cursos'}${done ? ` · ${done} terminado${done === 1 ? '' : 's'}` : ''}</span>
+    ${items.map(chip).join('')}`;
 }
 
 const LEGAL_LABELS = { terms: 'Términos', privacy: 'Privacidad', cookies: 'Cookies' };
@@ -127,7 +135,7 @@ function toolbarHtml(rows) {
       class="px-3 h-8 rounded-md text-xs font-semibold transition-colors ${f.id === currentFilter ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}">${f.label}</button>`).join('');
   return `
     <div class="flex items-center gap-3 flex-wrap text-xs">
-      <span class="inline-flex items-center gap-1.5 font-semibold text-emerald-700"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>${online} en línea</span>
+      <span class="inline-flex items-center gap-1.5 font-semibold text-emerald-700"><span class="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span>${online} en línea</span>
       <span class="text-line" aria-hidden="true">•</span>
       <span class="text-ink2"><strong class="text-ink">${active}</strong> activos (7 días)</span>
       <span class="text-line" aria-hidden="true">•</span>
@@ -148,6 +156,12 @@ function statusHtml(r, now) {
   return `
     <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${b.text}"><span class="w-1.5 h-1.5 rounded-full ${b.dot}" aria-hidden="true"></span>${b.label}</span>
     <span class="block text-[11px] text-muted font-mono">${esc(relativeTime(lastActivity(r), now))}</span>`;
+}
+
+// En móvil, la actividad va en una línea bajo el nombre (la columna no cabe).
+function statusInlineHtml(r, now) {
+  const b = STATUS_BADGE[activityStatus(r, now)];
+  return `<span class="inline-flex items-center gap-1.5 font-semibold ${b.text}"><span class="w-1.5 h-1.5 rounded-full ${b.dot}" aria-hidden="true"></span>${b.label}</span> <span class="text-muted font-mono">· ${esc(relativeTime(lastActivity(r), now))}</span>`;
 }
 
 function tableHtml(allRows) {
@@ -171,8 +185,7 @@ function tableHtml(allRows) {
       <thead class="text-[11px] text-muted font-mono uppercase">
         <tr class="border-b border-line">
           <th scope="col" class="px-4 py-2.5 font-semibold">Usuario</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold">Actividad</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold hidden sm:table-cell">Progreso</th>
+          <th scope="col" class="px-3 py-2.5 font-semibold hidden sm:table-cell">Actividad</th>
           <th scope="col" class="px-3 py-2.5 font-semibold text-right">Nivel</th>
         </tr>
       </thead>
@@ -188,13 +201,14 @@ function tableHtml(allRows) {
                       <span class="font-semibold text-sm text-ink group-hover:text-accent truncate">${esc(r.full_name || r.email)}</span>
                       ${r.role === 'admin' ? '<span class="px-1.5 py-px rounded bg-amber-100 text-amber-900 text-[9px] font-mono font-bold shrink-0">ADMIN</span>' : ''}
                     </span>
-                    <span class="block text-[11px] text-muted font-mono truncate max-w-[140px] sm:max-w-[260px]">${esc(r.email)}</span>
+                    <span class="block text-[11px] text-muted font-mono truncate max-w-[180px] sm:max-w-[260px]">${esc(r.email)}</span>
+                    <span class="sm:hidden block mt-0.5 text-[11px]">${statusInlineHtml(r, now)}</span>
                   </span>
                 </button>
+                <div class="mt-2 flex flex-wrap items-center gap-1.5">${courseChipsHtml(r)}</div>
               </td>
-              <td class="px-3 py-2.5 whitespace-nowrap">${statusHtml(r, now)}</td>
-              <td class="px-3 py-2.5 hidden sm:table-cell"><div class="flex flex-col gap-1">${progressBarsHtml(r)}</div></td>
-              <td class="px-3 py-2.5 text-right">${levelSelect(r)}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap align-top hidden sm:table-cell">${statusHtml(r, now)}</td>
+              <td class="px-3 py-2.5 text-right align-top">${levelSelect(r)}</td>
             </tr>`;
         }).join('')}
       </tbody>
@@ -645,6 +659,10 @@ export function openUserDetails(userId) {
           ${row('Último login', esc(formatDate(r.last_login)))}
           ${row('Última actividad', esc(formatDate(r.last_seen)))}
           ${row('Registrado', esc(formatDate(r.created_at)))}
+          ${row('Avisos por correo', r.email_opt_in ? `Activados · ${esc(formatDate(r.email_opt_in_at))}` : 'No')}
+          ${row('Recordatorios', (r.nudges || []).length
+            ? r.nudges.map(n => `<span class="block">${n.kind === 'n1' ? '1.º' : '2.º'} · ${esc(formatDate(n.created_at))}${n.email_status === 'sent' ? ' · también por correo' : n.email_status === 'pending' ? ' · correo pendiente' : ''}</span>`).join('')
+            : 'Ninguno')}
           ${row('Documentos aceptados', (r.consents || []).length
             ? r.consents.map(c => `<span class="block">${esc(LEGAL_LABELS[c.document] || c.document)} v${esc(c.version)} · ${esc(formatDate(c.accepted_at))}</span>`).join('')
             : 'Pendiente')}
