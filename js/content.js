@@ -466,9 +466,9 @@ export const NMAP_RESOURCES = [
       },
       {
         title: "SANS Institute Nmap Cheat Sheet Oficial",
-        desc: "Póster de referencia técnica rápida de SANS con los comandos más utilizados en auditorías y defensas de red.",
-        url: "https://www.sans.org/posters/nmap-cheat-sheet/",
-        badge: "SANS POSTER",
+        desc: "Hoja de referencia rápida de SANS (Ed Skoudis y Counter Hack) con los comandos más utilizados en auditorías y defensas de red.",
+        url: "https://www.sans.org/blog/sans-pen-test-cheat-sheet-nmap-v1-1",
+        badge: "SANS",
         badgeClass: "bg-indigo-100 text-indigo-800 border-indigo-300"
       },
       {

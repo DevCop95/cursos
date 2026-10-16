@@ -103,5 +103,18 @@ export const PUBLIC_COURSES = [
     "free": true,
     "logo": "assets/logos/redes-red.svg",
     "pitch": "Arregla la red de una oficina: rutas, DNS, puertos y HTTPS."
+  },
+  {
+    "id": "incidentes-101",
+    "slug": "respuesta-incidentes",
+    "title": "Respuesta a incidentes en Linux: investiga un servidor comprometido",
+    "short": "Incidentes",
+    "category": "CIBERSEGURIDAD",
+    "duration": "2 Semanas",
+    "lessons": 13,
+    "labs": 4,
+    "free": false,
+    "logo": "assets/logos/incidentes-lupa.svg",
+    "pitch": "Sigue la pista a un atacante en los logs de un servidor Linux."
   }
 ];

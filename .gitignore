@@ -23,3 +23,6 @@ scripts/linux-lab/caso-propuesta.pdf
 
 # Escenario del curso de seguridad para desarrolladores (contiene las respuestas del reto): solo local
 scripts/linux-lab/setup-devsec.sh
+
+# Caso del curso de respuesta a incidentes (contiene las respuestas del reto): solo local, se usa al construir la imagen
+scripts/linux-lab/incidentes-caso/

@@ -55,6 +55,10 @@ COPY gitleaks-lab.toml /etc/gitleaks/laboratorio.toml
 COPY setup-devsec.sh /tmp/setup-devsec.sh
 RUN sh /tmp/setup-devsec.sh && rm /tmp/setup-devsec.sh
 
+# Curso de respuesta a incidentes: copia de las pruebas de un servidor comprometido (solo lectura en /srv/incidentes/caso).
+COPY incidentes-caso /srv/incidentes/caso
+RUN chown -R root:root /srv/incidentes && chmod -R a+rX,go-w /srv/incidentes
+
 COPY bashrc /home/alumno/.bashrc
 COPY motd /etc/motd
 RUN chown -R alumno:alumno /home/alumno /srv/github \

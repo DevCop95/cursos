@@ -324,6 +324,48 @@
       "short": "Redes",
       "practice": "Practicas en una red simulada dentro del navegador: abres la consola de cada equipo y ves viajar los paquetes por los cables, sin instalar nada.",
       "pitch": "Arregla la red de una oficina: rutas, DNS, puertos y HTTPS."
+    },
+    {
+      "slug": "respuesta-incidentes",
+      "id": "incidentes-101",
+      "seoTitle": "Curso de respuesta a incidentes en Linux en español: logs y forense | Dev101x",
+      "seoDescription": "Aprende respuesta a incidentes en español: preserva las pruebas con hashes, analiza logs de SSH y del servidor web con grep, awk y sort, y encuentra lo que dejó el atacante, en un Linux real dentro del navegador.",
+      "free": false,
+      "workload": "PT16H",
+      "title": "Respuesta a incidentes en Linux: investiga un servidor comprometido",
+      "category": "CIBERSEGURIDAD",
+      "duration": "2 Semanas",
+      "description": "Aprende a investigar un servidor Linux que ha sido atacado: preservar las pruebas, leer los registros de SSH y del servidor web, seguir a la persona atacante en el log y encontrar lo que dejó para volver. Practicas en un Linux real dentro del navegador con las pruebas de un caso ficticio autorizado.",
+      "objectives": [
+        "Trabajar con método: alcance autorizado, copia de las pruebas y huellas para demostrar que no cambian.",
+        "Leer auth.log y distinguir una fuerza bruta fallida del acceso que de verdad entró.",
+        "Analizar el log del servidor web con grep, awk, sort y uniq, y seguir a una IP paso a paso.",
+        "Encontrar la persistencia (web shell, tarea de cron, clave SSH) y reconstruir lo que se llevó el atacante."
+      ],
+      "modules": [
+        {
+          "title": "Módulo 1: Método y pruebas",
+          "lessons": 2
+        },
+        {
+          "title": "Módulo 2: Accesos por SSH",
+          "lessons": 3
+        },
+        {
+          "title": "Módulo 3: El servidor web",
+          "lessons": 4
+        },
+        {
+          "title": "Módulo 4: Lo que dejó atrás",
+          "lessons": 4
+        }
+      ],
+      "labs": 4,
+      "videoAuthor": "RINKU",
+      "logo": "assets/logos/incidentes-lupa.svg",
+      "short": "Incidentes",
+      "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
+      "pitch": "Sigue la pista a un atacante en los logs de un servidor Linux."
     }
   ]
 }

@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v103';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v103';
-import { esc } from '../lib/html.js?v=dev101x-v103';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v103';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v103';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v103';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v103';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v103';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v103';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v104';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v104';
+import { esc } from '../lib/html.js?v=dev101x-v104';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v104';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v104';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v104';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v104';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v104';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v104';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -370,7 +370,8 @@ const COURSE_TOOLS = {
   'shodan-101': 'shodan · filtros',
   'osint-101': 'exiftool · sherlock',
   'devsec-101': 'gitleaks · sed · jq',
-  'webhacking-101': 'curl · jwt · scope'
+  'webhacking-101': 'curl · jwt · scope',
+  'incidentes-101': 'grep · awk · cron'
 };
 
 function courseLogoHtml(c, size = 26) {
@@ -484,6 +485,14 @@ const DEMO_SCENES = [
     { out: '{"id":4821,"cliente":"carla", ...}', tone: 'info' },
     { out: '[LAB] Mismo token, otro número: IDOR', tone: 'muted' },
     { out: '✓ Control de acceso roto encontrado', tone: 'ok' }
+  ] },
+  { id: 'incidentes-101', pick: 'Incidentes', title: 'Respuesta a incidentes', prompt: '$', steps: [
+    { cmd: 'grep Accepted logs/auth.log' },
+    { out: 'Accepted publickey for deploy from 198.51.100.8', tone: 'info' },
+    { out: '[LAB] Una clave que no es la del equipo', tone: 'muted' },
+    { cmd: 'cat sistema/crontab-www-data' },
+    { out: '*/10 * * * * curl -s ... | sh', tone: 'info' },
+    { out: '✓ Persistencia encontrada', tone: 'ok' }
   ] }
 ];
 

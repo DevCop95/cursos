@@ -1,15 +1,15 @@
 /**
  * Vista: Aula interactiva (terminal simulada, ficha técnica del comando, recursos de Nmap y temario).
  */
-import { esc } from '../lib/html.js?v=dev101x-v103';
-import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v103';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v103';
-import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v103';
-import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v103';
-import { showToast, openDialog } from '../ui.js?v=dev101x-v103';
-import { isCloudEnabled } from '../config.js?v=dev101x-v103';
-import * as cloud from '../cloud.js?v=dev101x-v103';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v103';
+import { esc } from '../lib/html.js?v=dev101x-v104';
+import { appState, saveState, initialTerminal } from '../state.js?v=dev101x-v104';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LESSON_DETAILS, STEP_HINTS, STEP_CONCEPTS, QUIZZES, FINAL_CHALLENGE, LAB_TARGET, LAB_HOST_IP, NMAP_RESOURCES, PENTESTING_COMMANDS, LAB_STEPS } from '../content.js?v=dev101x-v104';
+import { runCommand, isLessonDone, pendingHints, pendingChecks, isCommandStep, MAX_TERMINAL_LINES } from '../lab.js?v=dev101x-v104';
+import { recordSteps, applyServerSteps, currentProgress, currentSteps } from '../progress.js?v=dev101x-v104';
+import { showToast, openDialog } from '../ui.js?v=dev101x-v104';
+import { isCloudEnabled } from '../config.js?v=dev101x-v104';
+import * as cloud from '../cloud.js?v=dev101x-v104';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v104';
 
 const LINE_CLASSES = {
   error: 'text-red-400',
@@ -707,7 +707,7 @@ const DOWNLOADS = [
   ['https://npcap.com/#download', 'Npcap (driver de captura)', 'Windows'],
   ['https://nmap.org/book/', 'Libro oficial de Nmap', 'Libro'],
   ['https://nmap.org/nsedoc/', 'Catálogo de scripts NSE', '600+'],
-  ['https://www.sans.org/posters/nmap-cheat-sheet/', 'SANS Nmap Cheat Sheet', 'PDF']
+  ['https://www.sans.org/blog/sans-pen-test-cheat-sheet-nmap-v1-1', 'SANS Nmap Cheat Sheet', 'PDF']
 ];
 
 export function openResources() {
