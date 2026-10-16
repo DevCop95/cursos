@@ -4,15 +4,16 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v105';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v105';
-import { esc } from '../lib/html.js?v=dev101x-v105';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v105';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v105';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v105';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v105';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v105';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v105';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v106';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v106';
+import { esc } from '../lib/html.js?v=dev101x-v106';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v106';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v106';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v106';
+import { roadmapHtml } from './roadmap.js?v=dev101x-v106';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v106';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v106';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v106';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -280,6 +281,7 @@ export function renderLogin(container, onSuccess) {
       </section>
 
       ${catalogHtml()}
+      ${roadmapHtml({ mode: 'public' })}
 
       <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-12 items-center">
         <div class="flex flex-col gap-5 min-w-0">

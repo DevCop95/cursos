@@ -1,19 +1,20 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v105';
-import { appState } from '../state.js?v=dev101x-v105';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v105';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v105';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v105';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v105';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v105';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v105';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v105';
-import { paintResume } from './resume.js?v=dev101x-v105';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v105';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v105';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v105';
+import { esc } from '../lib/html.js?v=dev101x-v106';
+import { appState } from '../state.js?v=dev101x-v106';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v106';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v106';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v106';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v106';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v106';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v106';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v106';
+import { paintResume } from './resume.js?v=dev101x-v106';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v106';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v106';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v106';
+import { roadmapHtml, repaintRoadmap } from './roadmap.js?v=dev101x-v106';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {
@@ -393,12 +394,21 @@ export function renderExplorar(container) {
         </div>
       </section>
 
+      ${roadmapHtml({ mode: 'app' })}
+
       <section id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         ${COURSES.map(tile).join('')}
         ${soonTile}
       </section>
     </div>
   `;
+
+  // Progreso de cada curso (Nmap sale del estado local; el resto, de Supabase) para marcar la ruta.
+  const nmap = currentProgress();
+  const progress = { 'pentesting-101': { percent: nmap.percent, complete: nmap.complete } };
+  fetchCourseProgress().then(rows => {
+    (rows || []).forEach(r => { progress[r.course_id] = { percent: Number(r.progress_percentage) || 0, complete: Boolean(r.completed_at) }; });
+  }).catch(() => {}).finally(() => repaintRoadmap(progress));
 
   // El catálogo real está en Supabase: añade los cursos que aún no tienen contenido.
   Promise.all([fetchCourses(), fetchAccessRequests().catch(() => [])]).then(([list, requests]) => {
