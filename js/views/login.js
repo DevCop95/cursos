@@ -4,15 +4,15 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v104';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v104';
-import { esc } from '../lib/html.js?v=dev101x-v104';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v104';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v104';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v104';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v104';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v104';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v104';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v105';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v105';
+import { esc } from '../lib/html.js?v=dev101x-v105';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v105';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v105';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v105';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v105';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v105';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v105';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -457,8 +457,8 @@ const DEMO_SCENES = [
     { out: '✓ Primer commit en tu rama', tone: 'ok' }
   ] },
   { id: 'shodan-101', pick: 'Shodan', title: 'Shodan', prompt: '$', steps: [
-    { cmd: 'shodan host 198.51.100.23' },
-    { out: '198.51.100.23', tone: 'info' },
+    { cmd: 'shodan host 203.0.113.17' },
+    { out: '203.0.113.17', tone: 'info' },
     { out: 'Ports: 22, 80, 443', tone: 'muted' },
     { out: '22/tcp   OpenSSH 8.9' },
     { out: '80/tcp   nginx 1.22.1' },
