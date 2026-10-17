@@ -4,16 +4,13 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v106';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v106';
-import { esc } from '../lib/html.js?v=dev101x-v106';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v106';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v106';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v106';
-import { roadmapHtml } from './roadmap.js?v=dev101x-v106';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v106';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v106';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v106';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v107';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v107';
+import { esc } from '../lib/html.js?v=dev101x-v107';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v107';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v107';
+import { roadmapHtml } from './roadmap.js?v=dev101x-v107';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v107';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -280,7 +277,6 @@ export function renderLogin(container, onSuccess) {
         ${demoTermHtml(halloween)}
       </section>
 
-      ${catalogHtml()}
       ${roadmapHtml({ mode: 'public' })}
 
       <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-12 items-center">
@@ -346,7 +342,7 @@ export function renderLogin(container, onSuccess) {
   if (pumpkin) pumpkin.addEventListener('click', toggleDark);
   syncThemeButtons();
   const scrollBtn = container.querySelector('[data-action="scroll-catalog"]');
-  if (scrollBtn) scrollBtn.addEventListener('click', () => container.querySelector('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  if (scrollBtn) scrollBtn.addEventListener('click', () => container.querySelector('#roadmap')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   if (loginStatus) openLoginModal();
 }
 
@@ -358,66 +354,6 @@ function openLoginModal() {
   const main = m.querySelector('#login-actions button');
   if (main) main.focus();
 }
-
-// ---------------------------------------------------------------------------
-// Catálogo: todos los cursos (datos públicos generados por npm run pages) y el próximo lanzamiento.
-// Una fila de casillas cuadradas que se desliza: el catálogo puede crecer sin alargar la página. Las flechas
-// solo aparecen si no caben todas. Cada casilla lleva a la página pública del curso (la frase va en el title).
-// ---------------------------------------------------------------------------
-const COURSE_TOOLS = {
-  'pentesting-101': 'nmap · PowerShell',
-  'linux-101': 'ls · chmod · grep',
-  'redes-101': 'ip · dig · curl',
-  'git-github-101': 'git · ssh · gh',
-  'shodan-101': 'shodan · filtros',
-  'osint-101': 'exiftool · sherlock',
-  'devsec-101': 'gitleaks · sed · jq',
-  'webhacking-101': 'curl · jwt · scope',
-  'incidentes-101': 'grep · awk · cron'
-};
-
-function courseLogoHtml(c, size = 26) {
-  const logo = courseLogo(c.id) || c.logo;
-  return logo
-    ? `<img src="${esc(logo)}" alt="" width="${size}" height="${size}" decoding="async" class="object-contain" style="width:${size}px;height:${size}px" />`
-    : `<span class="material-symbols-outlined text-white text-[22px]" aria-hidden="true">${esc(courseIcon(c.id))}</span>`;
-}
-
-function catalogHtml() {
-  if (!PUBLIC_COURSES.length) return '';
-  const courses = [...PUBLIC_COURSES.filter(c => c.free), ...PUBLIC_COURSES.filter(c => !c.free)];
-  const meta = c => `${c.lessons} lecciones · ${c.labs} labs`;
-  const tile = c => `
-    <a href="/${esc(c.slug)}/" class="catalog-tile group"${c.pitch ? ` title="${esc(c.pitch)}"` : ''}>
-      <span class="flex items-start justify-between gap-2">
-        <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0">${courseLogoHtml(c)}</span>
-        <span class="text-[10px] font-mono font-bold uppercase tracking-wide ${c.free ? 'text-accent' : 'text-muted'}">${c.free ? 'Gratis' : 'Premium'}</span>
-      </span>
-      <span class="mt-auto flex flex-col gap-1 min-w-0">
-        <span class="text-base font-bold text-ink leading-tight group-hover:text-accent transition-colors">${esc(c.short)}</span>
-        ${COURSE_TOOLS[c.id] ? `<span class="text-[11px] font-mono text-muted truncate">${esc(COURSE_TOOLS[c.id])}</span>` : ''}
-        <span class="text-[10px] sm:text-[11px] font-mono text-ink2 whitespace-nowrap">${meta(c)}</span>
-      </span>
-    </a>`;
-  const soon = UPCOMING ? `
-    <div class="catalog-tile border-dashed" aria-label="Próximo curso: ${esc(UPCOMING.title)}">
-      <span class="flex items-start justify-between gap-2">
-        <span class="w-11 h-11 rounded-xl bg-term flex items-center justify-center shrink-0"><img src="${esc(UPCOMING.icon)}" alt="" width="26" height="26" loading="lazy" class="object-contain" style="width:26px;height:26px" /></span>
-        <span class="text-[10px] font-mono font-bold uppercase tracking-wide text-muted">Pronto</span>
-      </span>
-      <span class="mt-auto flex flex-col gap-1 min-w-0">
-        <span class="text-base font-bold text-ink2 leading-tight">${esc(UPCOMING.short || UPCOMING.title)}</span>
-        <span class="text-[11px] font-mono text-muted leading-snug">Próximamente</span>
-      </span>
-    </div>` : '';
-  return `
-      <section id="catalogo" class="landing-card w-full rounded-3xl px-6 sm:px-10 py-6 sm:py-8 flex flex-col gap-4">
-        <h2 class="text-2xl sm:text-[28px] leading-tight font-extrabold text-ink tracking-tight">Cursos</h2>
-        <div class="catalog-grid">${courses.map(tile).join('')}${soon}</div>
-        <p class="text-xs text-muted">Los premium se solicitan desde tu cuenta.</p>
-      </section>`;
-}
-
 
 // ---------------------------------------------------------------------------
 // Consola de muestra: escribe sola un comando de cada curso. Se para fuera de la pantalla o con la pestaña
@@ -523,7 +459,7 @@ function demoTermHtml(halloween) {
             <pre class="demo-term-body" data-demo-body></pre>
           </div>
           <button type="button" data-action="scroll-catalog" class="self-start inline-flex items-center gap-1 text-xs font-semibold text-ink2 hover:text-accent transition-colors">
-            Ver todos los cursos<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_downward</span>
+            Ver la ruta de cursos<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_downward</span>
           </button>
         </div>`;
 }

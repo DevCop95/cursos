@@ -3,15 +3,15 @@
  * El contenido solo llega si el servidor concede acceso (RLS). Todo el texto del curso es dato:
  * se escapa siempre con esc(). El progreso y las respuestas los valida el servidor.
  */
-import { esc } from '../lib/html.js?v=dev101x-v106';
-import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v106';
-import { isCloudEnabled } from '../config.js?v=dev101x-v106';
-import * as cloud from '../cloud.js?v=dev101x-v106';
-import { appState } from '../state.js?v=dev101x-v106';
-import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v106';
-import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v106';
-import { openNetLab, refreshNetLabTasks, drawTopology, currentNet, resetNetLab } from './net-lab.js?v=dev101x-v106';
-import { createNetwork, importNetState } from '../lib/netsim.js?v=dev101x-v106';
+import { esc } from '../lib/html.js?v=dev101x-v107';
+import { showToast, openDialog, closeModal } from '../ui.js?v=dev101x-v107';
+import { isCloudEnabled } from '../config.js?v=dev101x-v107';
+import * as cloud from '../cloud.js?v=dev101x-v107';
+import { appState } from '../state.js?v=dev101x-v107';
+import { scheduleRankCheck } from './rank-notice.js?v=dev101x-v107';
+import { runCourseCommand, computeCourseProgress, pendingCourseSteps, isCheckStep, initialCourseState, promptFor, realCourseSteps, realCourseValues } from '../lib/course-engine.js?v=dev101x-v107';
+import { openNetLab, refreshNetLabTasks, drawTopology, currentNet, resetNetLab } from './net-lab.js?v=dev101x-v107';
+import { createNetwork, importNetState } from '../lib/netsim.js?v=dev101x-v107';
 
 const LINE_CLASSES = {
   error: 'text-red-400', cmd: 'text-emerald-400 font-bold', info: 'text-sky-300', slate: 'text-slate-400',

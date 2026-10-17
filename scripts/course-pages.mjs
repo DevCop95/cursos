@@ -103,7 +103,10 @@ function page(c, other) {
   <meta name="theme-color" content="#005c38" />
   <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/css/fonts.css?v=${version}" />
+  <!-- app.css va ANTES que Tailwind: aporta el modo oscuro (clase theme-dark) y, así, las utilidades de Tailwind siguen mandando sobre sus tamaños -->
+  <link rel="stylesheet" href="/css/app.css?v=${version}" />
   <link rel="stylesheet" href="/css/tailwind.css?v=${version}" />
+  <script src="/js/theme-boot.js?v=${version}"></script>
 </head>
 <body class="bg-bg font-sans text-ink antialiased min-h-screen">
   <div class="max-w-4xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-5">
@@ -159,7 +162,7 @@ function page(c, other) {
 
       <section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p class="text-[13px] text-ink2">También te puede interesar: <a href="/${esc(other.slug)}/" class="font-semibold text-accent hover:underline">${esc(other.title)}</a> <span class="text-muted">(${other.free ? 'gratis' : 'premium'})</span></p>
-        <a href="/" class="text-[13px] font-semibold text-ink hover:text-accent shrink-0">Todos los cursos →</a>
+        <a href="/" class="text-[13px] font-semibold text-ink hover:text-accent shrink-0">Ver la ruta de cursos →</a>
       </section>
     </main>
 

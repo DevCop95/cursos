@@ -681,33 +681,6 @@ input:focus-visible,
 }
 @media (min-width: 640px) { .demo-term-body { font-size: 13px; } }
 
-/* Portada: catálogo en una cuadrícula de casillas cuadradas (sin scroll ni flechas: se ve entera) */
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-@media (min-width: 640px) {
-  .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-}
-@media (min-width: 1024px) {
-  .catalog-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-.catalog-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  aspect-ratio: 1 / 1;
-  min-width: 0;
-  padding: 14px;
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.6);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-@media (max-width: 639px) { .catalog-tile { padding: 12px; gap: 10px; border-radius: 16px; } }
-a.catalog-tile:hover { border-color: rgba(0, 92, 56, 0.45); background: #fff; }
-
 /* ---- Toque de Halloween en la portada (finales de octubre; se apaga solo tras el 1 de noviembre) ----
    Mismo tono sobrio del sitio: naranja calabaza apagado, sin neón ni gradientes. */
 /* Banner: noche con los colores de la consola de muestra. La calabaza llega desde el fondo (1,5 s), se asienta
@@ -954,8 +927,6 @@ html.theme-dark .login-card-editorial {
   border-color: #30363d;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
-html.theme-dark .catalog-tile { background: rgba(14, 16, 19, 0.6); border-color: #30363d; }
-html.theme-dark a.catalog-tile:hover { background: #161b22; border-color: rgba(76, 195, 138, 0.5); }
 html.theme-dark .phone-tab:hover { background: rgba(76, 195, 138, 0.07); }
 html.theme-dark .phone-tab[aria-selected="true"] { background: rgba(76, 195, 138, 0.1); border-color: rgba(76, 195, 138, 0.35); color: #4cc38a; }
 html.theme-dark .ldr { background: rgba(11, 13, 16, 0.92); }
@@ -963,8 +934,7 @@ html.theme-dark .ldr-brand,
 html.theme-dark .ldr-g { background: #1c2128; }
 html.theme-dark #water-bg-wrapper { filter: invert(1) hue-rotate(180deg) brightness(0.42) saturate(0.6); }
 html.login-active #water-bg-wrapper,
-html.login-active .landing-card,
-html.login-active .catalog-tile { transition: filter 0.5s ease, background-color 0.5s ease, border-color 0.5s ease; }
+html.login-active .landing-card { transition: filter 0.5s ease, background-color 0.5s ease, border-color 0.5s ease; }
 
 /* Halloween: en modo oscuro la calabaza brilla más, con halo cálido y parpadeo de vela */
 html.theme-dark .hw-banner { border-color: #5a3d1c; }
