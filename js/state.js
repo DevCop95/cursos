@@ -3,9 +3,9 @@
  * No se guarda ningún token: solo el perfil visible, el rol en caché y la fecha de caducidad.
  * El rol en caché solo decide qué UI se muestra; los datos protegidos los filtra RLS en Supabase.
  */
-import { CONFIG } from './config.js?v=dev101x-v111';
-import { MAX_TERMINAL_LINES } from './lab.js?v=dev101x-v111';
-import { LAB_TARGET } from './content.js?v=dev101x-v111';
+import { CONFIG } from './config.js?v=dev101x-v113';
+import { MAX_TERMINAL_LINES } from './lab.js?v=dev101x-v113';
+import { LAB_TARGET } from './content.js?v=dev101x-v113';
 
 const STATE_KEY = 'dev101x_state';
 const LEGACY_LAB_STEPS = { 'lab-1': ['nmap-basic', 'nmap-sv'], 'lab-2': ['ipconfig', 'ping'], 'lab-3': ['whoami', 'netstat'] };
@@ -79,7 +79,10 @@ export function clearSession(state) {
   return fresh;
 }
 
-export const appState = loadState();
+// Un módulo duplicado por imports de distintas versiones no debe crear otra sesión en paralelo.
+// La clave estable comparte el estado entre copias del módulo durante una transición de caché/CDN.
+const APP_STATE_SLOT = Symbol.for('dev101x.appState.v2');
+export const appState = globalThis[APP_STATE_SLOT] || (globalThis[APP_STATE_SLOT] = loadState());
 
 export function resetState(next) {
   Object.keys(appState).forEach(k => delete appState[k]);

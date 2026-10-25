@@ -1,20 +1,20 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v111';
-import { appState } from '../state.js?v=dev101x-v111';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v111';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v111';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v111';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v111';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v111';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v111';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v111';
-import { paintResume } from './resume.js?v=dev101x-v111';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v111';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v111';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v111';
-import { roadmapHtml, repaintRoadmap } from './roadmap.js?v=dev101x-v111';
+import { esc } from '../lib/html.js?v=dev101x-v113';
+import { appState } from '../state.js?v=dev101x-v113';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v113';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v113';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v113';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v113';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v113';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v113';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v113';
+import { paintResume } from './resume.js?v=dev101x-v113';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v113';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v113';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v113';
+import { roadmapHtml, repaintRoadmap } from './roadmap.js?v=dev101x-v113';
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {

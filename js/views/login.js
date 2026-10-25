@@ -4,13 +4,13 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v111';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v111';
-import { esc } from '../lib/html.js?v=dev101x-v111';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v111';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v111';
-import { roadmapHtml } from './roadmap.js?v=dev101x-v111';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v111';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v113';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v113';
+import { esc } from '../lib/html.js?v=dev101x-v113';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v113';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v113';
+import { roadmapHtml } from './roadmap.js?v=dev101x-v113';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v113';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">

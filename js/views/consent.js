@@ -5,11 +5,11 @@
  *  - Sin sesión: aviso breve de cookies en la portada; se recuerda en este navegador.
  * Cuando se cambie un documento: subir LEGAL_VERSION y la versión en public.legal_documents (migración).
  */
-import { appState, isSessionValid } from '../state.js?v=dev101x-v111';
-import { isCloudEnabled, CONFIG } from '../config.js?v=dev101x-v111';
-import { fetchPendingLegal, acceptLegal, setEmailOptIn } from '../cloud.js?v=dev101x-v111';
-import { showToast } from '../ui.js?v=dev101x-v111';
-import { esc } from '../lib/html.js?v=dev101x-v111';
+import { appState, isSessionValid } from '../state.js?v=dev101x-v113';
+import { isCloudEnabled, CONFIG } from '../config.js?v=dev101x-v113';
+import { fetchPendingLegal, acceptLegal, setEmailOptIn } from '../cloud.js?v=dev101x-v113';
+import { showToast } from '../ui.js?v=dev101x-v113';
+import { esc } from '../lib/html.js?v=dev101x-v113';
 
 // Al activar los avisos por correo (CONFIG.emailReminders) pasa a '2026-10-15' junto con la nueva privacidad
 // (supabase/pendiente/privacidad-2026-10-15.html) y public.legal_documents.
