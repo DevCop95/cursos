@@ -116,5 +116,18 @@ export const PUBLIC_COURSES = [
     "free": false,
     "logo": "assets/logos/incidentes-lupa.svg",
     "pitch": "Sigue la pista a un atacante en los logs de un servidor Linux."
+  },
+  {
+    "id": "dorks-101",
+    "slug": "busqueda-avanzada",
+    "title": "Búsqueda avanzada y exposición pública: Google y GitHub",
+    "short": "Google y GitHub",
+    "category": "CIBERSEGURIDAD",
+    "duration": "1 Semana",
+    "lessons": 7,
+    "labs": 3,
+    "free": true,
+    "logo": "",
+    "pitch": "Busca exposición pública con operadores, en un laboratorio ficticio y autorizado."
   }
 ];

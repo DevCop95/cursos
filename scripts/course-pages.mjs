@@ -141,8 +141,7 @@ function page(c, other) {
           <ul class="flex flex-col gap-2 text-[13px] text-ink2">
             <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">terminal</span><span>${esc(c.practice || 'Practicas cada comando en una terminal simulada dentro del navegador, sin instalar nada.')}</span></li>
             <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">quiz</span><span>Cada lección termina con una pregunta; el curso cierra con un reto final.</span></li>
-            <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">science</span><span>${c.labs} laboratorios${c.labTitles ? `: ${esc(c.labTitles.join(', ').toLowerCase())}` : ''}.</span></li>
-            <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-rose-500 mt-px shrink-0" aria-hidden="true">smart_display</span><span>Video en español de ${esc(c.videoAuthor)}, enlazado por capítulos en cada lección.</span></li>
+            <li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-accent mt-px shrink-0" aria-hidden="true">science</span><span>${c.labs} laboratorios${c.labTitles ? `: ${esc(c.labTitles.join(', ').toLowerCase())}` : ''}.</span></li>${c.videoAuthor ? `<li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-rose-500 mt-px shrink-0" aria-hidden="true">smart_display</span><span>Video en español de ${esc(c.videoAuthor)}, enlazado por capítulos en cada lección.</span></li>` : ''}
           </ul>
         </section>
       </div>
@@ -153,7 +152,7 @@ function page(c, other) {
           ${c.modules.map((m, i) => `<li class="py-3 flex flex-col gap-1.5">
             <div class="flex items-center justify-between gap-3">
               <span class="flex items-center gap-2.5 min-w-0"><span class="font-mono text-muted text-sm">${i + 1}.</span><span class="font-semibold text-[14px]">${esc(stripModule(m.title))}</span></span>
-              <span class="text-[11px] text-muted shrink-0">${m.lessons} lecciones</span>
+              <span class="text-[11px] text-muted shrink-0">${m.lessons} ${m.lessons === 1 ? 'lección' : 'lecciones'}</span>
             </div>${m.lessonTitles ? `
             <ul class="pl-7 flex flex-col gap-0.5 text-[12px] text-ink2">${m.lessonTitles.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
           </li>`).join('\n          ')}

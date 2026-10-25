@@ -3,11 +3,11 @@
  *  - modo 'app': cada curso es un botón que abre su ficha, y se marca lo que el alumno ya hizo.
  *  - modo 'public': cada curso es un enlace a su página pública y se muestran los requisitos tal cual.
  */
-import { esc } from '../lib/html.js?v=dev101x-v107';
-import { ROADMAP, courseState, missingBefore, nextRecommended } from '../lib/roadmap.js?v=dev101x-v107';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v107';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v107';
-import { courseIcon } from '../lib/ranks.js?v=dev101x-v107';
+import { esc } from '../lib/html.js?v=dev101x-v109';
+import { ROADMAP, courseState, missingBefore, nextRecommended } from '../lib/roadmap.js?v=dev101x-v109';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v109';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v109';
+import { courseIcon } from '../lib/ranks.js?v=dev101x-v109';
 
 const byId = new Map(PUBLIC_COURSES.map(c => [c.id, c]));
 const shortOf = id => (byId.get(id) || {}).short || id;

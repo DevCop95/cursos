@@ -366,6 +366,34 @@
       "short": "Incidentes",
       "practice": "Practicas en un Linux real dentro del navegador (o en una terminal simulada), sin instalar nada y sin que nada salga de tu equipo.",
       "pitch": "Sigue la pista a un atacante en los logs de un servidor Linux."
+    },
+    {
+      "slug": "busqueda-avanzada",
+      "id": "dorks-101",
+      "seoTitle": "Curso gratis de Google Dorks y búsqueda en GitHub | Dev101x",
+      "seoDescription": "Aprende operadores de búsqueda de Google y GitHub Code Search para auditar exposición pública autorizada, con datos ficticios en un simulador sin conexión a Internet.",
+      "free": true,
+      "workload": "PT10H",
+      "title": "Búsqueda avanzada y exposición pública: Google y GitHub",
+      "category": "CIBERSEGURIDAD",
+      "duration": "1 Semana",
+      "description": "Aprende a usar operadores de Google y GitHub Code Search para revisar exposición pública en un entorno autorizado. Practica con un simulador y datos completamente ficticios; no consulta Internet ni muestra credenciales reales.",
+      "objectives": [
+        "Combinar site:, filetype: e intitle: para acotar búsquedas de Google.",
+        "Usar org:, repo:, path: y filename: en GitHub Code Search.",
+        "Distinguir marcadores y falsos positivos de configuraciones que requieren revisión.",
+        "Documentar hallazgos con evidencia mínima y recomendar remediación responsable."
+      ],
+      "modules": [
+        { "title": "Módulo 1: Google y operadores de búsqueda", "lessons": 2 },
+        { "title": "Módulo 2: Búsqueda de código en GitHub", "lessons": 2 },
+        { "title": "Módulo 3: Verificación y reporte responsable", "lessons": 2 },
+        { "title": "Módulo 4: Reto final", "lessons": 1 }
+      ],
+      "labs": 3,
+      "short": "Google y GitHub",
+      "practice": "Practicas en un buscador simulado con un dataset ficticio local; no hay conexión con Google ni GitHub.",
+      "pitch": "Busca exposición pública con operadores, en un laboratorio ficticio y autorizado."
     }
   ]
 }

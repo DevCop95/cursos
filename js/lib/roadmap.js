@@ -13,7 +13,8 @@ export const ROADMAP = {
   paths: [
     { key: 'defensa', title: 'Defensa', blurb: 'Detectar, investigar y reducir lo que se expone.', steps: ['incidentes-101', 'osint-101'] },
     { key: 'ofensiva', title: 'Ofensiva y bug bounty', blurb: 'Reconocer un objetivo y encontrar fallos con ética.', steps: ['shodan-101', 'webhacking-101'] },
-    { key: 'desarrollo', title: 'Desarrollo seguro', blurb: 'Proteger el código antes de que llegue a producción.', steps: ['git-github-101', 'devsec-101', 'webhacking-101'] }
+    { key: 'desarrollo', title: 'Desarrollo seguro', blurb: 'Proteger el código antes de que llegue a producción.', steps: ['git-github-101', 'devsec-101', 'webhacking-101'] },
+    { key: 'exposicion', title: 'Exposición pública', blurb: 'Auditar información indexada y código público de forma autorizada.', steps: ['dorks-101'] }
   ],
   requires: {
     'linux-101': {},
@@ -24,6 +25,7 @@ export const ROADMAP = {
     'shodan-101': { soft: ['redes-101'] },
     'webhacking-101': { soft: ['redes-101'] },
     'git-github-101': {},
+    'dorks-101': {},
     'devsec-101': { hard: ['git-github-101'], soft: ['linux-101'] }
   }
 };
