@@ -58,7 +58,7 @@ function page(c, other) {
         creator: { '@id': PERSON },
         image: `${SITE}/assets/og-image.jpg?v=5`,
         teaches: c.objectives,
-        syllabusSections: c.modules.map(m => ({ '@type': 'Syllabus', name: stripModule(m.title), description: `${m.lessons} lecciones` })),
+        syllabusSections: c.modules.map(m => ({ '@type': 'Syllabus', name: stripModule(m.title), description: `${m.lessons} ${m.lessons === 1 ? 'lección' : 'lecciones'}` })),
         hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: c.workload },
         ...(c.free ? { offers: { '@type': 'Offer', category: 'Free', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock' } } : {})
       },
