@@ -391,6 +391,7 @@
         { "title": "Módulo 4: Reto final", "lessons": 1 }
       ],
       "labs": 3,
+      "videoAuthor": "Contando Bits",
       "short": "Google y GitHub",
       "practice": "Practicas en un buscador simulado con un dataset ficticio local; no hay conexión con Google ni GitHub.",
       "pitch": "Busca exposición pública con operadores, en un laboratorio ficticio y autorizado."

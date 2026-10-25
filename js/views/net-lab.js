@@ -10,8 +10,8 @@
  * Al hacer ping, el paquete recorre los cables: verde la ida, ámbar la vuelta, azul las consultas DNS y una ✕ roja
  * donde se pierde. Estilos: css/app.css (.nl-*). Con "reducir movimiento" no hay animación, solo el resultado.
  */
-import { createNetwork, runCommand, addressesOf, exportNetState, importNetState } from '../lib/netsim.js?v=dev101x-v110';
-import { esc } from '../lib/html.js?v=dev101x-v110';
+import { createNetwork, runCommand, addressesOf, exportNetState, importNetState } from '../lib/netsim.js?v=dev101x-v111';
+import { esc } from '../lib/html.js?v=dev101x-v111';
 
 const ICONS = {
   pc: '<rect class="nl-shape" x="-21" y="-17" width="42" height="28" rx="4"/><rect class="nl-screen" x="-16" y="-12" width="32" height="18" rx="1.5"/><path class="nl-shape" d="M-7 11h14l2.5 6h-19z"/>',
