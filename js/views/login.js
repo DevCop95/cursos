@@ -4,13 +4,13 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v113';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v113';
-import { esc } from '../lib/html.js?v=dev101x-v113';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v113';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v113';
-import { roadmapHtml } from './roadmap.js?v=dev101x-v113';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v113';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v114';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v114';
+import { esc } from '../lib/html.js?v=dev101x-v114';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v114';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v114';
+import { roadmapHtml } from './roadmap.js?v=dev101x-v114';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v114';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -271,7 +271,10 @@ export function renderLogin(container, onSuccess) {
             <button type="button" data-open-login class="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors">
               Empezar gratis<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
             </button>
-            <span class="text-xs text-muted">Con tu cuenta de Google</span>
+            <a href="/explicado/" class="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-white border border-line hover:border-accent/60 hover:text-accent text-sm font-semibold text-ink transition-colors">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_circle</span>OWASP Top 10 en video
+            </a>
+            <span class="text-xs text-muted w-full">Con tu cuenta de Google</span>
           </div>
         </div>
         ${demoTermHtml(halloween)}

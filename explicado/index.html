@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>OWASP Top 10 en video: cada ataque y su defensa | Dev101x</title>
+  <meta name="description" content="Diez videos cortos, en español, con grabaciones reales de pantalla de las vulnerabilidades del OWASP Top 10: primero el ataque contra un laboratorio local y después la defensa." />
+  <meta name="author" content="Yared Henriquez (Dev101x)" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cursos.dev101x.online/explicado/" />
+  <link rel="author" href="https://dev101x.online/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://cursos.dev101x.online/explicado/" />
+  <meta property="og:site_name" content="Dev101x Cursos" />
+  <meta property="og:locale" content="es_ES" />
+  <meta property="og:title" content="OWASP Top 10 en video: cada ataque y su defensa | Dev101x" />
+  <meta property="og:description" content="Diez videos cortos con grabaciones reales de pantalla: el ataque y la defensa de cada vulnerabilidad del OWASP Top 10." />
+  <meta property="og:image" content="https://cursos.dev101x.online/assets/og-image.jpg?v=5" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:creator" content="@Devcop101" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"CollectionPage","@id":"https://cursos.dev101x.online/explicado/#page","url":"https://cursos.dev101x.online/explicado/","name":"OWASP Top 10 en video","inLanguage":"es","isAccessibleForFree":true,"description":"Diez videos cortos con grabaciones reales de pantalla de las vulnerabilidades del OWASP Top 10: el ataque y su defensa.","isPartOf":{"@id":"https://cursos.dev101x.online/#organization"},"creator":{"@id":"https://dev101x.online/#person"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Dev101x Cursos","item":"https://cursos.dev101x.online/"},{"@type":"ListItem","position":2,"name":"OWASP Top 10 en video","item":"https://cursos.dev101x.online/explicado/"}]}]}</script>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
+  <meta name="theme-color" content="#005c38" />
+  <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v114" />
+  <link rel="stylesheet" href="/css/app.css?v=dev101x-v114" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v114" />
+  <script src="/js/theme-boot.js?v=dev101x-v114"></script>
+  <script type="module" src="escena.js?v=dev101x-v114"></script>
+</head>
+<body class="bg-bg font-sans text-ink antialiased min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-4">
+    <header class="flex items-center justify-between gap-3">
+      <a href="/" class="flex items-center gap-2.5 font-extrabold text-[17px]"><img src="/assets/icon-192.png" alt="" class="w-9 h-9 rounded-lg" /><span>Dev<em class="not-italic text-accent">101x</em> Cursos</span></a>
+      <a href="/" class="inline-flex items-center h-9 px-4 rounded-full bg-white border border-line hover:border-accent/60 hover:text-accent text-sm font-semibold text-ink transition-colors">Entrar</a>
+    </header>
+
+    <main>
+      <section id="hub">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Explicado</p>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">OWASP Top 10 en video</h1>
+            <p class="text-[14px] text-ink2 leading-relaxed max-w-2xl">Diez vulnerabilidades, diez videos de menos de un minuto. Cada uno es una grabación real de pantalla contra un laboratorio local: primero el ataque y después la defensa. Es la lista de 2021, la misma del curso de Web Hacking.</p>
+          </div>
+          <ol id="lista" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ol>
+        </div>
+      </section>
+
+      <section id="video" hidden>
+        <div class="flex flex-col gap-4">
+          <nav aria-label="Ruta" class="text-[11px] font-mono text-muted"><a href="#" class="hover:text-accent">Todos los videos</a> / <span id="v-ruta" class="text-ink2"></span></nav>
+
+          <div class="flex flex-col gap-2">
+            <p id="v-codigo" class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide"></p>
+            <h1 id="v-titulo" tabindex="-1" class="text-2xl sm:text-3xl font-extrabold tracking-tight outline-none"></h1>
+            <p id="v-resumen" class="text-[14px] text-ink2 leading-relaxed max-w-2xl"></p>
+          </div>
+
+          <div class="bg-surface rounded-2xl border border-line p-3 sm:p-4 flex flex-col gap-3">
+            <video id="v-mp4" class="w-full rounded-xl bg-term" controls playsinline preload="metadata" muted></video>
+            <div id="v-fin" class="flex flex-wrap items-center gap-2"></div>
+          </div>
+
+          <details class="bg-surface rounded-2xl border border-line p-4 sm:p-5">
+            <summary class="cursor-pointer text-sm font-bold">Resumen por escrito</summary>
+            <ol id="v-pasos" class="mt-3 flex flex-col gap-3 text-[14px] text-ink2 leading-relaxed"></ol>
+          </details>
+
+          <section class="bg-surface rounded-2xl border border-line p-4 sm:p-5 flex flex-col gap-2">
+            <h2 class="text-sm font-bold">Para practicarlo</h2>
+            <p class="text-[13px] text-ink2 leading-relaxed">Prueba estas técnicas solo en entornos propios o autorizados. En el curso de Web Hacking lo haces en un laboratorio preparado para ello.</p>
+            <a href="/web-hacking/" class="self-start inline-flex items-center h-10 px-4 rounded-xl border border-line bg-surface hover:border-accent/60 hover:text-accent text-sm font-semibold transition-colors">Ver el curso de Web Hacking</a>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-2 pt-2 pb-3 text-[12px] text-muted">
+      <p>Cursos creados por <a href="https://dev101x.online/" rel="author noopener" target="_blank" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez</a></p>
+      <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Pie de página">
+        <a href="https://github.com/DevCop95" rel="me noopener" target="_blank" class="hover:text-accent">GitHub</a>
+        <a href="/terminos/" class="hover:text-accent">Términos</a>
+        <a href="/privacidad/" class="hover:text-accent">Privacidad</a>
+        <a href="/cookies/" class="hover:text-accent">Cookies</a>
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>

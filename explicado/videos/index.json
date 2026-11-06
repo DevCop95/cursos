@@ -1,0 +1,12 @@
+{
+  "a01-control-acceso": 23,
+  "a02-fallos-criptograficos": 34,
+  "a03-inyeccion": 34,
+  "a04-diseno-inseguro": 27,
+  "a05-mala-configuracion": 29,
+  "a06-componentes-vulnerables": 24,
+  "a07-fallos-autenticacion": 26,
+  "a08-integridad-software-datos": 23,
+  "a09-registro-monitoreo": 29,
+  "a10-ssrf": 23
+}

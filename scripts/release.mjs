@@ -30,7 +30,7 @@ function jsFiles(dir) {
 
 // 1. Imports relativos de los módulos (también los dinámicos, import('./x.js')): './x.js' → './x.js?v=<versión>'.
 let changed = 0;
-for (const file of jsFiles('js')) {
+for (const file of [...jsFiles('js'), ...jsFiles('explicado')]) {
   const before = read(file);
   const after = before.replace(/((?:from|import)\s*\(?\s*')(\.{1,2}\/[^'?]+\.js)(?:\?v=[^']*)?'/g, `$1$2?v=${next}'`);
   if (after !== before) { write(file, after); changed++; }
@@ -49,6 +49,8 @@ const { courses } = JSON.parse(read('scripts/course-pages.json'));
 for (const slug of [...courses.map(c => c.slug), 'lab-linux', 'lab-red', 'privacidad', 'terminos', 'cookies']) {
   try { write(`${slug}/index.html`, read(`${slug}/index.html`).replace(/dev101x-v\d+/g, next)); } catch (e) { /* aún no generada */ }
 }
+// Videos "Explicado": la página y sus URLs ?v= (los imports de los .js ya se actualizaron arriba).
+write('explicado/index.html', read('explicado/index.html').replace(/dev101x-v\d+/g, next));
 write('lab-linux/embed.html', read('lab-linux/embed.html').replace(/dev101x-v\d+/g, next));
 write('lab-linux/lab.js', read('lab-linux/lab.js').replace(/dev101x-v\d+/g, next)); // URL de lab-hook.sh
 write('lab-red/lab-red.js', read('lab-red/lab-red.js').replace(/dev101x-v\d+/g, next)); // prototipo del laboratorio de redes

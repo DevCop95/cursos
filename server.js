@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const BASE_DIR = path.dirname(fileURLToPath(import.meta.url));
 // Lo mismo que publica GitHub Pages: la app, las páginas de cada curso, el laboratorio y .well-known.
 const COURSE_SLUGS = JSON.parse(fs.readFileSync(path.join(BASE_DIR, 'scripts/course-pages.json'), 'utf8')).courses.map(c => c.slug + '/');
-const PUBLIC_PREFIXES = ['index.html', '404.html', 'manifest.json', 'sw.js', 'robots.txt', 'sitemap.xml', 'assets/', 'css/', 'js/', 'lab-linux/', 'lab-red/', '.well-known/', 'privacidad/', 'terminos/', 'cookies/', ...COURSE_SLUGS];
+const PUBLIC_PREFIXES = ['index.html', '404.html', 'manifest.json', 'sw.js', 'robots.txt', 'sitemap.xml', 'assets/', 'css/', 'js/', 'lab-linux/', 'lab-red/', 'explicado/', '.well-known/', 'privacidad/', 'terminos/', 'cookies/', ...COURSE_SLUGS];
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -23,6 +23,7 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.mp4': 'video/mp4',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
@@ -67,6 +68,15 @@ const server = http.createServer((req, res) => {
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) return serveFallback(res);
     const contentType = MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+    // Los videos se piden por rangos (para poder saltar a cualquier punto), como en GitHub Pages.
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    if (range && contentType === 'video/mp4') {
+      const start = range[1] === '' ? Math.max(0, stats.size - Number(range[2])) : Number(range[1]);
+      const end = range[1] === '' || range[2] === '' ? stats.size - 1 : Math.min(Number(range[2]), stats.size - 1);
+      if (start > end || start >= stats.size) return send(res, 416, undefined, { 'Content-Range': `bytes */${stats.size}` });
+      res.writeHead(206, { ...SECURITY_HEADERS, 'Content-Type': contentType, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${stats.size}`, 'Content-Length': end - start + 1, 'Cache-Control': 'no-cache' });
+      return req.method === 'HEAD' ? res.end() : fs.createReadStream(filePath, { start, end }).pipe(res);
+    }
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) return send(res, 500, 'Internal Server Error', { 'Content-Type': 'text/plain; charset=utf-8' });
       send(res, 200, req.method === 'HEAD' ? undefined : content, { 'Content-Type': contentType, 'Cache-Control': 'no-cache' });

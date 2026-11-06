@@ -26,3 +26,6 @@ scripts/linux-lab/setup-devsec.sh
 
 # Caso del curso de respuesta a incidentes (contiene las respuestas del reto): solo local, se usa al construir la imagen
 scripts/linux-lab/incidentes-caso/
+
+# Videos "Explicado": laboratorios, guiones, grabaciones y renders intermedios (solo local; el MP4 final y su portada van en explicado/videos/)
+videos-src/
