@@ -4,13 +4,13 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v114';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v114';
-import { esc } from '../lib/html.js?v=dev101x-v114';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v114';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v114';
-import { roadmapHtml } from './roadmap.js?v=dev101x-v114';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v114';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v115';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v115';
+import { esc } from '../lib/html.js?v=dev101x-v115';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v115';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v115';
+import { roadmapHtml } from './roadmap.js?v=dev101x-v115';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v115';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -329,10 +329,7 @@ export function renderLogin(container, onSuccess) {
         </div>
         <div id="login-actions" class="login-modal-actions flex flex-col items-center gap-2 min-h-[44px]"></div>
         <p id="login-status" role="alert" class="hidden text-xs text-rose-700 text-center bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
-        <p class="self-center inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-900">
-          <span class="material-symbols-outlined text-[15px] text-accent" aria-hidden="true">verified_user</span>Solo usamos tu nombre, correo y foto de Google.
-        </p>
-        <p class="text-center text-[11px] text-muted leading-snug">Al continuar aceptas los <a href="/terminos/" class="font-semibold text-ink2 hover:text-accent underline">Términos</a> y las políticas de <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent underline">Privacidad</a> y <a href="/cookies/" class="font-semibold text-ink2 hover:text-accent underline">Cookies</a>.</p>
+        <p class="text-center text-[11px] text-muted leading-snug">Solo usamos tu nombre, correo y foto de Google. Al continuar aceptas los <a href="/terminos/" class="font-semibold text-ink2 hover:text-accent underline">Términos</a>, la <a href="/privacidad/" class="font-semibold text-ink2 hover:text-accent underline">Privacidad</a> y las <a href="/cookies/" class="font-semibold text-ink2 hover:text-accent underline">Cookies</a>.</p>
       </div>
     </div>
   `;

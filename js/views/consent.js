@@ -5,20 +5,27 @@
  *  - Sin sesión: aviso breve de cookies en la portada; se recuerda en este navegador.
  * Cuando se cambie un documento: subir LEGAL_VERSION y la versión en public.legal_documents (migración).
  */
-import { appState, isSessionValid } from '../state.js?v=dev101x-v114';
-import { isCloudEnabled, CONFIG } from '../config.js?v=dev101x-v114';
-import { fetchPendingLegal, acceptLegal, setEmailOptIn } from '../cloud.js?v=dev101x-v114';
-import { showToast } from '../ui.js?v=dev101x-v114';
-import { esc } from '../lib/html.js?v=dev101x-v114';
+import { appState, isSessionValid } from '../state.js?v=dev101x-v115';
+import { isCloudEnabled, CONFIG } from '../config.js?v=dev101x-v115';
+import { fetchPendingLegal, acceptLegal, setEmailOptIn } from '../cloud.js?v=dev101x-v115';
+import { showToast } from '../ui.js?v=dev101x-v115';
+import { esc } from '../lib/html.js?v=dev101x-v115';
 
 // Al activar los avisos por correo (CONFIG.emailReminders) pasa a '2026-10-15' junto con la nueva privacidad
 // (supabase/pendiente/privacidad-2026-10-15.html) y public.legal_documents.
 export const LEGAL_VERSION = '2026-10-13';
 const DOCS = {
-  terms: { label: 'He leído y acepto los', link: 'Términos y condiciones', href: '/terminos/' },
-  privacy: { label: 'Autorizo el tratamiento de mis datos según la', link: 'Política de privacidad', href: '/privacidad/' },
-  cookies: { label: 'Acepto la', link: 'Política de cookies', href: '/cookies/' }
+  terms: { art: 'los', link: 'Términos y condiciones', href: '/terminos/' },
+  privacy: { art: 'la', link: 'Política de privacidad', href: '/privacidad/' },
+  cookies: { art: 'la', link: 'Política de cookies', href: '/cookies/' }
 };
+
+// Una sola casilla para todo lo pendiente: "Acepto los Términos, la Política de privacidad y la Política de cookies…"
+function consentSentence(docs) {
+  const links = docs.map(d => `${DOCS[d].art} <a href="${DOCS[d].href}" target="_blank" rel="noopener" class="font-semibold text-accent hover:underline">${esc(DOCS[d].link)}</a>`);
+  const list = links.length > 1 ? `${links.slice(0, -1).join(', ')} y ${links[links.length - 1]}` : links[0];
+  return `Acepto ${list}${docs.includes('privacy') ? ' y autorizo el tratamiento de mis datos personales' : ''}.`;
+}
 const acceptedKey = userId => `dev101x_legal:${userId}`;
 const COOKIE_KEY = 'dev101x_cookies';
 
@@ -62,13 +69,10 @@ function showConsent(docs, userId, onDecline) {
         <h2 id="consent-title" class="text-lg font-extrabold text-ink tracking-tight">Antes de seguir</h2>
         <p class="text-[13px] text-ink2 leading-relaxed">Para usar Dev101x necesitamos que aceptes estos documentos. Se guarda qué versión aceptas y cuándo.</p>
       </div>
-      <div class="flex flex-col gap-2.5">
-        ${docs.map(d => `
-          <label class="flex items-start gap-2.5 text-[13px] text-ink2 leading-snug cursor-pointer">
-            <input type="checkbox" data-consent="${esc(d)}" class="mt-0.5 w-4 h-4 shrink-0 accent-[#005c38]" />
-            <span>${esc(DOCS[d].label)} <a href="${DOCS[d].href}" target="_blank" rel="noopener" class="font-semibold text-accent hover:underline">${esc(DOCS[d].link)}</a>.</span>
-          </label>`).join('')}
-      </div>
+      <label class="flex items-start gap-2.5 text-[13px] text-ink2 leading-snug cursor-pointer">
+        <input type="checkbox" data-consent-all class="mt-0.5 w-4 h-4 shrink-0 accent-[#005c38]" />
+        <span>${consentSentence(docs)}</span>
+      </label>
       ${CONFIG.emailReminders ? `<label class="flex items-start gap-2.5 pt-3 border-t border-line text-[13px] text-ink2 leading-snug cursor-pointer">
         <input type="checkbox" data-consent-email class="mt-0.5 w-4 h-4 shrink-0 accent-[#005c38]" />
         <span>Quiero recibir por correo avisos sobre mi progreso. <span class="text-muted">Opcional: puedes cambiarlo en tu perfil o darte de baja desde cualquier correo.</span></span>
@@ -81,12 +85,12 @@ function showConsent(docs, userId, onDecline) {
     </div>`;
   document.body.appendChild(overlay);
 
-  const boxes = [...overlay.querySelectorAll('[data-consent]')];
+  const box = overlay.querySelector('[data-consent-all]');
   const accept = overlay.querySelector('[data-consent-accept]');
   const error = overlay.querySelector('[data-consent-error]');
-  const sync = () => { accept.disabled = !boxes.every(b => b.checked); };
-  boxes.forEach(b => b.addEventListener('change', sync));
-  boxes[0].focus();
+  const sync = () => { accept.disabled = !box.checked; };
+  box.addEventListener('change', sync);
+  box.focus();
 
   accept.addEventListener('click', async () => {
     accept.disabled = true;
@@ -128,10 +132,10 @@ export function showCookieNotice() {
   notice = document.createElement('div');
   notice.setAttribute('role', 'region');
   notice.setAttribute('aria-label', 'Aviso de cookies');
-  notice.className = 'fixed bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-sm z-40 bg-surface border border-line rounded-xl shadow-lg p-4 flex flex-col gap-3 text-[12px] text-ink2 leading-relaxed';
+  notice.className = 'fixed bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-md z-40 bg-surface border border-line rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 text-[12px] text-ink2 leading-snug';
   notice.innerHTML = `
-    <p>Solo guardamos en tu navegador lo necesario para que la plataforma funcione. Sin publicidad ni rastreo. <a href="/cookies/" class="font-semibold text-accent hover:underline">Política de cookies</a></p>
-    <button type="button" class="self-end inline-flex items-center h-8 px-4 rounded-full bg-ink hover:bg-ink2 text-white text-[12px] font-semibold">Entendido</button>`;
+    <p>Solo guardamos lo necesario para que funcione, sin publicidad ni rastreo. <a href="/cookies/" class="font-semibold text-accent hover:underline">Más información</a></p>
+    <button type="button" class="shrink-0 inline-flex items-center h-8 px-4 rounded-full bg-ink hover:bg-ink2 text-white text-[12px] font-semibold">Entendido</button>`;
   notice.querySelector('button').addEventListener('click', () => {
     write(COOKIE_KEY, JSON.stringify({ v: LEGAL_VERSION, at: new Date().toISOString() }));
     hideCookieNotice();
