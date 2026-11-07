@@ -1,4 +1,4 @@
-import { code, ATACANTE, PROTEGIDA } from './ayuda.js?v=dev101x-v115';
+import { code, ATACANTE, PROTEGIDA } from './ayuda.js?v=dev101x-v116';
 
 export default {
   id: 'a10-ssrf',

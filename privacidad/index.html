@@ -12,8 +12,11 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <meta name="theme-color" content="#005c38" />
-  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v115" />
-  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v115" />
+  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v116" />
+  <!-- app.css va ANTES que Tailwind: aporta el modo oscuro (clase theme-dark) y la capa de temporada (clase xmas) -->
+  <link rel="stylesheet" href="/css/app.css?v=dev101x-v116" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v116" />
+  <script src="/js/theme-boot.js?v=dev101x-v116"></script>
 </head>
 <body class="bg-bg font-sans text-ink antialiased min-h-screen">
   <div class="max-w-3xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-5">

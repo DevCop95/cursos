@@ -1191,3 +1191,148 @@ html.nl-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .nl-link, .nl-halo { transition: none; }
 }
+
+/* ---- Capa de Navidad (se activa sola del 2 de noviembre al 7 de enero; ver js/theme-boot.js) ----
+   Solo AGREGA una capa: guirnalda de luces arriba, nieve suave detrás de la cabecera y, en la portada, el banner del árbol.
+   No cambia ningún color de la marca. Pruebas: ?navidad=1 (fuerza) o ?navidad=0 (apaga) en cualquier página.
+   Funciona en toda página que cargue css/app.css + js/theme-boot.js (app, cursos públicos, páginas legales). */
+html.xmas::before { /* guirnalda: fija arriba, sobre la cabecera, sin capturar clics */
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 14px;
+  z-index: 51;
+  pointer-events: none;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='14' viewBox='0 0 120 14'><path d='M0 1Q20 8 40 1Q60 8 80 1Q100 8 120 1' fill='none' stroke='%233a403c' stroke-opacity='0.5' stroke-width='1'/><rect x='18.5' y='4.4' width='3' height='2.4' rx='.6' fill='%233a403c'/><circle cx='20' cy='9.2' r='3.3' fill='%23b5413d'/><rect x='58.5' y='4.4' width='3' height='2.4' rx='.6' fill='%233a403c'/><circle cx='60' cy='9.2' r='3.3' fill='%233f8f63'/><rect x='98.5' y='4.4' width='3' height='2.4' rx='.6' fill='%233a403c'/><circle cx='100' cy='9.2' r='3.3' fill='%23d6a64a'/></svg>") repeat-x 0 0 / 120px 14px;
+}
+html.xmas.theme-dark::before { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='14' viewBox='0 0 120 14'><path d='M0 1Q20 8 40 1Q60 8 80 1Q100 8 120 1' fill='none' stroke='%238b949e' stroke-opacity='0.55' stroke-width='1'/><rect x='18.5' y='4.4' width='3' height='2.4' rx='.6' fill='%238b949e'/><circle cx='20' cy='9.2' r='3.3' fill='%23e0605a'/><rect x='58.5' y='4.4' width='3' height='2.4' rx='.6' fill='%238b949e'/><circle cx='60' cy='9.2' r='3.3' fill='%234cc38a'/><rect x='98.5' y='4.4' width='3' height='2.4' rx='.6' fill='%238b949e'/><circle cx='100' cy='9.2' r='3.3' fill='%23f0c05a'/></svg>"); }
+
+/* Nieve en dos capas con distinta velocidad (cerca: html::after, lejos: body::before). Se mueven con transform
+   (no repintan), se quitan con "reducir movimiento". */
+html.xmas::after,
+html.xmas body::before {
+  content: '';
+  position: fixed;
+  left: 0; right: 0;
+  z-index: -1; /* DETRÁS del contenido: la nieve solo se ve en el fondo y nunca tapa texto ni terminales */
+  pointer-events: none;
+  will-change: transform;
+}
+/* El cuerpo deja ver el fondo de <html> (mismo color en claro y oscuro) para que la nieve, que va detrás, se vea. */
+html.xmas body { background-color: transparent !important; }
+/* En la portada el fondo animado de agua cubre la pantalla, así que allí la nieve va delante (no hay texto largo). */
+html.xmas.login-active::after,
+html.xmas.login-active body::before { z-index: 48; }
+html.xmas::after {
+  top: -360px; height: calc(100% + 360px);
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'><g fill='%238fa8ba' fill-opacity='0.7'><circle cx='86.0' cy='328.9' r='2.2'/><circle cx='333.7' cy='17.8' r='2.5'/><circle cx='130.0' cy='19.1' r='1.7'/><circle cx='354.2' cy='350.2' r='2.1'/><circle cx='162.7' cy='197.2' r='2.2'/><circle cx='279.9' cy='280.7' r='2'/><circle cx='170.7' cy='306.8' r='2'/><circle cx='173.3' cy='33.1' r='2.3'/><circle cx='300.3' cy='128.9' r='1.8'/><circle cx='353.4' cy='43.9' r='2.1'/><circle cx='164.3' cy='38.9' r='1.7'/><circle cx='223.8' cy='278.2' r='1.7'/></g></svg>") repeat 0 0 / 360px 360px;
+  animation: xm-snow-near 26s linear infinite;
+}
+html.xmas body::before {
+  top: -520px; height: calc(100% + 520px);
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'><g fill='%239db3c3' fill-opacity='0.55'><circle cx='408.6' cy='497.7' r='1.1'/><circle cx='460.1' cy='107.7' r='1.1'/><circle cx='493.8' cy='371.7' r='1'/><circle cx='27.1' cy='152.8' r='1.4'/><circle cx='395.2' cy='109.5' r='1.2'/><circle cx='393.3' cy='217.0' r='1.1'/><circle cx='183.2' cy='106.9' r='1.4'/><circle cx='106.3' cy='353.0' r='1.3'/><circle cx='229.0' cy='139.7' r='1.2'/><circle cx='175.1' cy='52.3' r='1.1'/><circle cx='242.3' cy='390.3' r='1.4'/><circle cx='402.4' cy='120.4' r='1.3'/><circle cx='304.2' cy='39.6' r='1.3'/><circle cx='427.8' cy='292.7' r='1.4'/><circle cx='29.6' cy='388.4' r='1.2'/><circle cx='517.4' cy='473.8' r='1'/><circle cx='146.6' cy='440.8' r='1.4'/><circle cx='512.1' cy='495.1' r='0.9'/></g></svg>") repeat 0 0 / 520px 520px;
+  animation: xm-snow-far 52s linear infinite;
+}
+html.xmas.theme-dark::after { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'><g fill='%23ffffff' fill-opacity='0.7'><circle cx='218.0' cy='333.5' r='1.9'/><circle cx='212.6' cy='127.0' r='1.9'/><circle cx='184.5' cy='256.2' r='1.9'/><circle cx='57.0' cy='314.7' r='2.2'/><circle cx='136.6' cy='358.7' r='2.1'/><circle cx='136.6' cy='-1.3' r='2.1'/><circle cx='64.1' cy='91.3' r='2.5'/><circle cx='211.7' cy='177.4' r='1.8'/><circle cx='156.2' cy='64.3' r='1.6'/><circle cx='249.0' cy='273.6' r='1.7'/><circle cx='195.5' cy='267.1' r='2.5'/><circle cx='133.7' cy='146.4' r='2.2'/><circle cx='298.3' cy='181.3' r='2.1'/></g></svg>"); }
+html.xmas.theme-dark body::before { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'><g fill='%23ffffff' fill-opacity='0.5'><circle cx='459.5' cy='123.9' r='1.5'/><circle cx='125.3' cy='480.7' r='1.4'/><circle cx='336.9' cy='292.4' r='1.1'/><circle cx='96.7' cy='14.0' r='0.9'/><circle cx='70.2' cy='397.5' r='1'/><circle cx='190.5' cy='255.5' r='1.5'/><circle cx='98.3' cy='287.9' r='1.2'/><circle cx='212.2' cy='279.9' r='0.9'/><circle cx='352.0' cy='122.0' r='1.2'/><circle cx='93.6' cy='388.7' r='1.3'/><circle cx='224.4' cy='60.7' r='1.4'/><circle cx='44.1' cy='305.1' r='1'/><circle cx='439.4' cy='194.1' r='1.3'/><circle cx='240.5' cy='140.0' r='1.1'/><circle cx='354.7' cy='157.5' r='0.9'/><circle cx='409.5' cy='292.3' r='1.3'/><circle cx='396.9' cy='276.8' r='1.1'/><circle cx='106.5' cy='496.3' r='1.4'/></g></svg>"); }
+@keyframes xm-snow-near { /* cae una tesela entera con un vaivén suave; al repetir encaja sin salto */
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(14px, 90px, 0); }
+  50% { transform: translate3d(0, 180px, 0); }
+  75% { transform: translate3d(-14px, 270px, 0); }
+  100% { transform: translate3d(0, 360px, 0); }
+}
+@keyframes xm-snow-far {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-10px, 260px, 0); }
+  100% { transform: translate3d(0, 520px, 0); }
+}
+@media (max-width: 767px) { html.xmas body::before { display: none; } } /* en móvil, una sola capa */
+@media (prefers-reduced-motion: reduce) {
+  html.xmas::after, html.xmas body::before { display: none; }
+}
+@media print { html.xmas::before, html.xmas::after, html.xmas body::before { display: none !important; } }
+
+/* Banner de la portada: mismas medidas que el de Halloween (.hw-*), con el árbol. Las luces se encienden una a una
+   al entrar y quedan fijas (sin parpadeo). El árbol activa el modo oscuro, donde las luces brillan un poco más. */
+.xm-banner { border-color: #26382f; }
+.xm-banner .hw-banner-eyebrow { color: #e6b55a; }
+.xm-tree-stage:focus-visible { outline: 2px solid #e6b55a; outline-offset: 4px; }
+.xm-tree-svg {
+  width: 80px;
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  animation: xm-grow 0.9s cubic-bezier(0.33, 0.7, 0.3, 1) both;
+}
+.xm-t1 { fill: #2f7d57; }
+.xm-t2 { fill: #29704d; }
+.xm-t3 { fill: #236143; }
+.xm-trunk { fill: #6b4a2b; }
+.xm-star { fill: #e6b55a; }
+.xm-light { animation: xm-on 0.45s ease-out both; }
+.xm-l-red { fill: #cf5a52; }
+.xm-l-gold { fill: #e6b55a; }
+.xm-l-cream { fill: #f6ead0; }
+.xm-light:nth-of-type(1) { animation-delay: 0.9s; }
+.xm-light:nth-of-type(2) { animation-delay: 1.05s; }
+.xm-light:nth-of-type(3) { animation-delay: 1.2s; }
+.xm-light:nth-of-type(4) { animation-delay: 1.35s; }
+.xm-light:nth-of-type(5) { animation-delay: 1.5s; }
+.xm-light:nth-of-type(6) { animation-delay: 1.65s; }
+.xm-light:nth-of-type(7) { animation-delay: 1.8s; }
+@keyframes xm-grow {
+  0% { opacity: 0; transform: scale(0.6) translateY(14px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes xm-on { from { opacity: 0.12; } to { opacity: 1; } }
+@media (max-width: 639px) { .xm-tree-svg { width: 62px; } }
+@media (prefers-reduced-motion: reduce) { .xm-tree-svg, .xm-light { animation: none; } }
+html.theme-dark .xm-banner { border-color: #2f5a47; }
+html.theme-dark .xm-tree-stage { filter: drop-shadow(0 0 10px rgba(230, 181, 90, 0.28)); }
+html.theme-dark .xm-star { fill: #f3cf7e; }
+html.theme-dark .xm-l-red { fill: #ee6f66; }
+html.theme-dark .xm-l-gold { fill: #f3cf7e; }
+html.theme-dark .xm-l-cream { fill: #fff6df; }
+
+/* Esfera que cuelga de un hilo en la esquina de la tarjeta (en lugar de la araña de Halloween): solo en escritorio. */
+.xm-ornament {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 54px;
+  width: 1px;
+  height: 34px;
+  background: rgba(104, 109, 102, 0.5);
+  transform-origin: top center;
+  pointer-events: none;
+  z-index: 2;
+  animation: hw-dangle 6s ease-in-out infinite;
+}
+.xm-ornament::after { /* la esfera */
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  margin-left: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #b5413d;
+  box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.14), inset 3px 3px 0 rgba(255, 255, 255, 0.18);
+}
+.xm-ornament::before { /* el casquillo dorado */
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  margin-left: -3px;
+  width: 6px;
+  height: 4px;
+  border-radius: 1px;
+  background: #d6a64a;
+  z-index: 1;
+}
+@media (min-width: 768px) { .xm-ornament { display: block; } }
+@media (prefers-reduced-motion: reduce) { .xm-ornament { animation: none; } }
+html.theme-dark .xm-ornament { background: rgba(139, 148, 158, 0.55); }

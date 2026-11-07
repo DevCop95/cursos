@@ -4,13 +4,13 @@
  *    última cuenta, se ofrece "Continuar como …" con opción de usar otra o de olvidarla.
  *  - Modo local (sin Supabase): botón oficial de Google Identity Services.
  */
-import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v115';
-import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v115';
-import { esc } from '../lib/html.js?v=dev101x-v115';
-import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v115';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v115';
-import { roadmapHtml } from './roadmap.js?v=dev101x-v115';
-import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v115';
+import { CONFIG, isCloudEnabled } from '../config.js?v=dev101x-v116';
+import { prepareNonce, signInWithGoogleCredential, startGoogleLogin, getLastAccount, forgetLastAccount, preloadCloud } from '../auth.js?v=dev101x-v116';
+import { esc } from '../lib/html.js?v=dev101x-v116';
+import { avatarFor, showToast, openModal } from '../ui.js?v=dev101x-v116';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v116';
+import { roadmapHtml } from './roadmap.js?v=dev101x-v116';
+import { isDark, toggleDark, syncThemeButtons } from '../lib/theme.js?v=dev101x-v116';
 
 const GOOGLE_LOGO = `
   <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -29,6 +29,10 @@ function isHalloweenSeason(d = new Date()) {
   const day = d.getDate();
   return (m === 9 && day >= 10) || (m === 10 && day <= 1);
 }
+
+// Navidad: la decide js/theme-boot.js (del 2 de noviembre al 7 de enero, o ?navidad=1) y deja la clase xmas en <html>;
+// así la guirnalda y la nieve (css/app.css) salen en todas las páginas y la portada añade el banner del árbol.
+const isXmasSeason = () => document.documentElement.classList.contains('xmas');
 
 // Banner de Halloween: la calabaza se acerca desde el fondo y se le encienden los ojos y la boca.
 // Solo CSS (css/app.css, .hw-*): se repite cada vez que se entra en la portada; con "reducir movimiento"
@@ -62,6 +66,37 @@ function halloweenBannerHtml() {
           <p class="hw-banner-eyebrow">Especial Halloween</p>
           <h2 class="hw-banner-title">Truco o trato en la consola</h2>
           <p class="hw-banner-line">Nmap y Linux son gratis: escanea la mansión antes de que caiga la noche.</p>
+        </div>
+        <button type="button" data-open-login class="hw-banner-cta">Entrar<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span></button>
+      </section>`;
+}
+
+// Árbol de Navidad: crece desde abajo y las luces se encienden una a una (solo CSS, .xm-*). Como la calabaza, activa
+// el modo oscuro de toda la app, donde las luces brillan un poco más. Sin animación con "reducir movimiento".
+const TREE_SVG = `
+  <svg class="xm-tree-svg" viewBox="0 0 96 114" aria-hidden="true">
+    <rect class="xm-trunk" x="42" y="100" width="12" height="12" rx="1.5" />
+    <polygon class="xm-t3" points="48,54 90,102 6,102" />
+    <polygon class="xm-t2" points="48,32 81,76 15,76" />
+    <polygon class="xm-t1" points="48,14 72,48 24,48" />
+    <polygon class="xm-star" points="48,2 51,9.5 59,10 53,15 55,23 48,19 41,23 43,15 37,10 45,9.5" />
+    <circle class="xm-light xm-l-red" cx="42" cy="34" r="3" />
+    <circle class="xm-light xm-l-gold" cx="55" cy="27" r="3" />
+    <circle class="xm-light xm-l-cream" cx="36" cy="58" r="3" />
+    <circle class="xm-light xm-l-red" cx="59" cy="54" r="3" />
+    <circle class="xm-light xm-l-gold" cx="29" cy="90" r="3" />
+    <circle class="xm-light xm-l-cream" cx="50" cy="82" r="3" />
+    <circle class="xm-light xm-l-red" cx="68" cy="92" r="3" />
+  </svg>`;
+
+function xmasBannerHtml() {
+  return `
+      <section class="hw-banner xm-banner" aria-label="Especial Navidad">
+        <button type="button" class="hw-pumpkin-stage xm-tree-stage" data-hw-night data-theme-toggle data-title-off="Encender las luces" data-title-on="Volver al modo claro" aria-pressed="${isDark()}" aria-label="Modo oscuro">${TREE_SVG}</button>
+        <div class="hw-banner-text">
+          <p class="hw-banner-eyebrow">Especial Navidad</p>
+          <h2 class="hw-banner-title">Estas fiestas, un comando nuevo</h2>
+          <p class="hw-banner-line">Nmap y Linux son gratis: tu primer escaneo cabe en una tarde de vacaciones.</p>
         </div>
         <button type="button" data-open-login class="hw-banner-cta">Entrar<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span></button>
       </section>`;
@@ -238,7 +273,9 @@ async function mountGoogleButton() {
 // ---------------------------------------------------------------------------
 export function renderLogin(container, onSuccess) {
   onLoginSuccess = onSuccess;
-  const halloween = isHalloweenSeason();
+  const xmas = isXmasSeason();
+  const halloween = !xmas && isHalloweenSeason();
+  const season = xmas ? 'xmas' : halloween ? 'halloween' : '';
 
   container.innerHTML = `
     <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col gap-5">
@@ -257,10 +294,10 @@ export function renderLogin(container, onSuccess) {
         </div>
       </div>
 
-      ${halloween ? halloweenBannerHtml() : ''}
+      ${xmas ? xmasBannerHtml() : halloween ? halloweenBannerHtml() : ''}
 
       <section class="landing-card w-full rounded-3xl p-6 sm:p-10 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-8 md:gap-10 items-center modal-enter">
-        ${halloween ? '<span class="hw-spider" aria-hidden="true"></span>' : ''}
+        ${xmas ? '<span class="xm-ornament" aria-hidden="true"></span>' : halloween ? '<span class="hw-spider" aria-hidden="true"></span>' : ''}
         <div class="flex flex-col gap-5 min-w-0">
           <div class="flex flex-col gap-3">
             <p class="text-[11px] font-mono font-bold text-accent uppercase tracking-wide">Cursos de ciberseguridad en español</p>
@@ -277,7 +314,7 @@ export function renderLogin(container, onSuccess) {
             <span class="text-xs text-muted w-full">Con tu cuenta de Google</span>
           </div>
         </div>
-        ${demoTermHtml(halloween)}
+        ${demoTermHtml(season)}
       </section>
 
       ${roadmapHtml({ mode: 'public' })}
@@ -336,7 +373,7 @@ export function renderLogin(container, onSuccess) {
   if (isCloudEnabled()) paintActions();
   else mountGoogleButton();
   initPhoneShowcase(container);
-  initDemoTerm(container, halloween);
+  initDemoTerm(container, season);
   container.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', openLoginModal));
   const pumpkin = container.querySelector('[data-hw-night]');
   if (pumpkin) pumpkin.addEventListener('click', toggleDark);
@@ -446,12 +483,26 @@ const HALLOWEEN_SCENE = { id: 'halloween', pick: 'Halloween', title: '🎃 Espec
   { out: '✓ Truco o trato: aprende a defenderte', tone: 'ok' }
 ] };
 
-function scenesFor(halloween) {
-  return halloween ? [HALLOWEEN_SCENE, ...DEMO_SCENES] : DEMO_SCENES;
+// Escena de Navidad (del 2 de noviembre al 7 de enero). Mismo límite de 7 líneas; el puerto 1225 es el 25 de diciembre.
+const XMAS_SCENE = { id: 'navidad', pick: 'Navidad', title: '🎄 Especial Navidad', prompt: '$', steps: [
+  { cmd: 'nmap -p- arbol.navidad.local' },
+  { out: 'PORT      STATE SERVICE', tone: 'muted' },
+  { out: '1225/tcp  open  regalos' },
+  { cmd: 'curl -s arbol.navidad.local/regalo' },
+  { out: '{"para":"ti","contenido":"un comando nuevo"}', tone: 'info' },
+  { out: 'Nieve en el puerto 80, todo en calma', tone: 'muted' },
+  { out: '✓ Felices fiestas: aprende algo nuevo', tone: 'ok' }
+] };
+
+// season: 'xmas' | 'halloween' | '' (la escena de temporada va primero)
+function scenesFor(season) {
+  if (season === 'xmas') return [XMAS_SCENE, ...DEMO_SCENES];
+  if (season === 'halloween') return [HALLOWEEN_SCENE, ...DEMO_SCENES];
+  return DEMO_SCENES;
 }
 
-function demoTermHtml(halloween) {
-  const first = scenesFor(halloween)[0];
+function demoTermHtml(season) {
+  const first = scenesFor(season)[0];
   return `
         <div class="flex flex-col gap-3 min-w-0">
           <div class="demo-term" aria-hidden="true">
@@ -464,11 +515,11 @@ function demoTermHtml(halloween) {
         </div>`;
 }
 
-function initDemoTerm(container, halloween) {
+function initDemoTerm(container, season) {
   const body = container.querySelector('[data-demo-body]');
   const title = container.querySelector('[data-demo-title]');
   if (!body) return;
-  const scenes = scenesFor(halloween);
+  const scenes = scenesFor(season);
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let run = 0; // cada escena nueva invalida la anterior
   let visible = true;
