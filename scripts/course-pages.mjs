@@ -37,6 +37,9 @@ function fromContentJs(meta) {
 
 function page(c, other) {
   const url = `${SITE}/${c.slug}/`;
+  // Cada página tiene su propia vista previa (assets/og/<slug>.jpg, la genera e2e/og-cards.mjs)
+  const img = `${SITE}/assets/og/${c.slug}.jpg?v=1`;
+  const imgAlt = `Curso de ${c.short || c.title} de Dev101x: ${c.pitch || c.seoDescription}`;
   const lessons = c.modules.reduce((n, m) => n + m.lessons, 0);
   const cta = c.free
     ? `<a href="/#/aula-interactiva/${esc(c.id)}" class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-accent hover:bg-accent2 text-white text-sm font-semibold transition-colors"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">play_arrow</span>Empezar gratis</a>`
@@ -56,7 +59,7 @@ function page(c, other) {
         isAccessibleForFree: c.free,
         provider: { '@id': `${SITE}/#organization` },
         creator: { '@id': PERSON },
-        image: `${SITE}/assets/og-image.jpg?v=5`,
+        image: img,
         teaches: c.objectives,
         syllabusSections: c.modules.map(m => ({ '@type': 'Syllabus', name: stripModule(m.title), description: `${m.lessons} ${m.lessons === 1 ? 'lección' : 'lecciones'}` })),
         hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: c.workload },
@@ -92,11 +95,19 @@ function page(c, other) {
   <meta property="og:locale" content="es_ES" />
   <meta property="og:title" content="${esc(c.seoTitle)}" />
   <meta property="og:description" content="${esc(c.seoDescription)}" />
-  <meta property="og:image" content="${SITE}/assets/og-image.jpg?v=5" />
+  <meta property="og:image" content="${img}" />
+  <meta property="og:image:secure_url" content="${img}" />
+  <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="${esc(imgAlt)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:creator" content="@Devcop101" />
+  <meta name="twitter:url" content="${url}" />
+  <meta name="twitter:title" content="${esc(c.seoTitle)}" />
+  <meta name="twitter:description" content="${esc(c.seoDescription)}" />
+  <meta name="twitter:image" content="${img}" />
+  <meta name="twitter:image:alt" content="${esc(imgAlt)}" />
   <script type="application/ld+json">${JSON.stringify(ld)}</script>
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />

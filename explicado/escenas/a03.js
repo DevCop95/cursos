@@ -1,4 +1,4 @@
-import { code, ATACANTE, PROTEGIDA } from './ayuda.js?v=dev101x-v116';
+import { code, ATACANTE, PROTEGIDA } from './ayuda.js?v=dev101x-v117';
 
 const AT = "' OR '1'='1' --";
 
