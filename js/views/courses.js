@@ -1,20 +1,31 @@
 /**
  * Vistas: Mis Cursos y Catálogo.
  */
-import { esc } from '../lib/html.js?v=dev101x-v117';
-import { appState } from '../state.js?v=dev101x-v117';
-import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v117';
-import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v117';
-import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v117';
-import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v117';
-import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v117';
-import { openDialog, showToast } from '../ui.js?v=dev101x-v117';
-import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v117';
-import { paintResume } from './resume.js?v=dev101x-v117';
-import { courseLogo } from '../lib/course-logos.js?v=dev101x-v117';
-import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v117';
-import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v117';
-import { roadmapHtml, repaintRoadmap } from './roadmap.js?v=dev101x-v117';
+import { esc } from '../lib/html.js?v=dev101x-v118';
+import { appState } from '../state.js?v=dev101x-v118';
+import { COURSE, COURSE_OBJECTIVES, COURSE_VIDEO, LAB_STEPS, NMAP_RESOURCES } from '../content.js?v=dev101x-v118';
+import { TOTAL_LESSONS } from '../lab.js?v=dev101x-v118';
+import { currentProgress, fetchStreak } from '../progress.js?v=dev101x-v118';
+import { fetchCourses, fetchCourseProgress, fetchCourseContent, requestCourseAccess, fetchAccessRequests } from '../cloud.js?v=dev101x-v118';
+import { computeCourseProgress } from '../lib/course-engine.js?v=dev101x-v118';
+import { openDialog, showToast } from '../ui.js?v=dev101x-v118';
+import { UPCOMING } from '../lib/upcoming.js?v=dev101x-v118';
+import { paintResume } from './resume.js?v=dev101x-v118';
+import { courseLogo } from '../lib/course-logos.js?v=dev101x-v118';
+import { readViewCache, writeViewCache } from '../lib/view-cache.js?v=dev101x-v118';
+import { PUBLIC_COURSES } from '../lib/public-courses.js?v=dev101x-v118';
+import { roadmapHtml, repaintRoadmap } from './roadmap.js?v=dev101x-v118';
+
+// Enlace a los videos gratuitos de OWASP Top 10 (página pública /explicado/): así también se llega desde dentro de la app.
+const owaspStrip = `
+  <a href="/explicado/" class="rounded-2xl bg-surface border border-line hover:border-accent/60 p-4 flex items-center gap-3 transition-colors group">
+    <span class="material-symbols-outlined text-[22px] text-accent shrink-0" aria-hidden="true">play_circle</span>
+    <span class="flex flex-col min-w-0">
+      <span class="text-[14px] font-bold text-ink group-hover:text-accent transition-colors">OWASP Top 10 en video</span>
+      <span class="text-xs text-muted leading-relaxed">Diez videos cortos y gratis: el ataque y la defensa de cada vulnerabilidad.</span>
+    </span>
+    <span class="material-symbols-outlined text-[18px] text-muted ml-auto shrink-0" aria-hidden="true">arrow_forward</span>
+  </a>`;
 
 // Logo de la herramienta del curso (o su icono, si no tiene) en la cabecera oscura de la tarjeta.
 function cardLogo(id, icon) {
@@ -208,6 +219,8 @@ export function renderMisCursos(container) {
             No tienes cursos habilitados. <a href="#/explorar-cursos" class="text-accent font-semibold hover:underline">Ver catálogo</a>
           </div>`}
       </section>
+
+      ${owaspStrip}
     </div>
   `;
   paintResume(document.getElementById('resume-card'));
@@ -400,6 +413,8 @@ export function renderExplorar(container) {
         ${COURSES.map(tile).join('')}
         ${soonTile}
       </section>
+
+      ${owaspStrip}
     </div>
   `;
 

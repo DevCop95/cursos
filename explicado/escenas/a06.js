@@ -1,4 +1,4 @@
-import { code, ATACANTE } from './ayuda.js?v=dev101x-v117';
+import { code, ATACANTE } from './ayuda.js?v=dev101x-v118';
 
 export default {
   id: 'a06-componentes-vulnerables',

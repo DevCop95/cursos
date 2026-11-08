@@ -1,4 +1,4 @@
-import { code, ATACANTE, PROTEGIDA } from './ayuda.js?v=dev101x-v117';
+import { code, ATACANTE, PROTEGIDA } from './ayuda.js?v=dev101x-v118';
 
 export default {
   id: 'a01-control-acceso',

@@ -170,7 +170,12 @@ function page(c, other) {
         </ol>
       </section>
 
-      <section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+${c.related ? `<section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p class="text-[13px] text-ink2"><span class="font-semibold text-ink">${esc(c.related.title)}.</span> ${esc(c.related.text)}</p>
+        <a href="${esc(c.related.href)}" class="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-line bg-surface hover:border-accent/60 hover:text-accent text-sm font-semibold transition-colors shrink-0"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_circle</span>Ver los videos</a>
+      </section>
+
+      ` : ''}      <section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p class="text-[13px] text-ink2">También te puede interesar: <a href="/${esc(other.slug)}/" class="font-semibold text-accent hover:underline">${esc(other.title)}</a> <span class="text-muted">(${other.free ? 'gratis' : 'premium'})</span></p>
         <a href="/" class="text-[13px] font-semibold text-ink hover:text-accent shrink-0">Ver la ruta de cursos →</a>
       </section>
@@ -179,6 +184,7 @@ function page(c, other) {
     <footer class="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 pt-2 pb-4 text-[12px] text-muted">
       <p>Cursos creados por <a href="https://dev101x.online/" rel="author noopener" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez</a></p>
       <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Pie de página">
+        <a href="/explicado/" class="hover:text-accent">Videos OWASP</a>
         <a href="https://github.com/DevCop95" rel="me noopener" class="hover:text-accent">GitHub</a>
         <a href="/terminos/" class="hover:text-accent">Términos</a>
         <a href="/privacidad/" class="hover:text-accent">Privacidad</a>

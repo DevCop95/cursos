@@ -1,4 +1,4 @@
-import { code, PROTEGIDA } from './ayuda.js?v=dev101x-v117';
+import { code, PROTEGIDA } from './ayuda.js?v=dev101x-v118';
 
 const INTRUSO = { icon: 'skull', label: 'Atacante', tone: 'danger' };
 

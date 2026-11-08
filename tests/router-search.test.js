@@ -29,3 +29,8 @@ test('búsqueda: sin tildes, por comando y oculta admin a alumnos', () => {
   assert.ok(!search(idx, 'administracion').some(r => r.href === '#/panel-admin'));
   assert.ok(search(buildIndex({ admin: true }), 'administracion').some(r => r.href === '#/panel-admin'));
 });
+
+test('la ruta de la comunidad existe con sesión y redirige al acceso sin ella', () => {
+  assert.equal(resolveRoute('#/comunidad', { authenticated: true }).route, 'comunidad');
+  assert.equal(resolveRoute('#/comunidad', { authenticated: false }).route, 'login');
+});

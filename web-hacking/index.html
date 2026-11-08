@@ -36,11 +36,11 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <meta name="theme-color" content="#005c38" />
   <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v117" />
+  <link rel="stylesheet" href="/css/fonts.css?v=dev101x-v118" />
   <!-- app.css va ANTES que Tailwind: aporta el modo oscuro (clase theme-dark) y, así, las utilidades de Tailwind siguen mandando sobre sus tamaños -->
-  <link rel="stylesheet" href="/css/app.css?v=dev101x-v117" />
-  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v117" />
-  <script src="/js/theme-boot.js?v=dev101x-v117"></script>
+  <link rel="stylesheet" href="/css/app.css?v=dev101x-v118" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=dev101x-v118" />
+  <script src="/js/theme-boot.js?v=dev101x-v118"></script>
 </head>
 <body class="bg-bg font-sans text-ink antialiased min-h-screen">
   <div class="max-w-4xl mx-auto px-4 py-6 sm:py-8 flex flex-col gap-5">
@@ -133,7 +133,12 @@
         </ol>
       </section>
 
-      <section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p class="text-[13px] text-ink2"><span class="font-semibold text-ink">Gratis: OWASP Top 10 en video.</span> Diez videos cortos con el ataque y la defensa de cada vulnerabilidad, para ver antes o después del curso.</p>
+        <a href="/explicado/" class="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-line bg-surface hover:border-accent/60 hover:text-accent text-sm font-semibold transition-colors shrink-0"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">play_circle</span>Ver los videos</a>
+      </section>
+
+            <section class="bg-surface rounded-2xl border border-line p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p class="text-[13px] text-ink2">También te puede interesar: <a href="/redes/" class="font-semibold text-accent hover:underline">Redes para ciberseguridad desde cero</a> <span class="text-muted">(gratis)</span></p>
         <a href="/" class="text-[13px] font-semibold text-ink hover:text-accent shrink-0">Ver la ruta de cursos →</a>
       </section>
@@ -142,6 +147,7 @@
     <footer class="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 pt-2 pb-4 text-[12px] text-muted">
       <p>Cursos creados por <a href="https://dev101x.online/" rel="author noopener" class="font-semibold text-ink2 hover:text-accent">Yared Henriquez</a></p>
       <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Pie de página">
+        <a href="/explicado/" class="hover:text-accent">Videos OWASP</a>
         <a href="https://github.com/DevCop95" rel="me noopener" class="hover:text-accent">GitHub</a>
         <a href="/terminos/" class="hover:text-accent">Términos</a>
         <a href="/privacidad/" class="hover:text-accent">Privacidad</a>

@@ -1,5 +1,5 @@
-import { iconSvg } from './icono.js?v=dev101x-v117';
-import { SCENES } from './escenas/index.js?v=dev101x-v117';
+import { iconSvg } from './icono.js?v=dev101x-v118';
+import { SCENES } from './escenas/index.js?v=dev101x-v118';
 
 const $ = id => document.getElementById(id);
 const el = {

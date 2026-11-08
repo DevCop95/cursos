@@ -1,4 +1,4 @@
-import { ICONS } from './icons.js?v=dev101x-v117';
+import { ICONS } from './icons.js?v=dev101x-v118';
 
 /** SVG en línea de un icono de pixelarticons (cuadrícula de 24x24). */
 export function iconSvg(name, cls = 'w-5 h-5') {

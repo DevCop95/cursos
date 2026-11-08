@@ -1,4 +1,4 @@
-import { code, PROTEGIDA } from './ayuda.js?v=dev101x-v117';
+import { code, PROTEGIDA } from './ayuda.js?v=dev101x-v118';
 
 export default {
   id: 'a02-fallos-criptograficos',

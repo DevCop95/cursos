@@ -1,7 +1,7 @@
 /**
  * Enrutado por hash (módulo puro).
  */
-export const ROUTES = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'perfil', 'panel-admin'];
+export const ROUTES = ['mis-cursos', 'aula-interactiva', 'explorar-cursos', 'perfil', 'comunidad', 'panel-admin'];
 export const DEFAULT_ROUTE = 'mis-cursos';
 
 /**

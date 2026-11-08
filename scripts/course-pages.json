@@ -221,6 +221,7 @@
     },
     {
       "slug": "web-hacking",
+      "related": { "title": "Gratis: OWASP Top 10 en video", "text": "Diez videos cortos con el ataque y la defensa de cada vulnerabilidad, para ver antes o después del curso.", "href": "/explicado/" },
       "id": "webhacking-101",
       "seoTitle": "Curso de Web Hacking y Bug Bounty en español: OWASP Top 10 | Dev101x",
       "seoDescription": "Aprende a encontrar y reportar los fallos más comunes de las aplicaciones web según el OWASP Top 10 (control de acceso roto, inyección SQL, XSS, SSRF y JWT débil), con la línea ética de un programa de bug bounty real, practicando con curl en una terminal simulada en el navegador.",

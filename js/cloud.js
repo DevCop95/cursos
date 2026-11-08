@@ -2,7 +2,7 @@
  * Adaptador de Supabase. El SDK se carga bajo demanda y solo si hay anon key configurada.
  * Todas las lecturas/escrituras dependen de las políticas RLS definidas en supabase/schema.sql.
  */
-import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v117';
+import { CONFIG, isCloudEnabled } from './config.js?v=dev101x-v118';
 
 let clientPromise = null;
 
@@ -254,6 +254,29 @@ export async function fetchUserStats(userId = null) {
   const { data, error } = await client.rpc('user_stats', { p_user: userId });
   if (error) throw error;
   return data;
+}
+
+// Muro de la comunidad (miembros premium que lo activan). El servidor ya devuelve el nombre o el alias «Anonimo…»,
+// la foto (solo si no es anónimo) y el rango: nunca correos ni identificadores. Todo vía funciones del servidor.
+export async function fetchCommunityWall() {
+  const client = await getClient();
+  if (!client) return [];
+  const { data, error } = await client.rpc('community_wall');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+export async function fetchMyWall() {
+  const client = await getClient();
+  if (!client) return null;
+  const { data, error } = await client.rpc('my_wall');
+  if (error) throw error;
+  return data;
+}
+export async function setWallVisibility(visible) {
+  const client = await getClient();
+  if (!client) throw new Error('Supabase no está configurado.');
+  const { error } = await client.rpc('set_wall_visibility', { p_visible: Boolean(visible) });
+  if (error) throw error;
 }
 
 // Mensajes alumno ↔ administrador. RLS: el alumno solo ve su conversación; el admin, todas.
